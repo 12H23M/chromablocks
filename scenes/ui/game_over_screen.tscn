@@ -1,0 +1,225 @@
+[gd_scene load_steps=6 format=3 uid="uid://gameover001"]
+
+[ext_resource type="Script" path="res://scripts/ui/game_over_screen.gd" id="1_go"]
+
+[sub_resource type="StyleBoxFlat" id="card_style"]
+bg_color = Color(0.086, 0.133, 0.212, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+content_margin_left = 24.0
+content_margin_top = 24.0
+content_margin_right = 24.0
+content_margin_bottom = 24.0
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.118, 0.192, 0.282, 1)
+
+[sub_resource type="StyleBoxFlat" id="play_again_style"]
+bg_color = Color(0.078, 0.722, 0.651, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+content_margin_left = 24.0
+content_margin_top = 14.0
+content_margin_right = 24.0
+content_margin_bottom = 14.0
+
+[sub_resource type="StyleBoxFlat" id="home_btn_style"]
+bg_color = Color(0.086, 0.133, 0.212, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 12.0
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.078, 0.722, 0.651, 0.3)
+
+[sub_resource type="StyleBoxFlat" id="new_best_badge_style"]
+bg_color = Color(0.078, 0.722, 0.651, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+content_margin_left = 16.0
+content_margin_top = 6.0
+content_margin_right = 16.0
+content_margin_bottom = 6.0
+
+[node name="GameOverScreen" type="Control"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_go")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.051, 0.106, 0.165, 1)
+
+[node name="Content" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -260.0
+offset_right = 160.0
+offset_bottom = 260.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+theme_override_constants/separation = 24
+
+[node name="GameOverTitle" type="Label" parent="Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+theme_override_colors/font_color = Color(0.078, 0.722, 0.651, 1)
+text = "GAME OVER"
+horizontal_alignment = 1
+
+[node name="ScoreCard" type="PanelContainer" parent="Content"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("card_style")
+
+[node name="CardVBox" type="VBoxContainer" parent="Content/ScoreCard"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="FinalScoreLabel" type="Label" parent="Content/ScoreCard/CardVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
+text = "FINAL SCORE"
+horizontal_alignment = 1
+
+[node name="FinalScoreValue" type="Label" parent="Content/ScoreCard/CardVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 56
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "0"
+horizontal_alignment = 1
+
+[node name="NewBestBadge" type="PanelContainer" parent="Content/ScoreCard/CardVBox"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("new_best_badge_style")
+
+[node name="BadgeLabel" type="Label" parent="Content/ScoreCard/CardVBox/NewBestBadge"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "★ NEW BEST!"
+
+[node name="Divider" type="ColorRect" parent="Content/ScoreCard/CardVBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 1)
+color = Color(0.141, 0.231, 0.325, 1)
+
+[node name="Stats" type="HBoxContainer" parent="Content/ScoreCard/CardVBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 32
+
+[node name="LinesBox" type="VBoxContainer" parent="Content/ScoreCard/CardVBox/Stats"]
+layout_mode = 2
+alignment = 1
+
+[node name="LinesValue" type="Label" parent="Content/ScoreCard/CardVBox/Stats/LinesBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.078, 0.722, 0.651, 1)
+text = "0"
+horizontal_alignment = 1
+
+[node name="LinesLabel" type="Label" parent="Content/ScoreCard/CardVBox/Stats/LinesBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
+text = "Lines"
+horizontal_alignment = 1
+
+[node name="BlocksBox" type="VBoxContainer" parent="Content/ScoreCard/CardVBox/Stats"]
+layout_mode = 2
+alignment = 1
+
+[node name="BlocksValue" type="Label" parent="Content/ScoreCard/CardVBox/Stats/BlocksBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.078, 0.722, 0.651, 1)
+text = "0"
+horizontal_alignment = 1
+
+[node name="BlocksLabel" type="Label" parent="Content/ScoreCard/CardVBox/Stats/BlocksBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
+text = "Blocks"
+horizontal_alignment = 1
+
+[node name="CombosBox" type="VBoxContainer" parent="Content/ScoreCard/CardVBox/Stats"]
+layout_mode = 2
+alignment = 1
+
+[node name="CombosValue" type="Label" parent="Content/ScoreCard/CardVBox/Stats/CombosBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.545, 0.361, 0.965, 1)
+text = "0"
+horizontal_alignment = 1
+
+[node name="CombosLabel" type="Label" parent="Content/ScoreCard/CardVBox/Stats/CombosBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
+text = "Combos"
+horizontal_alignment = 1
+
+[node name="ButtonSection" type="VBoxContainer" parent="Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="PlayAgainButton" type="Button" parent="Content/ButtonSection"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 56)
+theme_override_styles/normal = SubResource("play_again_style")
+theme_override_styles/hover = SubResource("play_again_style")
+theme_override_styles/pressed = SubResource("play_again_style")
+theme_override_styles/focus = SubResource("play_again_style")
+theme_override_colors/font_color = Color(0.051, 0.106, 0.165, 1)
+theme_override_font_sizes/font_size = 18
+text = "PLAY AGAIN"
+
+[node name="HomeButton" type="Button" parent="Content/ButtonSection"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 48)
+theme_override_styles/normal = SubResource("home_btn_style")
+theme_override_styles/hover = SubResource("home_btn_style")
+theme_override_styles/pressed = SubResource("home_btn_style")
+theme_override_styles/focus = SubResource("home_btn_style")
+theme_override_colors/font_color = Color(0.078, 0.722, 0.651, 1)
+theme_override_font_sizes/font_size = 14
+text = "HOME"

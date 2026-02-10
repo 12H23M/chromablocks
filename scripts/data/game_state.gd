@@ -1,0 +1,33 @@
+class_name GameState
+
+var board: BoardState
+var tray_pieces: Array  # Array[BlockPiece]
+var score: int = 0
+var level: int = 1
+var lines_cleared: int = 0
+var combo: int = 0
+var status: int = Enums.GameStatus.READY
+var high_score: int = 0
+var blocks_placed: int = 0
+var max_combo: int = 0
+
+
+func _init() -> void:
+	board = BoardState.new()
+	tray_pieces = []
+
+
+func reset() -> void:
+	board = BoardState.new()
+	tray_pieces = []
+	score = 0
+	level = 1
+	lines_cleared = 0
+	combo = 0
+	status = Enums.GameStatus.READY
+	blocks_placed = 0
+	max_combo = 0
+
+
+var is_tray_empty: bool:
+	get: return tray_pieces.is_empty()

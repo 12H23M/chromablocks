@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://dragpiece001"]
+
+[ext_resource type="Script" path="res://scripts/game/draggable_piece.gd" id="1_drag"]
+
+[node name="DraggablePiece" type="Control"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+mouse_filter = 0
+script = ExtResource("1_drag")

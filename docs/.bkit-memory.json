@@ -1,0 +1,13 @@
+{
+  "sessionCount": 42,
+  "lastSession": {
+    "startedAt": "2026-02-10T15:38:51.388Z",
+    "platform": "claude",
+    "level": "Starter"
+  },
+  "pdca": {
+    "feature": "tetris-mobile-app",
+    "phase": "completed",
+    "matchRate": 90.1
+  }
+}

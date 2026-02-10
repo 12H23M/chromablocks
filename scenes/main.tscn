@@ -1,0 +1,106 @@
+[gd_scene load_steps=10 format=3 uid="uid://main001"]
+
+[ext_resource type="Script" path="res://scripts/game/chroma_blocks_game.gd" id="1_game"]
+[ext_resource type="PackedScene" uid="uid://board001" path="res://scenes/game/board.tscn" id="2_board"]
+[ext_resource type="PackedScene" uid="uid://tray001" path="res://scenes/game/piece_tray.tscn" id="3_tray"]
+[ext_resource type="PackedScene" uid="uid://hud001" path="res://scenes/ui/hud.tscn" id="4_hud"]
+[ext_resource type="PackedScene" uid="uid://home001" path="res://scenes/ui/home_screen.tscn" id="5_home"]
+[ext_resource type="PackedScene" uid="uid://gameover001" path="res://scenes/ui/game_over_screen.tscn" id="6_gameover"]
+[ext_resource type="PackedScene" uid="uid://pause001" path="res://scenes/ui/pause_screen.tscn" id="7_pause"]
+[ext_resource type="Theme" path="res://theme/game_theme.tres" id="8_theme"]
+[ext_resource type="PackedScene" uid="uid://splash001" path="res://scenes/ui/splash_screen.tscn" id="9_splash"]
+
+[node name="Main" type="Node"]
+script = ExtResource("1_game")
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+
+[node name="Background" type="ColorRect" parent="UILayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.051, 0.106, 0.165, 1)
+
+[node name="GameUI" type="VBoxContainer" parent="UILayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("8_theme")
+theme_override_constants/separation = 0
+
+[node name="TopMargin" type="MarginContainer" parent="UILayer/GameUI"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+
+[node name="HUD" parent="UILayer/GameUI/TopMargin" instance=ExtResource("4_hud")]
+
+[node name="HudSpacer" type="Control" parent="UILayer/GameUI"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 24)
+
+[node name="BoardContainer" type="CenterContainer" parent="UILayer/GameUI"]
+layout_mode = 2
+
+[node name="Board" parent="UILayer/GameUI/BoardContainer" instance=ExtResource("2_board")]
+unique_name_in_owner = true
+
+[node name="Spacer" type="Control" parent="UILayer/GameUI"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 28)
+
+[node name="TrayMargin" type="MarginContainer" parent="UILayer/GameUI"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 0
+
+[node name="PieceTray" parent="UILayer/GameUI/TrayMargin" instance=ExtResource("3_tray")]
+unique_name_in_owner = true
+
+[node name="AdSpacer" type="Control" parent="UILayer/GameUI"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="AdBanner" type="ColorRect" parent="UILayer/GameUI"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 50)
+color = Color(0.086, 0.137, 0.212, 1)
+
+[node name="AdLabel" type="Label" parent="UILayer/GameUI/AdBanner"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.29, 0.4, 0.467, 1)
+text = "BANNER AD"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DragLayer" type="Control" parent="UILayer"]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="HomeScreen" parent="UILayer" instance=ExtResource("5_home")]
+
+[node name="GameOverScreen" parent="UILayer" instance=ExtResource("6_gameover")]
+
+[node name="PauseScreen" parent="UILayer" instance=ExtResource("7_pause")]
+
+[node name="SplashScreen" parent="UILayer" instance=ExtResource("9_splash")]
+
+[node name="MusicPlayer" type="AudioStreamPlayer" parent="."]
