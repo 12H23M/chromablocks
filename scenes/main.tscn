@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://main001"]
+[gd_scene load_steps=12 format=3 uid="uid://main001"]
 
 [ext_resource type="Script" path="res://scripts/game/chroma_blocks_game.gd" id="1_game"]
 [ext_resource type="PackedScene" uid="uid://board001" path="res://scenes/game/board.tscn" id="2_board"]
@@ -9,6 +9,8 @@
 [ext_resource type="PackedScene" uid="uid://pause001" path="res://scenes/ui/pause_screen.tscn" id="7_pause"]
 [ext_resource type="Theme" path="res://theme/game_theme.tres" id="8_theme"]
 [ext_resource type="PackedScene" uid="uid://splash001" path="res://scenes/ui/splash_screen.tscn" id="9_splash"]
+[ext_resource type="PackedScene" uid="uid://settings001" path="res://scenes/ui/settings_screen.tscn" id="10_settings"]
+[ext_resource type="PackedScene" uid="uid://tutorial001" path="res://scenes/ui/tutorial_overlay.tscn" id="11_tutorial"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_game")
@@ -101,6 +103,8 @@ mouse_filter = 2
 
 [node name="PauseScreen" parent="UILayer" instance=ExtResource("7_pause")]
 
-[node name="SplashScreen" parent="UILayer" instance=ExtResource("9_splash")]
+[node name="SettingsScreen" parent="UILayer" instance=ExtResource("10_settings")]
 
-[node name="MusicPlayer" type="AudioStreamPlayer" parent="."]
+[node name="TutorialOverlay" parent="UILayer" instance=ExtResource("11_tutorial")]
+
+[node name="SplashScreen" parent="UILayer" instance=ExtResource("9_splash")]

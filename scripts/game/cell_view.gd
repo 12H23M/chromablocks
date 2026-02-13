@@ -11,6 +11,8 @@ var _border_color := Color("1C2E45")
 
 # Scale animation for clear effects
 var _scale_factor := 1.0
+# Cached color for clear-out tween (block-colored instead of white)
+var _clear_color := Color.WHITE
 
 func set_empty() -> void:
 	_occupied = false
@@ -48,62 +50,156 @@ func clear_highlight() -> void:
 	else:
 		set_empty()
 
-func play_clear_flash(duration: float, delay: float = 0.0) -> void:
-	if delay > 0.0:
-		await get_tree().create_timer(delay).timeout
+func play_place_pulse(delay: float = 0.0) -> void:
+	var original_bg := _bg_color
+	var light := AppColors.get_block_light_color(_color) if _color >= 0 else Color.WHITE
 
-	# Remember the cell's original bright color for the effect
+	var tween := create_tween()
+	if delay > 0.0:
+		tween.tween_interval(delay)
+	tween.tween_callback(func():
+		_bg_color = light
+		_scale_factor = 0.85
+		queue_redraw()
+	)
+	tween.tween_property(self, "_scale_factor", 1.12, 0.08) \
+		 .set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(self, "_scale_factor", 1.0, 0.07) \
+		 .set_ease(Tween.EASE_IN_OUT)
+	tween.parallel().tween_method(func(t: float):
+		_bg_color = light.lerp(original_bg, 1.0 - t)
+		queue_redraw()
+	, 1.0, 0.0, 0.15)
+
+
+func play_clear_flash(duration: float, delay: float = 0.0) -> void:
 	var bright_color := Color.WHITE
 	if _occupied and _color >= 0:
 		bright_color = AppColors.get_block_light_color(_color)
-
-	# Phase 1: Flash bright in original color (0.08s)
-	_bg_color = bright_color
-	_glow_color = Color(bright_color.r, bright_color.g, bright_color.b, 0.8)
-	_highlight_color = Color(1, 1, 1, 0.6)
-	_border_color = bright_color
-	_scale_factor = 1.0
-	queue_redraw()
+	# Cache the block's bright color for the fade-out tween
+	_clear_color = bright_color
 
 	var tween := create_tween()
+	if delay > 0.0:
+		tween.tween_interval(delay)
 
-	# Phase 2: Pop to white + scale up (0.1s)
+	# Phase 1: Bright flash (block color)
 	tween.tween_callback(func():
-		_bg_color = Color.WHITE
-		_glow_color = Color(1, 1, 1, 0.9)
-		_border_color = Color.WHITE
+		_bg_color = bright_color
+		_glow_color = Color(bright_color.r, bright_color.g, bright_color.b, 1.0)
+		_highlight_color = Color(bright_color.r, bright_color.g, bright_color.b, 0.8)
+		_border_color = bright_color
+		_scale_factor = 1.0
 		queue_redraw()
-	).set_delay(0.06)
-	tween.tween_property(self, "_scale_factor", 1.25, 0.08).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	)
 
-	# Phase 3: Shrink + fade out
-	tween.tween_method(_tween_clear_out, 1.0, 0.0, duration * 0.7)
+	# Phase 2: Intensified block color pop + scale up
+	var peak_color := bright_color.lightened(0.4)
+	tween.tween_callback(func():
+		_bg_color = peak_color
+		_glow_color = Color(peak_color.r, peak_color.g, peak_color.b, 0.9)
+		_border_color = peak_color
+		queue_redraw()
+	).set_delay(0.08)
+	tween.tween_property(self, "_scale_factor", 1.3, 0.1) \
+		 .set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+
+	# Phase 3: Hold at peak briefly
+	tween.tween_interval(0.06)
+
+	# Phase 4: Shrink + fade out (slower)
+	tween.tween_method(_tween_clear_out, 1.0, 0.0, 0.25) \
+		 .set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
 	tween.tween_callback(func():
 		_scale_factor = 1.0
 		set_empty()
 	)
 
 func play_color_match_flash(duration: float, delay: float = 0.0) -> void:
-	if delay > 0.0:
-		await get_tree().create_timer(delay).timeout
-
 	var bright := AppColors.get_block_light_color(_color) if _occupied else Color.WHITE
-	_bg_color = bright
-	_glow_color = Color(bright.r, bright.g, bright.b, 0.6)
-	queue_redraw()
 
 	var tween := create_tween()
-	tween.tween_method(_tween_to_empty, 1.0, 0.0, duration)
+	if delay > 0.0:
+		tween.tween_interval(delay)
+
+	tween.tween_callback(func():
+		_bg_color = Color.WHITE
+		_glow_color = Color(1, 1, 1, 0.7)
+		_highlight_color = Color(1, 1, 1, 0.5)
+		_border_color = Color.WHITE
+		queue_redraw()
+	)
+	tween.tween_callback(func():
+		_bg_color = bright
+		_glow_color = Color(bright.r, bright.g, bright.b, 0.6)
+		_highlight_color = Color.TRANSPARENT
+		_border_color = bright
+		queue_redraw()
+	).set_delay(0.05)
+	tween.tween_method(_tween_to_empty, 1.0, 0.0, duration - 0.05)
 	tween.tween_callback(set_empty)
 
 func _tween_clear_out(t: float) -> void:
-	# Fade colors toward empty
-	_bg_color = Color.WHITE.lerp(AppColors.EMPTY_CELL, 1.0 - t)
+	# Fade from block color toward empty cell
+	_bg_color = _clear_color.lerp(AppColors.EMPTY_CELL, 1.0 - t)
 	_glow_color.a = 0.9 * t * t
 	_highlight_color.a = 0.0
-	_border_color = Color.WHITE.lerp(AppColors.EMPTY_BORDER, 1.0 - t)
+	_border_color = _clear_color.lerp(AppColors.EMPTY_BORDER, 1.0 - t)
 	# Shrink scale from current down to 0
 	_scale_factor = lerpf(0.0, _scale_factor, t)
+	queue_redraw()
+
+## Line prediction overlay
+var _line_prediction_active: bool = false
+var _line_prediction_overlay := Color(1.0, 1.0, 1.0, 0.30)
+var _line_prediction_border := Color(1.0, 1.0, 1.0, 0.50)
+var _line_pulse_tween: Tween = null
+
+# Alpha range for the pulse animation
+const _LINE_PULSE_ALPHA_MIN := 0.18
+const _LINE_PULSE_ALPHA_MAX := 0.42
+const _LINE_PULSE_BORDER_MIN := 0.30
+const _LINE_PULSE_BORDER_MAX := 0.65
+const _LINE_PULSE_DURATION := 0.6
+
+func show_line_prediction() -> void:
+	_line_prediction_active = true
+	# Use the cell's light color for a thematic highlight, with white fallback
+	if _occupied and _color >= 0:
+		var light := AppColors.get_block_light_color(_color)
+		_line_prediction_overlay = Color(light.r, light.g, light.b, _LINE_PULSE_ALPHA_MAX)
+		_line_prediction_border = Color(light.r, light.g, light.b, _LINE_PULSE_BORDER_MAX)
+	else:
+		_line_prediction_overlay = Color(1.0, 1.0, 1.0, _LINE_PULSE_ALPHA_MAX)
+		_line_prediction_border = Color(1.0, 1.0, 1.0, _LINE_PULSE_BORDER_MAX)
+	_start_line_pulse()
+	queue_redraw()
+
+func clear_line_prediction() -> void:
+	if _line_prediction_active:
+		_line_prediction_active = false
+		_stop_line_pulse()
+		queue_redraw()
+
+func _start_line_pulse() -> void:
+	_stop_line_pulse()
+	_line_pulse_tween = create_tween()
+	_line_pulse_tween.set_loops()
+	# Fade overlay alpha down then back up in a smooth loop
+	_line_pulse_tween.tween_method(_set_line_pulse_alpha, 1.0, 0.0, _LINE_PULSE_DURATION) \
+		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	_line_pulse_tween.tween_method(_set_line_pulse_alpha, 0.0, 1.0, _LINE_PULSE_DURATION) \
+		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+
+func _stop_line_pulse() -> void:
+	if _line_pulse_tween and _line_pulse_tween.is_valid():
+		_line_pulse_tween.kill()
+	_line_pulse_tween = null
+
+func _set_line_pulse_alpha(t: float) -> void:
+	# t goes 1→0→1 in the loop; interpolate alpha between min and max
+	_line_prediction_overlay.a = lerpf(_LINE_PULSE_ALPHA_MIN, _LINE_PULSE_ALPHA_MAX, t)
+	_line_prediction_border.a = lerpf(_LINE_PULSE_BORDER_MIN, _LINE_PULSE_BORDER_MAX, t)
 	queue_redraw()
 
 func _tween_to_empty(t: float) -> void:
@@ -143,6 +239,11 @@ func _draw() -> void:
 
 	# Layer 4: Border (1px outline around the inset area)
 	draw_rect(bg_rect, _border_color, false, 1.0)
+
+	# Layer 5: Line prediction overlay + accented border
+	if _line_prediction_active:
+		draw_rect(bg_rect, _line_prediction_overlay)
+		draw_rect(bg_rect, _line_prediction_border, false, 1.5)
 
 	# Reset transform
 	if _scale_factor != 1.0:

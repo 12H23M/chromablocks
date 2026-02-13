@@ -62,13 +62,15 @@ const CATEGORY_PIECES: Dictionary = {
 # Templates define the SIZE MIX of each 3-piece tray.
 
 const TEMPLATES_EASY: Array = [
-	{ "t": [SizeCat.TINY, SizeCat.SMALL, SizeCat.MEDIUM], "w": 0.30 },
-	{ "t": [SizeCat.SMALL, SizeCat.MEDIUM, SizeCat.MEDIUM], "w": 0.25 },
-	{ "t": [SizeCat.TINY, SizeCat.TINY, SizeCat.MEDIUM], "w": 0.15 },
-	{ "t": [SizeCat.SMALL, SizeCat.SMALL, SizeCat.SMALL], "w": 0.10 },
-	{ "t": [SizeCat.SMALL, SizeCat.SMALL, SizeCat.MEDIUM], "w": 0.10 },
-	{ "t": [SizeCat.TINY, SizeCat.MEDIUM, SizeCat.HUGE], "w": 0.05 },
+	{ "t": [SizeCat.SMALL, SizeCat.MEDIUM, SizeCat.MEDIUM], "w": 0.22 },
+	{ "t": [SizeCat.MEDIUM, SizeCat.MEDIUM, SizeCat.MEDIUM], "w": 0.15 },
+	{ "t": [SizeCat.TINY, SizeCat.MEDIUM, SizeCat.MEDIUM], "w": 0.13 },
+	{ "t": [SizeCat.SMALL, SizeCat.MEDIUM, SizeCat.LARGE], "w": 0.12 },
+	{ "t": [SizeCat.TINY, SizeCat.MEDIUM, SizeCat.LARGE], "w": 0.10 },
+	{ "t": [SizeCat.TINY, SizeCat.SMALL, SizeCat.MEDIUM], "w": 0.10 },
+	{ "t": [SizeCat.SMALL, SizeCat.SMALL, SizeCat.MEDIUM], "w": 0.08 },
 	{ "t": [SizeCat.MEDIUM, SizeCat.MEDIUM, SizeCat.HUGE], "w": 0.05 },
+	{ "t": [SizeCat.TINY, SizeCat.SMALL, SizeCat.LARGE], "w": 0.05 },
 ]
 
 const TEMPLATES_MEDIUM: Array = [
@@ -91,30 +93,56 @@ const TEMPLATES_HARD: Array = [
 	{ "t": [SizeCat.LARGE, SizeCat.HUGE, SizeCat.HUGE], "w": 0.05 },
 ]
 
-# Excluded piece types per difficulty (same rules as original)
-const EXCLUDED_EASY: Array = [
+const TEMPLATES_EXPERT: Array = [
+	{ "t": [SizeCat.MEDIUM, SizeCat.LARGE], "w": 0.30 },
+	{ "t": [SizeCat.SMALL, SizeCat.LARGE], "w": 0.25 },
+	{ "t": [SizeCat.LARGE, SizeCat.LARGE], "w": 0.20 },
+	{ "t": [SizeCat.MEDIUM, SizeCat.HUGE], "w": 0.15 },
+	{ "t": [SizeCat.SMALL, SizeCat.HUGE], "w": 0.10 },
+]
+
+# Progressive piece exclusion lists per level range
+# Level 1-2: Exclude T-variants, Z/S, and complex pentominoes
+const EXCLUDED_LV1: Array = [
+	Enums.PieceType.TET_T_R, Enums.PieceType.TET_T_L,
 	Enums.PieceType.TET_Z, Enums.PieceType.TET_S,
 	Enums.PieceType.TET_Z_V, Enums.PieceType.TET_S_V,
-	Enums.PieceType.TET_T_R, Enums.PieceType.TET_T_L,
 	Enums.PieceType.PENT_PLUS, Enums.PieceType.PENT_U,
-	Enums.PieceType.PENT_T, Enums.PieceType.PENT_LINE,
-	Enums.PieceType.PENT_LINE_V, Enums.PieceType.PENT_L3,
-	Enums.PieceType.PENT_J3, Enums.PieceType.PENT_L3_R,
-	Enums.PieceType.PENT_J3_R,
+	Enums.PieceType.PENT_T,
 ]
+# Level 3-4: Allow T-variants, still exclude Z/S and complex pentominoes
+const EXCLUDED_LV3: Array = [
+	Enums.PieceType.TET_Z, Enums.PieceType.TET_S,
+	Enums.PieceType.TET_Z_V, Enums.PieceType.TET_S_V,
+	Enums.PieceType.PENT_PLUS, Enums.PieceType.PENT_U,
+	Enums.PieceType.PENT_T,
+]
+# Level 5-7: Allow Z/S, still exclude complex pentominoes
+const EXCLUDED_LV5: Array = [
+	Enums.PieceType.PENT_PLUS, Enums.PieceType.PENT_U,
+	Enums.PieceType.PENT_T,
+]
+# Level 8+: All pieces allowed (empty array)
 
 # Board density thresholds for mercy system
 const MERCY_MILD_THRESHOLD := 0.60
 const MERCY_STRONG_THRESHOLD := 0.75
+const MERCY_CRITICAL_THRESHOLD := 0.80
 const COLOR_CLUSTER_CHANCE := 0.25
 
 # ── State ──
 
+var _rng := RandomNumberGenerator.new()
 var _previous_tray_types: Array = []  # PieceType values from last tray
 
 
 func reset() -> void:
 	_previous_tray_types = []
+	_rng.randomize()
+
+
+func set_seed(seed_value: int) -> void:
+	_rng.seed = seed_value
 
 
 func generate_tray(level: int, board: BoardState) -> Array:
@@ -128,6 +156,17 @@ func generate_tray(level: int, board: BoardState) -> Array:
 	# Pick a tray template
 	var template: Array = _pick_template(templates)
 
+	# Critical mercy: guarantee at least one TINY piece when board >= 80% full
+	if fill_ratio >= MERCY_CRITICAL_THRESHOLD:
+		var has_tiny := false
+		for cat in template:
+			if cat == SizeCat.TINY:
+				has_tiny = true
+				break
+		if not has_tiny:
+			# Force the first slot to TINY
+			template[0] = SizeCat.TINY
+
 	# Generate pieces for each slot
 	var tray: Array = []
 	var used_types: Array = []  # track types within this tray
@@ -135,7 +174,7 @@ func generate_tray(level: int, board: BoardState) -> Array:
 
 	for i in template.size():
 		var cat: int = template[i]
-		var piece := _pick_piece(cat, excluded, used_types, first_color if i > 0 else -1)
+		var piece := _pick_piece(cat, excluded, used_types, first_color if i > 0 else -1, level)
 		tray.append(piece)
 		used_types.append(piece.type)
 		if i == 0:
@@ -154,12 +193,18 @@ func _get_templates_for_level(level: int) -> Array:
 		return TEMPLATES_EASY.duplicate(true)
 	if level <= 15:
 		return TEMPLATES_MEDIUM.duplicate(true)
+	if level >= GameConstants.EXPERT_TRAY_REDUCE_LEVEL:
+		return TEMPLATES_EXPERT.duplicate(true)
 	return TEMPLATES_HARD.duplicate(true)
 
 
 func _get_excluded_for_level(level: int) -> Array:
-	if level <= 5:
-		return EXCLUDED_EASY
+	if level <= 2:
+		return EXCLUDED_LV1
+	if level <= 4:
+		return EXCLUDED_LV3
+	if level <= 7:
+		return EXCLUDED_LV5
 	return []
 
 
@@ -198,7 +243,7 @@ func _pick_template(templates: Array) -> Array:
 	for entry in templates:
 		total += entry["w"]
 
-	var roll := randf() * total
+	var roll := _rng.randf() * total
 	for entry in templates:
 		roll -= entry["w"]
 		if roll <= 0.0:
@@ -209,7 +254,7 @@ func _pick_template(templates: Array) -> Array:
 
 # ── Piece selection ──
 
-func _pick_piece(category: int, excluded: Array, used_types: Array, cluster_color: int) -> BlockPiece:
+func _pick_piece(category: int, excluded: Array, used_types: Array, cluster_color: int, level: int = 0) -> BlockPiece:
 	var pool: Array = CATEGORY_PIECES[category].duplicate()
 
 	# Remove excluded types
@@ -233,7 +278,7 @@ func _pick_piece(category: int, excluded: Array, used_types: Array, cluster_colo
 		weights[piece_type] = w
 
 	# Color clustering: boost pieces matching the cluster color
-	if cluster_color >= 0 and randf() < COLOR_CLUSTER_CHANCE:
+	if cluster_color >= 0 and _rng.randf() < COLOR_CLUSTER_CHANCE:
 		for piece_type in weights:
 			if PieceDefinitions.PIECE_COLORS[piece_type] == cluster_color:
 				weights[piece_type] *= 2.5
@@ -242,6 +287,11 @@ func _pick_piece(category: int, excluded: Array, used_types: Array, cluster_colo
 	var chosen_type := _weighted_pick(weights)
 	var piece_color: int = PieceDefinitions.PIECE_COLORS[chosen_type]
 	var piece_shape: Array = PieceDefinitions.SHAPES[chosen_type]
+
+	# Expert mode: reduce color palette at high levels
+	if level >= GameConstants.EXPERT_COLOR_REDUCE_LEVEL:
+		piece_color = piece_color % GameConstants.EXPERT_COLOR_COUNT
+
 	return BlockPiece.new(chosen_type, piece_color, piece_shape)
 
 
@@ -250,7 +300,7 @@ func _weighted_pick(weights: Dictionary) -> int:
 	for w in weights.values():
 		total += w
 
-	var roll := randf() * total
+	var roll := _rng.randf() * total
 	for key in weights:
 		roll -= weights[key]
 		if roll <= 0.0:

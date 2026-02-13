@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://gameover001"]
+[gd_scene load_steps=7 format=3 uid="uid://gameover001"]
 
 [ext_resource type="Script" path="res://scripts/ui/game_over_screen.gd" id="1_go"]
 
@@ -44,6 +44,22 @@ border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.078, 0.722, 0.651, 0.3)
+
+[sub_resource type="StyleBoxFlat" id="ad_btn_style"]
+bg_color = Color(0.086, 0.133, 0.212, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+content_margin_left = 24.0
+content_margin_top = 10.0
+content_margin_right = 24.0
+content_margin_bottom = 10.0
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.957, 0.62, 0.043, 0.5)
 
 [sub_resource type="StyleBoxFlat" id="new_best_badge_style"]
 bg_color = Color(0.078, 0.722, 0.651, 1)
@@ -197,6 +213,32 @@ theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
 text = "Combos"
 horizontal_alignment = 1
+
+[node name="AdSection" type="VBoxContainer" parent="Content"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ContinueAdButton" type="Button" parent="Content/AdSection"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+theme_override_styles/normal = SubResource("ad_btn_style")
+theme_override_styles/hover = SubResource("ad_btn_style")
+theme_override_styles/pressed = SubResource("ad_btn_style")
+theme_override_styles/focus = SubResource("ad_btn_style")
+theme_override_colors/font_color = Color(0.957, 0.62, 0.043, 1)
+theme_override_font_sizes/font_size = 13
+text = "CONTINUE (Watch Ad)"
+
+[node name="DoubleScoreAdButton" type="Button" parent="Content/AdSection"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+theme_override_styles/normal = SubResource("ad_btn_style")
+theme_override_styles/hover = SubResource("ad_btn_style")
+theme_override_styles/pressed = SubResource("ad_btn_style")
+theme_override_styles/focus = SubResource("ad_btn_style")
+theme_override_colors/font_color = Color(0.957, 0.62, 0.043, 1)
+theme_override_font_sizes/font_size = 13
+text = "DOUBLE SCORE (Watch Ad)"
 
 [node name="ButtonSection" type="VBoxContainer" parent="Content"]
 layout_mode = 2

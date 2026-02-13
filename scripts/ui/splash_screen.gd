@@ -12,6 +12,8 @@ const GRID_ROWS := 5
 @onready var block_container: Control = $BlockContainer
 
 var _blocks: Array[ColorRect] = []
+var _skippable := false
+var _tweens: Array[Tween] = []
 
 # Block pattern: chromatic cross/diamond shape
 const PATTERN := [
@@ -32,10 +34,33 @@ const BLOCK_COLORS := [
 ]
 
 func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_STOP
 	title_label.modulate.a = 0.0
 	subtitle_label.modulate.a = 0.0
 	_create_blocks()
 	_start_animation()
+
+	# Enable skipping after 0.5s to prevent accidental taps
+	get_tree().create_timer(0.5).timeout.connect(func() -> void:
+		_skippable = true
+	)
+
+func _gui_input(event: InputEvent) -> void:
+	if _skippable and event is InputEventScreenTouch and event.pressed:
+		_skip_intro()
+		accept_event()
+
+func _skip_intro() -> void:
+	_skippable = false
+	# Kill all running animation tweens
+	for tween in _tweens:
+		if tween and tween.is_valid():
+			tween.kill()
+	_tweens.clear()
+	# Quick fade out then finish
+	var fade_tween := create_tween()
+	fade_tween.tween_property(self, "modulate:a", 0.0, 0.15)
+	fade_tween.tween_callback(_on_intro_done)
 
 func _create_blocks() -> void:
 	var total_w := GRID_COLS * (BLOCK_SIZE + BLOCK_GAP) - BLOCK_GAP
@@ -71,6 +96,7 @@ func _start_animation() -> void:
 		tween.tween_property(block, "modulate:a", 1.0, 0.15).set_delay(delay * i)
 		tween.tween_property(block, "position:y", target_y, 0.4) \
 			.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK).set_delay(delay * i)
+		_tweens.append(tween)
 
 	var blocks_done_time := delay * _blocks.size() + 0.4
 
@@ -83,17 +109,20 @@ func _start_animation() -> void:
 	title_tween.parallel().tween_property(title_label, "scale", Vector2.ONE, 0.4) \
 		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK) \
 		.set_delay(blocks_done_time + 0.1)
+	_tweens.append(title_tween)
 
 	# Subtitle animation
 	var sub_tween := create_tween()
 	sub_tween.tween_property(subtitle_label, "modulate:a", 1.0, 0.3) \
 		.set_delay(blocks_done_time + 0.5)
+	_tweens.append(sub_tween)
 
 	# Fade out and finish
 	var finish_tween := create_tween()
 	finish_tween.tween_interval(blocks_done_time + 1.5)
 	finish_tween.tween_property(self, "modulate:a", 0.0, 0.4)
 	finish_tween.tween_callback(_on_intro_done)
+	_tweens.append(finish_tween)
 
 func _on_intro_done() -> void:
 	intro_finished.emit()

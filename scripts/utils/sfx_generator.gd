@@ -6,46 +6,61 @@ const MAX_16BIT := 32767.0
 # ── Public generators ──
 
 static func generate_block_place() -> AudioStreamWAV:
-	# Soft thud: low sine with quick exponential decay
+	# Soft thud: low sine with quick exponential decay + subtle click
 	var samples := PackedByteArray()
 	var duration := 0.1
 	var total := int(SAMPLE_RATE * duration)
 
 	for i in total:
 		var t := float(i) / SAMPLE_RATE
-		var env := _exp_decay(t, 12.0) * _attack(t, 0.004) * 0.45
+		var env := _exp_decay(t, 12.0) * _attack(t, 0.004) * 0.28
 		var sample := sin(t * 180.0 * TAU) * env
-		# Add a subtle click transient at the start
-		sample += sin(t * 400.0 * TAU) * _exp_decay(t, 40.0) * _attack(t, 0.002) * 0.15
+		# Subtle click transient at the start
+		sample += sin(t * 400.0 * TAU) * _exp_decay(t, 40.0) * _attack(t, 0.002) * 0.10
 		_write_sample(samples, sample)
 
 	return _make_wav(samples)
 
 
 static func generate_line_clear() -> AudioStreamWAV:
-	# Smooth ascending chime with overlapping notes
+	# Punchy ascending sweep: impact transient + sub-bass + whoosh noise
 	var samples := PackedByteArray()
-	var duration := 0.55
+	var duration := 0.3
 	var total := int(SAMPLE_RATE * duration)
-	var freqs := [523.0, 659.0, 784.0]
-	var note_len := 0.35 / 3.0
-	var fade_out_time := 0.04
+	var fade_out_time := 0.06
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 123  # Deterministic noise
 
 	for i in total:
 		var t := float(i) / SAMPLE_RATE
-		var sample := 0.0
+		var ratio := t / duration
 
-		for n in freqs.size():
-			var note_start: float = n * note_len * 0.7  # overlapping notes
-			var note_t := t - note_start
-			if note_t < 0.0:
-				continue
-			var env := _exp_decay(note_t, 5.0) * _attack(note_t, 0.008) * 0.3
-			# Sine + soft overtone for warmth
-			sample += sin(note_t * freqs[n] * TAU) * env
-			sample += sin(note_t * freqs[n] * 2.0 * TAU) * env * 0.12
+		# Smooth ascending frequency sweep (C5 → G5)
+		var freq := lerpf(523.0, 784.0, ratio * ratio)
 
-		# Smooth fade-out at the end to prevent abrupt cutoff
+		# Envelope: soft attack, gentle sustain, smooth fade
+		var env := _attack(t, 0.01) * _exp_decay(t, 2.5) * 0.38
+
+		# Initial impact transient (first 20ms)
+		var impact := sin(t * 1200.0 * TAU) * _exp_decay(t, 60.0) * _attack(t, 0.001) * 0.22
+
+		# Main tone + soft harmonics for warmth
+		var sample := sin(t * freq * TAU) * env
+		sample += sin(t * freq * 2.0 * TAU) * env * 0.10
+		sample += sin(t * freq * 0.5 * TAU) * env * 0.08
+
+		# Sub-bass layer (90Hz)
+		sample += sin(t * 90.0 * TAU) * _exp_decay(t, 6.0) * _attack(t, 0.005) * 0.18
+
+		# Whoosh noise layer
+		var whoosh := rng.randf_range(-1.0, 1.0) * _exp_decay(t, 5.0) * _attack(t, 0.01) * 0.10
+
+		sample += impact + whoosh
+
+		# Subtle shimmer (amplitude modulation)
+		sample *= 1.0 + sin(t * 12.0 * TAU) * 0.06
+
+		# Smooth fade-out
 		var remaining := duration - t
 		if remaining < fade_out_time:
 			sample *= remaining / fade_out_time
@@ -63,7 +78,7 @@ static func generate_color_match() -> AudioStreamWAV:
 
 	for i in total:
 		var t := float(i) / SAMPLE_RATE
-		var env := _exp_decay(t, 6.0) * _attack(t, 0.005) * 0.35
+		var env := _exp_decay(t, 6.0) * _attack(t, 0.005) * 0.40
 		var sample := sin(t * 784.0 * TAU) * env
 		sample += sin(t * 784.0 * 2.0 * TAU) * env * 0.2
 		sample += sin(t * 784.0 * 3.0 * TAU) * env * 0.05
@@ -72,27 +87,22 @@ static func generate_color_match() -> AudioStreamWAV:
 	return _make_wav(samples)
 
 
-static func generate_combo() -> AudioStreamWAV:
-	# Smooth ascending arpeggio with overlap
+static func generate_combo_clear(combo_level: int) -> AudioStreamWAV:
+	# Pitched combo tone: higher combo → higher frequency
+	var freq_table := [440.0, 523.0, 587.0, 659.0, 784.0, 880.0, 988.0]
+	var idx := clampi(combo_level - 1, 0, freq_table.size() - 1)
+	var base_freq: float = freq_table[idx]
+
 	var samples := PackedByteArray()
-	var duration := 0.3
+	var duration := 0.15
 	var total := int(SAMPLE_RATE * duration)
-	var freqs := [440.0, 554.0, 659.0, 880.0]
-	var note_len := 0.075
 
 	for i in total:
 		var t := float(i) / SAMPLE_RATE
-		var sample := 0.0
-
-		for n in freqs.size():
-			var note_start: float = n * note_len * 0.8
-			var note_t := t - note_start
-			if note_t < 0.0:
-				continue
-			var env := _exp_decay(note_t, 6.0) * _attack(note_t, 0.006) * 0.25
-			sample += sin(note_t * freqs[n] * TAU) * env
-			sample += sin(note_t * freqs[n] * 2.0 * TAU) * env * 0.1
-
+		var env := _exp_decay(t, 8.0) * _attack(t, 0.005) * 0.55
+		var sample := sin(t * base_freq * TAU) * env
+		# Soft harmonic for brightness
+		sample += sin(t * base_freq * 2.0 * TAU) * env * 0.12
 		_write_sample(samples, sample)
 
 	return _make_wav(samples)
@@ -115,9 +125,9 @@ static func generate_level_up() -> AudioStreamWAV:
 			var note_t := t - note_start
 			if note_t < 0.0:
 				continue
-			var env := _exp_decay(note_t, 4.0) * _attack(note_t, 0.008) * 0.25
+			var env := _exp_decay(note_t, 4.0) * _attack(note_t, 0.008) * 0.45
 			sample += sin(note_t * freqs[n] * TAU) * env
-			sample += sin(note_t * freqs[n] * 2.0 * TAU) * env * 0.08
+			sample += sin(note_t * freqs[n] * 2.0 * TAU) * env * 0.10
 
 		_write_sample(samples, sample)
 
@@ -152,7 +162,7 @@ static func generate_perfect_clear() -> AudioStreamWAV:
 
 	for i in total:
 		var t := float(i) / SAMPLE_RATE
-		var env := _exp_decay(t, 2.5) * _attack(t, 0.008) * 0.2
+		var env := _exp_decay(t, 2.5) * _attack(t, 0.008) * 0.45
 		# Major chord (C5-E5-G5)
 		var chord := sin(t * 523.0 * TAU) + sin(t * 659.0 * TAU) + sin(t * 784.0 * TAU)
 		chord /= 3.0
@@ -160,7 +170,7 @@ static func generate_perfect_clear() -> AudioStreamWAV:
 
 		# High resolve note fades in
 		var high_t := maxf(0.0, t - 0.2)
-		var high_env := _exp_decay(high_t, 3.0) * _attack(high_t, 0.01) * 0.25
+		var high_env := _exp_decay(high_t, 3.0) * _attack(high_t, 0.01) * 0.40
 		var high := sin(high_t * 1047.0 * TAU) * high_env
 		high += sin(high_t * 1047.0 * 2.0 * TAU) * high_env * 0.1
 
@@ -178,8 +188,25 @@ static func generate_button_press() -> AudioStreamWAV:
 
 	for i in total:
 		var t := float(i) / SAMPLE_RATE
-		var env := _exp_decay(t, 30.0) * _attack(t, 0.002) * 0.25
+		var env := _exp_decay(t, 30.0) * _attack(t, 0.002) * 0.15
 		var sample := sin(t * 600.0 * TAU) * env
+		_write_sample(samples, sample)
+
+	return _make_wav(samples)
+
+
+static func generate_place_fail() -> AudioStreamWAV:
+	# Dissonant buzz: 150Hz + 160Hz (minor 2nd) with fast decay
+	var samples := PackedByteArray()
+	var duration := 0.1
+	var total := int(SAMPLE_RATE * duration)
+
+	for i in total:
+		var t := float(i) / SAMPLE_RATE
+		var env := _exp_decay(t, 15.0) * _attack(t, 0.003) * 0.2
+		var sample := sin(t * 150.0 * TAU) * env
+		# Dissonant second tone (minor 2nd interval)
+		sample += sin(t * 160.0 * TAU) * env * 0.8
 		_write_sample(samples, sample)
 
 	return _make_wav(samples)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://pause001"]
+[gd_scene load_steps=6 format=3 uid="uid://pause001"]
 
 [ext_resource type="Script" path="res://scripts/ui/pause_screen.gd" id="1_pause"]
 
@@ -40,6 +40,17 @@ content_margin_top = 10.0
 content_margin_right = 24.0
 content_margin_bottom = 10.0
 
+[sub_resource type="StyleBoxFlat" id="toggle_btn_style"]
+bg_color = Color(0.063, 0.102, 0.161, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+
 [node name="PauseScreen" type="Control"]
 unique_name_in_owner = true
 visible = false
@@ -67,10 +78,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -120.0
-offset_top = -100.0
-offset_right = 120.0
-offset_bottom = 100.0
+offset_left = -130.0
+offset_top = -140.0
+offset_right = 130.0
+offset_bottom = 140.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("card_panel_style")
@@ -86,6 +97,56 @@ theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 text = "PAUSED"
 horizontal_alignment = 1
+
+[node name="Separator" type="HSeparator" parent="Card/VBox"]
+layout_mode = 2
+theme_override_colors/separator_color = Color(0.141, 0.231, 0.325, 1)
+
+[node name="SoundRow" type="HBoxContainer" parent="Card/VBox"]
+layout_mode = 2
+
+[node name="SoundLabel" type="Label" parent="Card/VBox/SoundRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
+text = "Sound"
+
+[node name="SoundToggle" type="Button" parent="Card/VBox/SoundRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(56, 34)
+theme_override_styles/normal = SubResource("toggle_btn_style")
+theme_override_styles/hover = SubResource("toggle_btn_style")
+theme_override_styles/pressed = SubResource("toggle_btn_style")
+theme_override_styles/focus = SubResource("toggle_btn_style")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.176, 0.831, 0.749, 1)
+text = "ON"
+
+[node name="HapticRow" type="HBoxContainer" parent="Card/VBox"]
+layout_mode = 2
+
+[node name="HapticLabel" type="Label" parent="Card/VBox/HapticRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
+text = "Vibration"
+
+[node name="HapticToggle" type="Button" parent="Card/VBox/HapticRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(56, 34)
+theme_override_styles/normal = SubResource("toggle_btn_style")
+theme_override_styles/hover = SubResource("toggle_btn_style")
+theme_override_styles/pressed = SubResource("toggle_btn_style")
+theme_override_styles/focus = SubResource("toggle_btn_style")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.176, 0.831, 0.749, 1)
+text = "ON"
+
+[node name="Separator2" type="HSeparator" parent="Card/VBox"]
+layout_mode = 2
+theme_override_colors/separator_color = Color(0.141, 0.231, 0.325, 1)
 
 [node name="ResumeButton" type="Button" parent="Card/VBox"]
 layout_mode = 2

@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://home001"]
+[gd_scene load_steps=8 format=3 uid="uid://home001"]
 
 [ext_resource type="Script" path="res://scripts/ui/home_screen.gd" id="1_home"]
 
@@ -12,6 +12,38 @@ content_margin_left = 24.0
 content_margin_top = 14.0
 content_margin_right = 24.0
 content_margin_bottom = 14.0
+
+[sub_resource type="StyleBoxFlat" id="continue_btn_style"]
+bg_color = Color(0.086, 0.133, 0.212, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+content_margin_left = 24.0
+content_margin_top = 14.0
+content_margin_right = 24.0
+content_margin_bottom = 14.0
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.078, 0.722, 0.651, 1)
+
+[sub_resource type="StyleBoxFlat" id="daily_btn_style"]
+bg_color = Color(0.086, 0.133, 0.212, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+content_margin_left = 24.0
+content_margin_top = 14.0
+content_margin_right = 24.0
+content_margin_bottom = 14.0
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.957, 0.62, 0.043, 1)
 
 [sub_resource type="StyleBoxFlat" id="how_btn_style"]
 bg_color = Color(0.086, 0.133, 0.212, 1)
@@ -145,16 +177,46 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="StartButton" type="Button" parent="VBox/ButtonSection"]
+[node name="ContinueButton" type="Button" parent="VBox/ButtonSection"]
+visible = false
 layout_mode = 2
 custom_minimum_size = Vector2(0, 56)
+theme_override_styles/normal = SubResource("continue_btn_style")
+theme_override_styles/hover = SubResource("continue_btn_style")
+theme_override_styles/pressed = SubResource("continue_btn_style")
+theme_override_styles/focus = SubResource("continue_btn_style")
+theme_override_colors/font_color = Color(0.078, 0.722, 0.651, 1)
+theme_override_font_sizes/font_size = 18
+text = "CONTINUE"
+
+[node name="StartButton" type="Button" parent="VBox/ButtonSection"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 62)
 theme_override_styles/normal = SubResource("start_btn_style")
 theme_override_styles/hover = SubResource("start_btn_style")
 theme_override_styles/pressed = SubResource("start_btn_style")
 theme_override_styles/focus = SubResource("start_btn_style")
 theme_override_colors/font_color = Color(0.051, 0.106, 0.165, 1)
+theme_override_font_sizes/font_size = 20
+text = "NEW GAME"
+
+[node name="DailyButton" type="Button" parent="VBox/ButtonSection"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 56)
+theme_override_styles/normal = SubResource("daily_btn_style")
+theme_override_styles/hover = SubResource("daily_btn_style")
+theme_override_styles/pressed = SubResource("daily_btn_style")
+theme_override_styles/focus = SubResource("daily_btn_style")
+theme_override_colors/font_color = Color(0.957, 0.62, 0.043, 1)
 theme_override_font_sizes/font_size = 18
-text = "START GAME"
+text = "DAILY CHALLENGE"
+
+[node name="DailyDesc" type="Label" parent="VBox/ButtonSection"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 0.8)
+text = "Same puzzle for everyone today"
+horizontal_alignment = 1
 
 [node name="HowToPlayButton" type="Button" parent="VBox/ButtonSection"]
 layout_mode = 2

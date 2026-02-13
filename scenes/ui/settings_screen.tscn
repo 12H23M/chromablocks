@@ -1,0 +1,138 @@
+[gd_scene format=3 uid="uid://settings001"]
+
+[ext_resource type="Script" path="res://scripts/ui/settings_screen.gd" id="1_settings"]
+
+[sub_resource type="StyleBoxFlat" id="card_style"]
+bg_color = Color(0.086, 0.137, 0.212, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+content_margin_left = 24.0
+content_margin_top = 24.0
+content_margin_right = 24.0
+content_margin_bottom = 24.0
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.141, 0.231, 0.325, 1)
+
+[sub_resource type="StyleBoxFlat" id="close_btn_style"]
+bg_color = Color(0.078, 0.722, 0.651, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 12.0
+
+[node name="SettingsScreen" type="Control"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_settings")
+
+[node name="Dimmer" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="Card" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -155.0
+offset_top = -260.0
+offset_right = 155.0
+offset_bottom = 260.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("card_style")
+
+[node name="VBox" type="VBoxContainer" parent="Card"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="Card/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "Settings"
+horizontal_alignment = 1
+
+[node name="SoundRow" type="HBoxContainer" parent="Card/VBox"]
+layout_mode = 2
+
+[node name="SoundLabel" type="Label" parent="Card/VBox/SoundRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
+text = "Sound"
+
+[node name="SoundToggle" type="Button" parent="Card/VBox/SoundRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(60, 36)
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.078, 0.722, 0.651, 1)
+text = "ON"
+
+[node name="MusicRow" type="HBoxContainer" parent="Card/VBox"]
+layout_mode = 2
+
+[node name="MusicLabel" type="Label" parent="Card/VBox/MusicRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
+text = "Music"
+
+[node name="MusicToggle" type="Button" parent="Card/VBox/MusicRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(60, 36)
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.078, 0.722, 0.651, 1)
+text = "ON"
+
+[node name="HapticRow" type="HBoxContainer" parent="Card/VBox"]
+layout_mode = 2
+
+[node name="HapticLabel" type="Label" parent="Card/VBox/HapticRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
+text = "Haptic"
+
+[node name="HapticToggle" type="Button" parent="Card/VBox/HapticRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(60, 36)
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.078, 0.722, 0.651, 1)
+text = "ON"
+
+[node name="CloseButton" type="Button" parent="Card/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+theme_override_styles/normal = SubResource("close_btn_style")
+theme_override_styles/hover = SubResource("close_btn_style")
+theme_override_styles/pressed = SubResource("close_btn_style")
+theme_override_styles/focus = SubResource("close_btn_style")
+theme_override_colors/font_color = Color(0.051, 0.106, 0.165, 1)
+theme_override_font_sizes/font_size = 16
+text = "CLOSE"

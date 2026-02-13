@@ -8,11 +8,12 @@ var piece_data: BlockPiece
 var tray_index: int = -1
 var _cell_size: float = 28.0
 var _dragging: bool = false
+var _is_lifted: bool = false
 var _drag_offset := Vector2.ZERO
 var _original_position := Vector2.ZERO
 
-const DRAG_OFFSET_Y: float = -130.0
-const DRAG_SCALE: float = 1.1
+const DRAG_OFFSET_Y: float = GameConstants.DRAG_OFFSET_Y
+const DRAG_SCALE: float = GameConstants.DRAG_SCALE
 
 func setup(p_piece: BlockPiece, p_index: int, p_cell_size: float) -> void:
 	piece_data = p_piece
@@ -26,6 +27,22 @@ func setup(p_piece: BlockPiece, p_index: int, p_cell_size: float) -> void:
 func _draw() -> void:
 	if piece_data == null:
 		return
+
+	# Draw shadow when lifted
+	if _is_lifted:
+		var piece_pixel_w_shadow := piece_data.width * _cell_size
+		var piece_pixel_h_shadow := piece_data.height * _cell_size
+		var offset_x_shadow := (size.x - piece_pixel_w_shadow) / 2.0
+		var offset_y_shadow := (size.y - piece_pixel_h_shadow) / 2.0
+		for row_idx in piece_data.shape.size():
+			for col_idx in piece_data.shape[row_idx].size():
+				if piece_data.shape[row_idx][col_idx] == 1:
+					var cx: float = offset_x_shadow + col_idx * _cell_size
+					var cy: float = offset_y_shadow + row_idx * _cell_size
+					var shadow_rect := Rect2(
+						Vector2(cx + 3, cy + 3),
+						Vector2(_cell_size - 2, _cell_size - 2))
+					draw_rect(shadow_rect, Color(0, 0, 0, 0.3))
 
 	var piece_pixel_w := piece_data.width * _cell_size
 	var piece_pixel_h := piece_data.height * _cell_size
@@ -72,6 +89,7 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 			_dragging = true
+			_is_lifted = true
 			_original_position = global_position
 			_drag_offset = global_position - event.global_position
 			scale = Vector2.ONE * DRAG_SCALE
@@ -86,18 +104,23 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 			_dragging = false
+			_is_lifted = false
 			z_index = 0
 			drag_ended.emit(self, event.global_position + Vector2(0, DRAG_OFFSET_Y))
 			scale = Vector2.ONE
 			get_viewport().set_input_as_handled()
 
 	elif event is InputEventMouseMotion:
-		global_position = event.global_position + _drag_offset + Vector2(0, DRAG_OFFSET_Y)
+		var raw_pos: Vector2 = event.global_position + _drag_offset + Vector2(0, DRAG_OFFSET_Y)
+		var viewport_size: Vector2 = get_viewport_rect().size
+		global_position.x = clampf(raw_pos.x, -size.x * 0.5, viewport_size.x - size.x * 0.5)
+		global_position.y = clampf(raw_pos.y, -size.y * 0.5, viewport_size.y - size.y * 0.5)
 		drag_moved.emit(self, event.global_position + Vector2(0, DRAG_OFFSET_Y))
 		get_viewport().set_input_as_handled()
 
 func return_to_tray() -> Tween:
 	_dragging = false
+	_is_lifted = false
 	scale = Vector2.ONE
 	z_index = 0
 	var tween := create_tween()

@@ -1,6 +1,6 @@
 class_name ScoringSystem
 
-## Returns: {placement, line_clear, color_match, perfect_clear, combo_multiplier, total}
+## Returns: {placement, line_clear, color_match, perfect_clear, combo_multiplier, dual_clear_multiplier, total}
 static func calculate(cell_count: int, clear_result: Dictionary,
 		color_result: Dictionary, combo: int, _level: int) -> Dictionary:
 	# 1. Placement
@@ -21,8 +21,11 @@ static func calculate(cell_count: int, clear_result: Dictionary,
 	var combo_idx := clampi(combo, 0, GameConstants.COMBO_MULTIPLIERS.size() - 1)
 	var multiplier: float = GameConstants.COMBO_MULTIPLIERS[combo_idx]
 
-	# 6. Total (placement is not affected by combo)
-	var bonus := roundi((line_clear + color_match + perfect_clear) * multiplier)
+	# 6. Dual clear bonus: x1.25 when BOTH line clear and color match occur
+	var dual_clear_multiplier := 1.25 if (line_clear > 0 and color_match > 0) else 1.0
+
+	# 7. Total (placement is not affected by combo or dual clear)
+	var bonus := roundi((line_clear + color_match + perfect_clear) * multiplier * dual_clear_multiplier)
 	var total := placement + bonus
 
 	return {
@@ -31,5 +34,6 @@ static func calculate(cell_count: int, clear_result: Dictionary,
 		"color_match": color_match,
 		"perfect_clear": perfect_clear,
 		"combo_multiplier": multiplier,
+		"dual_clear_multiplier": dual_clear_multiplier,
 		"total": total,
 	}

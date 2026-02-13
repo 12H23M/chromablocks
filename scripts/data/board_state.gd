@@ -82,6 +82,54 @@ func get_completed_columns() -> Array:
 	return completed
 
 
+## Check which rows/cols would be completed if piece were placed at (gx, gy).
+## Returns {"rows": Array[int], "cols": Array[int]} without allocating a new board.
+func predict_completed_lines(piece: BlockPiece, gx: int, gy: int) -> Dictionary:
+	var piece_cells := piece.occupied_cells_at(gx, gy)
+
+	# Build a set of occupied cells from the piece for quick lookup
+	var piece_set := {}
+	for cell in piece_cells:
+		if cell.x >= 0 and cell.x < columns and cell.y >= 0 and cell.y < rows:
+			piece_set[Vector2i(cell.x, cell.y)] = true
+
+	# Check rows — only need to check rows that the piece touches
+	var completed_rows: Array = []
+	var rows_to_check := {}
+	for cell in piece_cells:
+		if cell.y >= 0 and cell.y < rows:
+			rows_to_check[cell.y] = true
+
+	for row_y in rows_to_check:
+		var full := true
+		for x in columns:
+			var pos := Vector2i(x, row_y)
+			if not grid[row_y][x]["occupied"] and not piece_set.has(pos):
+				full = false
+				break
+		if full:
+			completed_rows.append(row_y)
+
+	# Check columns — only need to check columns that the piece touches
+	var completed_cols: Array = []
+	var cols_to_check := {}
+	for cell in piece_cells:
+		if cell.x >= 0 and cell.x < columns:
+			cols_to_check[cell.x] = true
+
+	for col_x in cols_to_check:
+		var full := true
+		for y_idx in rows:
+			var pos := Vector2i(col_x, y_idx)
+			if not grid[y_idx][col_x]["occupied"] and not piece_set.has(pos):
+				full = false
+				break
+		if full:
+			completed_cols.append(col_x)
+
+	return {"rows": completed_rows, "cols": completed_cols}
+
+
 func clear_completed_lines() -> Dictionary:
 	var completed_rows := get_completed_rows()
 	var completed_cols := get_completed_columns()

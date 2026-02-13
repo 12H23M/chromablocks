@@ -1,6 +1,6 @@
 extends Node
 
-# Block Colors (Luminous on dark)
+# 기본 블록 색상 (default 테마 — 하드코딩 원본)
 var CORAL := Color("EF4444")
 var CORAL_LIGHT := Color("FCA5A5")
 var CORAL_GLOW := Color(Color("EF4444"), 0.35)
@@ -39,6 +39,10 @@ var TEXT_MUTED := Color("4A6577")
 var BORDER := Color("243B53")
 var GRID_LINE := Color("1A2940")
 
+# Score popup accents
+var GOLDEN := Color("FFD700")
+var SAGE_GREEN := Color("2DD4BF")
+
 # Ghost/highlight
 var HIGHLIGHT_VALID := Color(Color("10B981"), 0.25)
 var HIGHLIGHT_INVALID := Color(Color("EF4444"), 0.25)
@@ -51,8 +55,68 @@ var EMPTY_BORDER := Color("1C2E45")
 var BOARD_BG := Color("0F1D32")
 var BOARD_BORDER := Color("1C2E45")
 
+# 테마 변경 시그널 — UI 갱신에 사용
+signal theme_changed()
+
+# 현재 적용 중인 테마 ID 캐시 (성능 최적화)
+var _current_theme_id: String = "default"
+# 현재 테마 색상 캐시
+var _cached_colors: Dictionary = {}
+
+
+func _ready() -> void:
+	# 저장된 테마를 로드하여 적용
+	_apply_theme(ThemeSystem.get_current_theme())
+
+
+## 테마를 변경하고 색상 캐시를 갱신
+func apply_theme(theme_id: String) -> void:
+	if theme_id == _current_theme_id:
+		return
+	_apply_theme(theme_id)
+	theme_changed.emit()
+
+
+## 내부: 테마 색상 적용
+func _apply_theme(theme_id: String) -> void:
+	_current_theme_id = theme_id
+	if theme_id == "default":
+		_cached_colors = {}
+	else:
+		_cached_colors = ThemeSystem.get_theme_colors(theme_id)
+
 
 func get_block_color(block_color: int) -> Color:
+	# default 테마이면 기존 하드코딩 색상 사용 (성능 최적화)
+	if _current_theme_id == "default":
+		return _get_default_block_color(block_color)
+	# 테마 색상에서 bg 값 반환
+	if _cached_colors.has(block_color):
+		return _cached_colors[block_color]["bg"]
+	return _get_default_block_color(block_color)
+
+
+func get_block_light_color(block_color: int) -> Color:
+	if _current_theme_id == "default":
+		return _get_default_block_light_color(block_color)
+	if _cached_colors.has(block_color):
+		return _cached_colors[block_color]["light"]
+	return _get_default_block_light_color(block_color)
+
+
+func get_block_glow_color(block_color: int) -> Color:
+	if _current_theme_id == "default":
+		return _get_default_block_glow_color(block_color)
+	# glow 색상은 bg에 알파 0.35 적용
+	if _cached_colors.has(block_color):
+		var bg_color: Color = _cached_colors[block_color]["bg"]
+		return Color(bg_color.r, bg_color.g, bg_color.b, 0.35)
+	return _get_default_block_glow_color(block_color)
+
+
+# --- 기본 테마 색상 (원본 하드코딩) ---
+
+func _get_default_block_color(block_color: int) -> Color:
 	match block_color:
 		Enums.BlockColor.CORAL: return CORAL
 		Enums.BlockColor.AMBER: return AMBER
@@ -64,7 +128,7 @@ func get_block_color(block_color: int) -> Color:
 	return Color.GRAY
 
 
-func get_block_light_color(block_color: int) -> Color:
+func _get_default_block_light_color(block_color: int) -> Color:
 	match block_color:
 		Enums.BlockColor.CORAL: return CORAL_LIGHT
 		Enums.BlockColor.AMBER: return AMBER_LIGHT
@@ -76,7 +140,7 @@ func get_block_light_color(block_color: int) -> Color:
 	return Color.WHITE
 
 
-func get_block_glow_color(block_color: int) -> Color:
+func _get_default_block_glow_color(block_color: int) -> Color:
 	match block_color:
 		Enums.BlockColor.CORAL: return CORAL_GLOW
 		Enums.BlockColor.AMBER: return AMBER_GLOW
