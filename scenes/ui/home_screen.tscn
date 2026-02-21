@@ -14,7 +14,6 @@ content_margin_right = 24.0
 content_margin_bottom = 14.0
 shadow_color = Color(1, 0.42, 0.42, 0.3)
 shadow_size = 6
-shadow_offset = Vector2(0, 3)
 
 [sub_resource type="StyleBoxFlat" id="continue_btn_style"]
 bg_color = Color(1, 1, 1, 1)
@@ -33,7 +32,6 @@ border_width_bottom = 2
 border_color = Color(1, 0.42, 0.42, 1)
 shadow_color = Color(0, 0, 0, 0.06)
 shadow_size = 4
-shadow_offset = Vector2(0, 2)
 
 [sub_resource type="StyleBoxFlat" id="daily_btn_style"]
 bg_color = Color(1, 1, 1, 1)
@@ -52,7 +50,6 @@ border_width_bottom = 2
 border_color = Color(0.957, 0.62, 0.043, 1)
 shadow_color = Color(0, 0, 0, 0.06)
 shadow_size = 4
-shadow_offset = Vector2(0, 2)
 
 [sub_resource type="StyleBoxFlat" id="how_btn_style"]
 bg_color = Color(1, 1, 1, 1)
@@ -78,7 +75,6 @@ corner_radius_bottom_right = 24
 corner_radius_bottom_left = 24
 shadow_color = Color(0.655, 0.545, 0.875, 0.3)
 shadow_size = 6
-shadow_offset = Vector2(0, 3)
 
 [sub_resource type="StyleBoxFlat" id="sound_btn_style"]
 bg_color = Color(1, 1, 1, 1)

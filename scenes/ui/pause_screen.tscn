@@ -19,7 +19,6 @@ border_width_bottom = 1
 border_color = Color(0.894, 0.875, 0.941, 1)
 shadow_color = Color(0, 0, 0, 0.1)
 shadow_size = 10
-shadow_offset = Vector2(0, 4)
 
 [sub_resource type="StyleBoxFlat" id="resume_btn_style"]
 bg_color = Color(1, 0.42, 0.42, 1)

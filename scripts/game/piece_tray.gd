@@ -38,7 +38,6 @@ func _setup_card_style() -> void:
 	_card_style.border_color = Color(AppColors.CARD_BORDER, 0.5)
 	_card_style.shadow_color = Color(0, 0, 0, 0.06)
 	_card_style.shadow_size = 4
-	_card_style.shadow_offset = Vector2(0, 2)
 
 func set_cell_size(board_cell_size: float) -> void:
 	_tray_cell_size = board_cell_size * 0.7

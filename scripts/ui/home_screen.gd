@@ -130,7 +130,6 @@ func _show_reward_popup(reward: Dictionary) -> void:
 	style.border_color = Color(0.957, 0.62, 0.043, 0.4)
 	style.shadow_color = Color(0, 0, 0, 0.08)
 	style.shadow_size = 4
-	style.shadow_offset = Vector2(0, 2)
 	panel.add_theme_stylebox_override("panel", style)
 	panel.add_child(popup)
 

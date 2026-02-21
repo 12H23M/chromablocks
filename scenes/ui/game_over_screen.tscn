@@ -19,7 +19,6 @@ border_width_bottom = 1
 border_color = Color(0.894, 0.875, 0.941, 1)
 shadow_color = Color(0, 0, 0, 0.08)
 shadow_size = 8
-shadow_offset = Vector2(0, 3)
 
 [sub_resource type="StyleBoxFlat" id="play_again_style"]
 bg_color = Color(1, 0.42, 0.42, 1)
@@ -33,7 +32,6 @@ content_margin_right = 24.0
 content_margin_bottom = 14.0
 shadow_color = Color(1, 0.42, 0.42, 0.3)
 shadow_size = 6
-shadow_offset = Vector2(0, 3)
 
 [sub_resource type="StyleBoxFlat" id="home_btn_style"]
 bg_color = Color(1, 1, 1, 1)

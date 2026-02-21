@@ -58,7 +58,6 @@ func _setup_styles() -> void:
 	_bg_style.border_color = AppColors.BOARD_BORDER
 	_bg_style.shadow_color = Color(0, 0, 0, 0.05)
 	_bg_style.shadow_size = 6
-	_bg_style.shadow_offset = Vector2(0, 2)
 
 func _calculate_cell_size() -> void:
 	var viewport_size := get_viewport_rect().size
