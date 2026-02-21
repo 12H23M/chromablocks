@@ -26,16 +26,19 @@ func _ready() -> void:
 
 func _setup_card_style() -> void:
 	_card_style = StyleBoxFlat.new()
-	_card_style.bg_color = AppColors.CARD_SURFACE
-	_card_style.corner_radius_top_left = CARD_RADIUS
-	_card_style.corner_radius_top_right = CARD_RADIUS
-	_card_style.corner_radius_bottom_left = CARD_RADIUS
-	_card_style.corner_radius_bottom_right = CARD_RADIUS
-	_card_style.border_width_left = int(CARD_BORDER_WIDTH)
-	_card_style.border_width_top = int(CARD_BORDER_WIDTH)
-	_card_style.border_width_right = int(CARD_BORDER_WIDTH)
-	_card_style.border_width_bottom = int(CARD_BORDER_WIDTH)
-	_card_style.border_color = AppColors.CARD_BORDER
+	_card_style.bg_color = Color(AppColors.CARD_SURFACE, 0.7)
+	_card_style.corner_radius_top_left = 20
+	_card_style.corner_radius_top_right = 20
+	_card_style.corner_radius_bottom_left = 20
+	_card_style.corner_radius_bottom_right = 20
+	_card_style.border_width_left = 1
+	_card_style.border_width_top = 1
+	_card_style.border_width_right = 1
+	_card_style.border_width_bottom = 1
+	_card_style.border_color = Color(AppColors.CARD_BORDER, 0.5)
+	_card_style.shadow_color = Color(0, 0, 0, 0.06)
+	_card_style.shadow_size = 4
+	_card_style.shadow_offset = Vector2(0, 2)
 
 func set_cell_size(board_cell_size: float) -> void:
 	_tray_cell_size = board_cell_size * 0.7

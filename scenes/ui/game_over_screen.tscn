@@ -4,10 +4,10 @@
 
 [sub_resource type="StyleBoxFlat" id="card_style"]
 bg_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 24
-corner_radius_top_right = 24
-corner_radius_bottom_right = 24
-corner_radius_bottom_left = 24
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
 content_margin_left = 24.0
 content_margin_top = 24.0
 content_margin_right = 24.0
@@ -16,18 +16,24 @@ border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.91, 0.878, 0.847, 1)
+border_color = Color(0.894, 0.875, 0.941, 1)
+shadow_color = Color(0, 0, 0, 0.08)
+shadow_size = 8
+shadow_offset = Vector2(0, 3)
 
 [sub_resource type="StyleBoxFlat" id="play_again_style"]
 bg_color = Color(1, 0.42, 0.42, 1)
-corner_radius_top_left = 24
-corner_radius_top_right = 24
-corner_radius_bottom_right = 24
-corner_radius_bottom_left = 24
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
 content_margin_left = 24.0
 content_margin_top = 14.0
 content_margin_right = 24.0
 content_margin_bottom = 14.0
+shadow_color = Color(1, 0.42, 0.42, 0.3)
+shadow_size = 6
+shadow_offset = Vector2(0, 3)
 
 [sub_resource type="StyleBoxFlat" id="home_btn_style"]
 bg_color = Color(1, 1, 1, 1)
@@ -90,7 +96,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.961, 0.941, 0.922, 1)
+color = Color(0.953, 0.941, 0.973, 1)
 
 [node name="Content" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -153,7 +159,7 @@ text = "★ NEW BEST!"
 [node name="Divider" type="ColorRect" parent="Content/ScoreCard/CardVBox"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 1)
-color = Color(0.91, 0.878, 0.847, 1)
+color = Color(0.894, 0.875, 0.941, 1)
 
 [node name="Stats" type="HBoxContainer" parent="Content/ScoreCard/CardVBox"]
 layout_mode = 2
@@ -251,7 +257,7 @@ theme_override_styles/normal = SubResource("play_again_style")
 theme_override_styles/hover = SubResource("play_again_style")
 theme_override_styles/pressed = SubResource("play_again_style")
 theme_override_styles/focus = SubResource("play_again_style")
-theme_override_colors/font_color = Color(0.961, 0.941, 0.922, 1)
+theme_override_colors/font_color = Color(0.953, 0.941, 0.973, 1)
 theme_override_font_sizes/font_size = 18
 text = "PLAY AGAIN"
 

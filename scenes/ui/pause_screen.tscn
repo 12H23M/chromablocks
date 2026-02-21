@@ -4,10 +4,10 @@
 
 [sub_resource type="StyleBoxFlat" id="card_panel_style"]
 bg_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 24
-corner_radius_top_right = 24
-corner_radius_bottom_right = 24
-corner_radius_bottom_left = 24
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
 content_margin_left = 24.0
 content_margin_top = 24.0
 content_margin_right = 24.0
@@ -16,7 +16,10 @@ border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.91, 0.878, 0.847, 1)
+border_color = Color(0.894, 0.875, 0.941, 1)
+shadow_color = Color(0, 0, 0, 0.1)
+shadow_size = 10
+shadow_offset = Vector2(0, 4)
 
 [sub_resource type="StyleBoxFlat" id="resume_btn_style"]
 bg_color = Color(1, 0.42, 0.42, 1)
@@ -41,7 +44,7 @@ content_margin_right = 24.0
 content_margin_bottom = 10.0
 
 [sub_resource type="StyleBoxFlat" id="toggle_btn_style"]
-bg_color = Color(0.063, 0.102, 0.161, 1)
+bg_color = Color(0.894, 0.875, 0.941, 1)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
@@ -69,7 +72,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.031, 0.067, 0.102, 0.7)
+color = Color(0.176, 0.176, 0.176, 0.4)
 
 [node name="Card" type="PanelContainer" parent="."]
 layout_mode = 1
@@ -100,7 +103,7 @@ horizontal_alignment = 1
 
 [node name="Separator" type="HSeparator" parent="Card/VBox"]
 layout_mode = 2
-theme_override_colors/separator_color = Color(0.91, 0.878, 0.847, 1)
+theme_override_colors/separator_color = Color(0.894, 0.875, 0.941, 1)
 
 [node name="SoundRow" type="HBoxContainer" parent="Card/VBox"]
 layout_mode = 2
@@ -146,7 +149,7 @@ text = "ON"
 
 [node name="Separator2" type="HSeparator" parent="Card/VBox"]
 layout_mode = 2
-theme_override_colors/separator_color = Color(0.91, 0.878, 0.847, 1)
+theme_override_colors/separator_color = Color(0.894, 0.875, 0.941, 1)
 
 [node name="ResumeButton" type="Button" parent="Card/VBox"]
 layout_mode = 2
@@ -156,7 +159,7 @@ theme_override_styles/normal = SubResource("resume_btn_style")
 theme_override_styles/hover = SubResource("resume_btn_style")
 theme_override_styles/pressed = SubResource("resume_btn_style")
 theme_override_styles/focus = SubResource("resume_btn_style")
-theme_override_colors/font_color = Color(0.961, 0.941, 0.922, 1)
+theme_override_colors/font_color = Color(0.953, 0.941, 0.973, 1)
 theme_override_font_sizes/font_size = 16
 text = "RESUME"
 

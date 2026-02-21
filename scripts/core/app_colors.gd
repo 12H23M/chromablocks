@@ -1,43 +1,43 @@
 extends Node
 
-# 기본 블록 색상 (default 테마 — Soft & Bright)
-var CORAL := Color("FF8A8A")
-var CORAL_LIGHT := Color("FFB8B8")
-var CORAL_GLOW := Color(Color("FF8A8A"), 0.35)
+# 기본 블록 색상 (default 테마 — Bubble Pop)
+var CORAL := Color("FF7E8E")
+var CORAL_LIGHT := Color("FFB0BA")
+var CORAL_GLOW := Color(Color("FF7E8E"), 0.40)
 
-var AMBER := Color("FFB347")
-var AMBER_LIGHT := Color("FFD08A")
-var AMBER_GLOW := Color(Color("FFB347"), 0.35)
+var AMBER := Color("FFAA42")
+var AMBER_LIGHT := Color("FFCF8A")
+var AMBER_GLOW := Color(Color("FFAA42"), 0.40)
 
-var LEMON := Color("FFD93D")
-var LEMON_LIGHT := Color("FFE57A")
-var LEMON_GLOW := Color(Color("FFD93D"), 0.35)
+var LEMON := Color("FFD536")
+var LEMON_LIGHT := Color("FFE87A")
+var LEMON_GLOW := Color(Color("FFD536"), 0.40)
 
-var MINT := Color("6BCB77")
-var MINT_LIGHT := Color("A8E6A3")
-var MINT_GLOW := Color(Color("6BCB77"), 0.35)
+var MINT := Color("5EC97B")
+var MINT_LIGHT := Color("9DE8A8")
+var MINT_GLOW := Color(Color("5EC97B"), 0.40)
 
-var SKY := Color("4FC3F7")
-var SKY_LIGHT := Color("8AD4F8")
-var SKY_GLOW := Color(Color("4FC3F7"), 0.35)
+var SKY := Color("42B9F5")
+var SKY_LIGHT := Color("8DD6FA")
+var SKY_GLOW := Color(Color("42B9F5"), 0.40)
 
-var LAVENDER := Color("9B8EC4")
-var LAVENDER_LIGHT := Color("C5BBE0")
-var LAVENDER_GLOW := Color(Color("9B8EC4"), 0.35)
+var LAVENDER := Color("A78BDF")
+var LAVENDER_LIGHT := Color("CFBEF0")
+var LAVENDER_GLOW := Color(Color("A78BDF"), 0.40)
 
 var SPECIAL := Color("FFD700")
 
-# Light Theme UI — Soft & Bright
-var BACKGROUND := Color("F5F0EB")
+# Light Theme UI — Bubble Pop
+var BACKGROUND := Color("F3F0F8")
 var CARD_SURFACE := Color("FFFFFF")
-var CARD_BORDER := Color("E8E0D8")
+var CARD_BORDER := Color("E4DFF0")
 var ACCENT := Color("FF6B6B")
 var ACCENT_TEXT := Color("FF8A8A")
 var TEXT_PRIMARY := Color("2D2D2D")
 var TEXT_SECONDARY := Color("8E8E93")
 var TEXT_MUTED := Color("AEAEB2")
-var BORDER := Color("E8E0D8")
-var GRID_LINE := Color("DDD5CC")
+var BORDER := Color("E4DFF0")
+var GRID_LINE := Color("DCD7EA")
 
 # Score popup accents
 var GOLDEN := Color("FFD700")
@@ -47,13 +47,13 @@ var SAGE_GREEN := Color("6BCB77")
 var HIGHLIGHT_VALID := Color(Color("6BCB77"), 0.30)
 var HIGHLIGHT_INVALID := Color(Color("FF8A8A"), 0.30)
 
-# Empty cell (warm beige)
-var EMPTY_CELL := Color("EDE7E0")
-var EMPTY_BORDER := Color("DDD5CC")
+# Empty cell (soft lavender well)
+var EMPTY_CELL := Color("EBE7F4")
+var EMPTY_BORDER := Color("DCD7EA")
 
 # Board
-var BOARD_BG := Color("E8E0D8")
-var BOARD_BORDER := Color("DDD5CC")
+var BOARD_BG := Color("E4DFF0")
+var BOARD_BORDER := Color("DCD7EA")
 
 # 테마 변경 시그널 — UI 갱신에 사용
 signal theme_changed()

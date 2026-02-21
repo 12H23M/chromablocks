@@ -4,6 +4,7 @@ signal closed()
 
 var _sound_toggle: Button
 var _music_toggle: Button
+var _track_button: Button
 var _haptic_toggle: Button
 
 # 테마 선택 UI 참조
@@ -21,6 +22,11 @@ func _ready() -> void:
 	_music_toggle = $Card/VBox/MusicRow/MusicToggle
 	_music_toggle.pressed.connect(_toggle_music)
 	_update_music_label()
+
+	# Track selector
+	_track_button = $Card/VBox/TrackRow/TrackButton
+	_track_button.pressed.connect(_cycle_track)
+	_update_track_label()
 
 	# Haptic toggle
 	_haptic_toggle = $Card/VBox/HapticRow/HapticToggle
@@ -50,8 +56,12 @@ func _toggle_music() -> void:
 
 func _toggle_haptic() -> void:
 	SoundManager.play_sfx("button_press")
-	SaveManager.set_haptic_enabled(not SaveManager.is_haptic_enabled())
+	var new_state := not SaveManager.is_haptic_enabled()
+	SaveManager.set_haptic_enabled(new_state)
 	_update_haptic_label()
+	# Give immediate feedback vibration when enabling
+	if new_state:
+		Input.vibrate_handheld(30)
 
 
 func _update_sound_label() -> void:
@@ -60,6 +70,31 @@ func _update_sound_label() -> void:
 
 func _update_music_label() -> void:
 	_music_toggle.text = "ON" if SaveManager.is_music_enabled() else "OFF"
+
+
+func _cycle_track() -> void:
+	SoundManager.play_sfx("button_press")
+	var tracks := MusicGenerator.get_track_list()
+	var current_id := MusicManager.get_current_track_id()
+	var current_idx := 0
+	for i in tracks.size():
+		if tracks[i]["id"] == current_id:
+			current_idx = i
+			break
+	var next_idx := (current_idx + 1) % tracks.size()
+	var next_id: String = tracks[next_idx]["id"]
+	MusicManager.switch_track(next_id)
+	_update_track_label()
+
+
+func _update_track_label() -> void:
+	var tracks := MusicGenerator.get_track_list()
+	var current_id := MusicManager.get_current_track_id()
+	for track in tracks:
+		if track["id"] == current_id:
+			_track_button.text = track["name"]
+			return
+	_track_button.text = "Classic"
 
 
 func _update_haptic_label() -> void:

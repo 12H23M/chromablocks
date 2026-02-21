@@ -22,3 +22,7 @@ android/build/
 # OS-specific
 .DS_Store
 Thumbs.db
+.dart_tool/
+.idea/
+*.apk
+*.idsig

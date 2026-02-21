@@ -5,9 +5,9 @@ var _color: int = -1
 
 # Layer colors (set by set_filled / set_empty / set_highlight)
 var _glow_color := Color.TRANSPARENT
-var _bg_color := Color("EDE7E0")
+var _bg_color := Color("EBE7F4")
 var _highlight_color := Color.TRANSPARENT
-var _border_color := Color("DDD5CC")
+var _border_color := Color("DCD7EA")
 
 # Scale animation for clear effects
 var _scale_factor := 1.0
@@ -210,10 +210,10 @@ func _tween_to_empty(t: float) -> void:
 	queue_redraw()
 
 ## Draw a rounded rectangle using polygon approximation
-func _draw_rounded_rect(rect: Rect2, color: Color, filled: bool = true, line_width: float = 1.0) -> void:
-	var r := minf(rect.size.x, rect.size.y) * 0.20  # 20% corner radius
+func _draw_rounded_rect(rect: Rect2, color: Color, filled: bool = true, line_width: float = 1.0, radius_ratio: float = 0.35) -> void:
+	var r := minf(rect.size.x, rect.size.y) * radius_ratio
 	var points := PackedVector2Array()
-	var segments := 6  # segments per corner arc
+	var segments := 8  # smoother arcs for bubble feel
 	# Top-left
 	for i in range(segments + 1):
 		var angle := PI + float(i) / segments * (PI / 2.0)
@@ -237,11 +237,18 @@ func _draw_rounded_rect(rect: Rect2, color: Color, filled: bool = true, line_wid
 		points.append(points[0])  # close the loop
 		draw_polyline(points, color, line_width, true)
 
+## Draw a circle (for bubble specular highlight)
+func _draw_ellipse(center: Vector2, radius: Vector2, color: Color, segments: int = 12) -> void:
+	var points := PackedVector2Array()
+	for i in range(segments + 1):
+		var angle := float(i) / segments * TAU
+		points.append(center + Vector2(cos(angle) * radius.x, sin(angle) * radius.y))
+	draw_colored_polygon(points, color)
+
 
 func _draw() -> void:
-	var cell_rect := Rect2(Vector2.ZERO, size)
-	var inset := 2.0  # wider gap for casual feel
-
+	var inset := 2.5  # gap between cells for bubble separation
+	
 	# Apply scale transform around cell center
 	if _scale_factor != 1.0 and _scale_factor > 0.01:
 		var center := size / 2.0
@@ -252,33 +259,60 @@ func _draw() -> void:
 		Vector2(inset, inset),
 		Vector2(size.x - inset * 2, size.y - inset * 2))
 
-	# Layer 1: Soft shadow (offset down 1.5px, slightly darker)
 	if _occupied and _bg_color.a > 0.5:
-		var shadow_rect := Rect2(bg_rect.position + Vector2(0, 1.5), bg_rect.size)
-		var shadow_color := Color(0.0, 0.0, 0.0, 0.08)
-		_draw_rounded_rect(shadow_rect, shadow_color)
+		# === BUBBLE STYLE BLOCK ===
+		
+		# Layer 1: Drop shadow (soft, below)
+		var shadow_offset := Vector2(0, 2.0)
+		var shadow_rect := Rect2(bg_rect.position + shadow_offset, bg_rect.size)
+		_draw_rounded_rect(shadow_rect, Color(0.0, 0.0, 0.0, 0.12), true, 1.0, 0.35)
+		
+		# Layer 2: Glow aura
+		if _glow_color.a > 0.01:
+			var glow_rect := Rect2(bg_rect.position - Vector2(1, 1), bg_rect.size + Vector2(2, 2))
+			_draw_rounded_rect(glow_rect, _glow_color, true, 1.0, 0.35)
+		
+		# Layer 3: Base color (big rounded = bubble shape)
+		_draw_rounded_rect(bg_rect, _bg_color, true, 1.0, 0.35)
+		
+		# Layer 4: Bottom darkening (depth/3D feel)
+		var dark_color := Color(_bg_color.r * 0.75, _bg_color.g * 0.75, _bg_color.b * 0.75, 0.3)
+		var bottom_h := bg_rect.size.y * 0.4
+		var bottom_rect := Rect2(
+			Vector2(bg_rect.position.x, bg_rect.position.y + bg_rect.size.y - bottom_h),
+			Vector2(bg_rect.size.x, bottom_h))
+		_draw_rounded_rect(bottom_rect, dark_color, true, 1.0, 0.3)
+		
+		# Layer 5: Top shine (glossy bubble reflection)
+		var shine_alpha := 0.30
+		var shine_rect := Rect2(
+			bg_rect.position + Vector2(bg_rect.size.x * 0.15, bg_rect.size.y * 0.08),
+			Vector2(bg_rect.size.x * 0.7, bg_rect.size.y * 0.35))
+		_draw_rounded_rect(shine_rect, Color(1.0, 1.0, 1.0, shine_alpha), true, 1.0, 0.5)
+		
+		# Layer 6: Specular dot (tiny white circle, top-left)
+		var spec_center := bg_rect.position + Vector2(bg_rect.size.x * 0.28, bg_rect.size.y * 0.25)
+		var spec_radius := Vector2(bg_rect.size.x * 0.08, bg_rect.size.y * 0.08)
+		_draw_ellipse(spec_center, spec_radius, Color(1.0, 1.0, 1.0, 0.6))
+		
+		# Layer 7: Rim light (subtle edge highlight)
+		_draw_rounded_rect(bg_rect, Color(1.0, 1.0, 1.0, 0.08), false, 1.0, 0.35)
+	
+	else:
+		# === EMPTY CELL ===
+		# Glow
+		if _glow_color.a > 0.01:
+			_draw_rounded_rect(bg_rect, _glow_color, true, 1.0, 0.35)
+		# Subtle empty well
+		_draw_rounded_rect(bg_rect, _bg_color, true, 1.0, 0.35)
+		# Highlight override (for placement preview)
+		if _highlight_color.a > 0.01:
+			_draw_rounded_rect(bg_rect, _highlight_color, true, 1.0, 0.35)
 
-	# Layer 2: Glow (behind block)
-	if _glow_color.a > 0.01:
-		_draw_rounded_rect(bg_rect, _glow_color)
-
-	# Layer 3: Background (rounded)
-	_draw_rounded_rect(bg_rect, _bg_color)
-
-	# Layer 4: Glossy highlight gradient (top → bottom, subtle)
-	if _highlight_color.a > 0.01 or (_occupied and _bg_color.a > 0.5):
-		var grad_alpha := _highlight_color.a if _highlight_color.a > 0.01 else 0.12
-		var grad_top := Color(1.0, 1.0, 1.0, grad_alpha)
-		var grad_bottom := Color(1.0, 1.0, 1.0, 0.0)
-		# Simple two-band approximation for gradient on rounded shape
-		var half_h := bg_rect.size.y * 0.5
-		var top_rect := Rect2(bg_rect.position, Vector2(bg_rect.size.x, half_h))
-		_draw_rounded_rect(top_rect, grad_top.lerp(grad_bottom, 0.3))
-
-	# Layer 5: Line prediction overlay + accented border
+	# Line prediction overlay + accented border
 	if _line_prediction_active:
-		_draw_rounded_rect(bg_rect, _line_prediction_overlay)
-		_draw_rounded_rect(bg_rect, _line_prediction_border, false, 1.5)
+		_draw_rounded_rect(bg_rect, _line_prediction_overlay, true, 1.0, 0.35)
+		_draw_rounded_rect(bg_rect, _line_prediction_border, false, 1.5, 0.35)
 
 	# Reset transform
 	if _scale_factor != 1.0:

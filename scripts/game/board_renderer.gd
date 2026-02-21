@@ -2,8 +2,8 @@ extends Control
 
 const CellScene := preload("res://scenes/game/cell.tscn")
 const ClearParticlesScript := preload("res://scripts/game/clear_particles.gd")
-const CORNER_RADIUS := 4
-const BORDER_WIDTH := 1.5
+const CORNER_RADIUS := 12
+const BORDER_WIDTH := 1.0
 
 var _cells: Array = []  # Array[Array[CellView]] — [y][x]
 var _cell_size: float = 36.0
@@ -56,6 +56,9 @@ func _setup_styles() -> void:
 	_bg_style.border_width_right = int(BORDER_WIDTH)
 	_bg_style.border_width_bottom = int(BORDER_WIDTH)
 	_bg_style.border_color = AppColors.BOARD_BORDER
+	_bg_style.shadow_color = Color(0, 0, 0, 0.05)
+	_bg_style.shadow_size = 6
+	_bg_style.shadow_offset = Vector2(0, 2)
 
 func _calculate_cell_size() -> void:
 	var viewport_size := get_viewport_rect().size
@@ -188,22 +191,30 @@ func _get_cell_light_color(x: int, y: int) -> Color:
 func _emit_particles_and_shockwave(positions: Array, colors: Array, intensity: float, shockwave_radius: float) -> void:
 	if positions.is_empty():
 		return
-	# Particle burst (top_level bypasses board's clip_children)
+	# Particle burst — add to parent to avoid board's clip_children clipping
 	var particles := Control.new()
 	particles.set_script(ClearParticlesScript)
 	particles.top_level = true
-	add_child(particles)
+	var effect_parent := get_parent() if get_parent() != null else self
+	effect_parent.add_child(particles)
 	particles.global_position = global_position
 	particles.size = get_viewport_rect().size
 	particles.emit_at(positions, _cell_size, colors, intensity)
-	# Shockwave ring at center of affected area
+	# Shockwave rings at center of affected area
 	var center := Vector2.ZERO
 	for pos in positions:
 		center += pos
 	center /= positions.size()
 	center += Vector2(_cell_size / 2.0, _cell_size / 2.0)
 	var avg_color: Color = colors[0] if colors.size() > 0 else Color.WHITE
+	# Primary shockwave
 	_spawn_shockwave(center, avg_color, shockwave_radius)
+	# Secondary larger, fainter shockwave for intense clears
+	if intensity >= 1.5:
+		_spawn_shockwave(center, Color(avg_color.r, avg_color.g, avg_color.b, 0.4), shockwave_radius * 1.6)
+	# Tertiary white shockwave for 3+ lines
+	if intensity >= 2.0:
+		_spawn_shockwave(center, Color(1.0, 1.0, 1.0, 0.3), shockwave_radius * 2.0)
 
 func world_to_grid(local_pos: Vector2) -> Vector2i:
 	var gx := int(local_pos.x / _cell_size)
@@ -256,12 +267,7 @@ func play_level_up_effect() -> void:
 # --- Crisis Warning (2.11) ---
 
 func update_crisis_state(board: BoardState) -> void:
-	var occupied := 0
-	for y in board.rows:
-		for x in board.columns:
-			if board.grid[y][x]["occupied"]:
-				occupied += 1
-	var density: float = float(occupied) / float(board.rows * board.columns)
+	var density := board.fill_ratio()
 
 	if density >= 0.8:
 		_bg_style.border_color = AppColors.CORAL
@@ -364,7 +370,7 @@ func _spawn_shockwave(center: Vector2, color: Color, max_radius: float) -> void:
 		"color": color,
 		"max_radius": max_radius,
 		"age": 0.0,
-		"duration": 0.5,
+		"duration": 0.4,
 	})
 	set_process(true)
 
@@ -395,13 +401,19 @@ func _draw() -> void:
 		var y := i * _cell_size
 		draw_line(Vector2(0, y), Vector2(size.x, y), AppColors.GRID_LINE, 1.0)
 
-	# Shockwave rings
+	# Shockwave rings with glow
 	for sw in _shockwaves:
 		if sw["age"] >= sw["duration"]:
 			continue
 		var progress: float = sw["age"] / sw["duration"]
-		var radius: float = sw["max_radius"] * progress
-		var alpha: float = (1.0 - progress) * 0.6
+		var radius: float = sw["max_radius"] * ease(progress, 0.5)
+		var alpha: float = (1.0 - progress * progress) * 0.7
 		var sw_color := Color(sw["color"].r, sw["color"].g, sw["color"].b, alpha)
-		var width := lerpf(3.0, 1.0, progress)
-		draw_arc(sw["center"], radius, 0.0, TAU, 32, sw_color, width)
+		var width := lerpf(4.0, 1.0, progress)
+		# Outer glow ring
+		var glow_alpha := alpha * 0.3
+		var glow_color := Color(sw["color"].r, sw["color"].g, sw["color"].b, glow_alpha)
+		if radius > 2.0:
+			draw_arc(sw["center"], radius, 0.0, TAU, 48, glow_color, width + 3.0)
+		# Main ring
+		draw_arc(sw["center"], radius, 0.0, TAU, 48, sw_color, width)

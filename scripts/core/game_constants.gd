@@ -1,8 +1,8 @@
 extends Node
 
 # Grid
-const BOARD_COLUMNS: int = 10
-const BOARD_ROWS: int = 10
+const BOARD_COLUMNS: int = 8
+const BOARD_ROWS: int = 8
 
 # Piece Tray
 const TRAY_SIZE: int = 3
@@ -33,6 +33,7 @@ const COLOR_MATCH_BONUS: Dictionary = {
 }
 
 # Color Match
+const COLOR_MATCH_ENABLED: bool = false
 const COLOR_MATCH_MIN_CELLS: int = 6
 
 # Layout

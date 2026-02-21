@@ -25,6 +25,8 @@ func _toggle_sound() -> void:
 	SoundManager.play_sfx("button_press")
 	var enabled := not SaveManager.is_sound_enabled()
 	SaveManager.set_sound_enabled(enabled)
+	# Also toggle music when toggling sound
+	MusicManager.set_enabled(enabled)
 	_update_sound_label()
 
 func _toggle_haptic() -> void:

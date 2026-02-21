@@ -114,11 +114,11 @@ func _show_reward_popup(reward: Dictionary) -> void:
 	var panel := PanelContainer.new()
 	panel.name = "DailyRewardPanel"
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.086, 0.133, 0.212, 0.95)
-	style.corner_radius_top_left = 16
-	style.corner_radius_top_right = 16
-	style.corner_radius_bottom_right = 16
-	style.corner_radius_bottom_left = 16
+	style.bg_color = Color(1, 1, 1, 0.95)
+	style.corner_radius_top_left = 20
+	style.corner_radius_top_right = 20
+	style.corner_radius_bottom_right = 20
+	style.corner_radius_bottom_left = 20
 	style.content_margin_left = 20.0
 	style.content_margin_top = 12.0
 	style.content_margin_right = 20.0
@@ -127,7 +127,10 @@ func _show_reward_popup(reward: Dictionary) -> void:
 	style.border_width_top = 1
 	style.border_width_right = 1
 	style.border_width_bottom = 1
-	style.border_color = Color(0.957, 0.62, 0.043, 0.6)
+	style.border_color = Color(0.957, 0.62, 0.043, 0.4)
+	style.shadow_color = Color(0, 0, 0, 0.08)
+	style.shadow_size = 4
+	style.shadow_offset = Vector2(0, 2)
 	panel.add_theme_stylebox_override("panel", style)
 	panel.add_child(popup)
 

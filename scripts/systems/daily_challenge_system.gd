@@ -3,6 +3,7 @@ class_name DailyChallengeSystem
 ## 같은 퍼즐을 풀 수 있도록 하는 정적 유틸리티 클래스.
 
 const SECTION := "daily_challenge"
+const MAX_STREAK := 365
 
 
 ## 오늘 날짜 기반의 결정론적 시드 반환 (YYYYMMDD 형식)
@@ -48,7 +49,7 @@ static func get_streak() -> int:
 
 	# 오늘부터 역순으로 연속 날짜 체크
 	var check_date := today
-	while true:
+	while streak < MAX_STREAK:
 		var key := str(check_date)
 		var val: int = SaveManager.get_value(SECTION, key, -1)
 		if val < 0:

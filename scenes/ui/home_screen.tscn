@@ -4,21 +4,24 @@
 
 [sub_resource type="StyleBoxFlat" id="start_btn_style"]
 bg_color = Color(1, 0.42, 0.42, 1)
-corner_radius_top_left = 24
-corner_radius_top_right = 24
-corner_radius_bottom_right = 24
-corner_radius_bottom_left = 24
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
 content_margin_left = 24.0
 content_margin_top = 14.0
 content_margin_right = 24.0
 content_margin_bottom = 14.0
+shadow_color = Color(1, 0.42, 0.42, 0.3)
+shadow_size = 6
+shadow_offset = Vector2(0, 3)
 
 [sub_resource type="StyleBoxFlat" id="continue_btn_style"]
 bg_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 24
-corner_radius_top_right = 24
-corner_radius_bottom_right = 24
-corner_radius_bottom_left = 24
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
 content_margin_left = 24.0
 content_margin_top = 14.0
 content_margin_right = 24.0
@@ -28,13 +31,16 @@ border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(1, 0.42, 0.42, 1)
+shadow_color = Color(0, 0, 0, 0.06)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
 
 [sub_resource type="StyleBoxFlat" id="daily_btn_style"]
 bg_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 24
-corner_radius_top_right = 24
-corner_radius_bottom_right = 24
-corner_radius_bottom_left = 24
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
 content_margin_left = 24.0
 content_margin_top = 14.0
 content_margin_right = 24.0
@@ -44,6 +50,9 @@ border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.957, 0.62, 0.043, 1)
+shadow_color = Color(0, 0, 0, 0.06)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
 
 [sub_resource type="StyleBoxFlat" id="how_btn_style"]
 bg_color = Color(1, 1, 1, 1)
@@ -62,11 +71,14 @@ border_width_bottom = 1
 border_color = Color(1, 0.42, 0.42, 0.3)
 
 [sub_resource type="StyleBoxFlat" id="icon_bg_style"]
-bg_color = Color(0.42, 0.55, 0.31, 1)
-corner_radius_top_left = 20
-corner_radius_top_right = 20
-corner_radius_bottom_right = 20
-corner_radius_bottom_left = 20
+bg_color = Color(0.655, 0.545, 0.875, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+shadow_color = Color(0.655, 0.545, 0.875, 0.3)
+shadow_size = 6
+shadow_offset = Vector2(0, 3)
 
 [sub_resource type="StyleBoxFlat" id="sound_btn_style"]
 bg_color = Color(1, 1, 1, 1)
@@ -96,7 +108,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.961, 0.941, 0.922, 1)
+color = Color(0.953, 0.941, 0.973, 1)
 
 [node name="VBox" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -196,7 +208,7 @@ theme_override_styles/normal = SubResource("start_btn_style")
 theme_override_styles/hover = SubResource("start_btn_style")
 theme_override_styles/pressed = SubResource("start_btn_style")
 theme_override_styles/focus = SubResource("start_btn_style")
-theme_override_colors/font_color = Color(0.961, 0.941, 0.922, 1)
+theme_override_colors/font_color = Color(0.953, 0.941, 0.973, 1)
 theme_override_font_sizes/font_size = 20
 text = "NEW GAME"
 
@@ -292,7 +304,7 @@ horizontal_alignment = 1
 layout_mode = 2
 custom_minimum_size = Vector2(200, 1)
 size_flags_horizontal = 4
-color = Color(0.91, 0.878, 0.847, 1)
+color = Color(0.894, 0.875, 0.941, 1)
 
 [node name="BottomRow" type="HBoxContainer" parent="VBox"]
 layout_mode = 2

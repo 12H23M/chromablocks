@@ -72,45 +72,24 @@ func _ready() -> void:
 # ── Public API ──
 
 func start_game() -> void:
-	_is_daily_mode = false  # 일반 모드로 리셋
-	SaveManager.clear_active_game()
-	_state.reset()
-	_piece_gen.reset()  # RNG를 랜덤으로 재초기화
-	_state.high_score = SaveManager.get_high_score()
-	_state.status = Enums.GameStatus.PLAYING
-	SaveManager.increment_games_played()
-	game_over_screen.reset_ad_state()
-
-	var tray := _piece_gen.generate_tray(_state.level, _state.board)
-	_state.tray_pieces = tray
-
-	board_renderer.update_from_state(_state.board)
-	board_renderer.update_crisis_state(_state.board)
-	piece_tray.populate_tray(tray)
-	hud.update_from_state(_state)
-	piece_tray.update_swap_state(_state.swaps_remaining)
-
-	ScreenTransition.fade_out(home_screen)
-	ScreenTransition.fade_out(game_over_screen)
-	ScreenTransition.fade_out(pause_screen)
-
-	_color_match_count = 0
-	_had_perfect_clear = false
-	AnalyticsManager.game_start("normal")
-	state_changed.emit(_state)
+	_start_new_game(false)
 
 ## 일일 챌린지 시작 — 오늘 날짜 기반 시드 사용
 func start_daily_challenge() -> void:
-	# 이미 오늘 플레이한 경우 안내 메시지 표시 후 그대로 시작 허용
 	if DailyChallengeSystem.has_played_today():
 		var best := DailyChallengeSystem.get_daily_best()
 		print("[Daily] Already played today. Best: %d — replaying." % best)
+	_start_new_game(true)
 
-	_is_daily_mode = true
+func _start_new_game(daily: bool) -> void:
+	Engine.time_scale = 1.0
+	_hit_stop_duration = 0.0
+	_is_daily_mode = daily
 	SaveManager.clear_active_game()
 	_state.reset()
 	_piece_gen.reset()
-	_piece_gen.set_seed(DailyChallengeSystem.get_today_seed())
+	if daily:
+		_piece_gen.set_seed(DailyChallengeSystem.get_today_seed())
 	_state.high_score = SaveManager.get_high_score()
 	_state.status = Enums.GameStatus.PLAYING
 	SaveManager.increment_games_played()
@@ -131,12 +110,16 @@ func start_daily_challenge() -> void:
 
 	_color_match_count = 0
 	_had_perfect_clear = false
-	AnalyticsManager.game_start("daily")
-	AnalyticsManager.daily_challenge_start()
+	var mode := "daily" if daily else "normal"
+	AnalyticsManager.game_start(mode)
+	if daily:
+		AnalyticsManager.daily_challenge_start()
 	state_changed.emit(_state)
 
 
 func continue_game() -> void:
+	Engine.time_scale = 1.0
+	_hit_stop_duration = 0.0
 	var saved_state := SaveManager.load_active_game()
 	if saved_state == null:
 		start_game()
@@ -208,7 +191,6 @@ func _on_drag_moved(piece_node: Control, global_pos: Vector2) -> void:
 func _on_drag_ended(piece_node: Control, global_pos: Vector2) -> void:
 	if _dragging_piece == null:
 		return
-
 	board_renderer.clear_highlights()
 	board_renderer.clear_line_prediction()
 	var grid_pos := _piece_to_grid(piece_node)
@@ -257,12 +239,17 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	# 1. Place on board
 	var board := _state.board.place_piece(piece, gx, gy)
 
-	# 2. Line clear (only full rows/columns of 10)
+	# 2. Line clear
 	var clear_result := ClearSystem.check_and_clear(board)
 	board = clear_result["board"]
 
-	# 3. Color match — disabled (only line clears remove blocks)
-	var color_result := {"board": board, "groups": [], "total_removed": 0, "has_matches": false}
+	# 3. Color match (toggle via GameConstants.COLOR_MATCH_ENABLED)
+	var color_result: Dictionary
+	if GameConstants.COLOR_MATCH_ENABLED:
+		color_result = ColorMatchSystem.check_color_match(board)
+		board = color_result["board"]
+	else:
+		color_result = {"board": board, "groups": [], "total_removed": 0, "has_matches": false}
 
 	# 4. Scoring
 	var did_clear: bool = clear_result["lines_cleared"] > 0 or color_result["has_matches"]
@@ -287,30 +274,38 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	# 7.5 Crisis warning (board density check)
 	board_renderer.update_crisis_state(board)
 
-	# 7.6 Placement pulse on newly placed cells + board micro-bounce
+	# 7.6 Placement pulse on newly placed cells
 	board_renderer.play_place_effect(piece.occupied_cells_at(gx, gy))
-	board_renderer.play_place_bounce()
 	AnalyticsManager.piece_placed(Enums.PieceType.keys()[piece.type], gx, gy)
 
 	# 8. Effects
-	if clear_result["has_clears"]:
-		_apply_hit_stop(0.05)
+	var has_clear: bool = clear_result["has_clears"]
+
+	# Micro-bounce only when no clear (shake replaces it on clears)
+	if not has_clear:
+		board_renderer.play_place_bounce()
+
+	if has_clear:
+		var lines: int = clear_result["lines_cleared"]
+		# Freeze-frame hit stop — short and sharp
+		if lines >= 3:
+			_apply_hit_stop(0.05)
+		else:
+			_apply_hit_stop(0.03)
 		board_renderer.play_line_clear_effect(clear_result["rows"], clear_result["cols"])
 		SoundManager.play_sfx("line_clear")
-		HapticManager.line_clear()
-		HapticManager.explosion(clear_result["lines_cleared"])
-		AnalyticsManager.line_clear(clear_result["lines_cleared"], new_combo)
-		# Screen shake: intensity scales with number of lines cleared
-		var lines: int = clear_result["lines_cleared"]
+		HapticManager.line_clear_burst(lines)
+		AnalyticsManager.line_clear(lines, new_combo)
+		# Screen shake: boosted intensity for post-freeze punch
 		if lines >= 3:
-			board_renderer.play_screen_shake(5.0, 0.2)
+			board_renderer.play_screen_shake(9.0, 0.20)
 		elif lines >= 2:
-			board_renderer.play_screen_shake(3.5, 0.15)
+			board_renderer.play_screen_shake(6.0, 0.15)
 		else:
-			board_renderer.play_screen_shake(2.0, 0.1)
+			board_renderer.play_screen_shake(4.0, 0.10)
 
 	if color_result["has_matches"]:
-		_apply_hit_stop(0.05)
+		_apply_hit_stop(0.03)
 		board_renderer.play_color_match_effect(color_result["groups"])
 		SoundManager.play_sfx("color_match")
 		HapticManager.color_match()
@@ -325,16 +320,17 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 		HapticManager.combo(new_combo)
 		_spawn_combo_popup(new_combo)
 		if new_combo >= 3:
-			_apply_hit_stop(0.08)
+			_apply_hit_stop(0.05)
 
 	if score_result["total"] > 0:
 		_spawn_score_popup(score_result["total"], gx, gy)
 
 	if clear_result.get("is_perfect", false):
-		_apply_hit_stop(0.12)
+		_apply_hit_stop(0.09)
 		_spawn_score_popup(GameConstants.PERFECT_CLEAR_BONUS, 5, 5)
 		SoundManager.play_sfx("perfect_clear")
-		board_renderer.play_screen_shake(6.0, 0.25)
+		board_renderer.play_screen_shake(10.0, 0.25)
+		HapticManager.perfect_clear()
 		_had_perfect_clear = true
 
 	if leveled_up:
@@ -380,6 +376,9 @@ func _refill_tray() -> void:
 
 func _check_game_over() -> void:
 	if GameOverSystem.is_game_over(_state.board, _state.tray_pieces):
+		# Ensure time_scale is restored if game over triggers during hit stop
+		Engine.time_scale = 1.0
+		_hit_stop_duration = 0.0
 		_state.status = Enums.GameStatus.GAME_OVER
 		SaveManager.clear_active_game()
 		SaveManager.save_end_of_game(_state.score)
@@ -411,9 +410,19 @@ func _apply_hit_stop(duration: float) -> void:
 	_hit_stop_duration = duration
 	_hit_stop_id += 1
 	var current_id := _hit_stop_id
-	Engine.time_scale = 0.1
-	var timer := get_tree().create_timer(duration, true, false, true)
+	# Freeze-frame hit stop: tweens and _process receive delta=0 during the
+	# pause, then resume at full speed.  Sound/haptics are unaffected.
+	Engine.time_scale = 0.0
+	var tree := get_tree()
+	if tree == null:
+		Engine.time_scale = 1.0
+		return
+	var timer := tree.create_timer(duration, true, false, true)
 	timer.timeout.connect(func():
+		# Guard against node being freed during hit stop
+		if not is_instance_valid(self):
+			Engine.time_scale = 1.0
+			return
 		# Only restore if this is still the active hit stop
 		if _hit_stop_id == current_id:
 			Engine.time_scale = 1.0
@@ -436,6 +445,9 @@ func _spawn_score_popup(value: int, gx: int, gy: int) -> void:
 	popup.show_score(value, pos)
 
 func _on_quit_to_home() -> void:
+	# Ensure time_scale is restored if quitting during hit stop
+	Engine.time_scale = 1.0
+	_hit_stop_duration = 0.0
 	board_renderer.modulate.a = 1.0
 	piece_tray.modulate.a = 1.0
 	_show_home()

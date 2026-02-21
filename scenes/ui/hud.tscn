@@ -4,25 +4,31 @@
 
 [sub_resource type="StyleBoxFlat" id="pause_btn_style"]
 bg_color = Color(1, 0.42, 0.42, 1)
-corner_radius_top_left = 14
-corner_radius_top_right = 14
-corner_radius_bottom_right = 14
-corner_radius_bottom_left = 14
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
 content_margin_left = 12.0
 content_margin_top = 8.0
 content_margin_right = 12.0
 content_margin_bottom = 8.0
+shadow_color = Color(0, 0, 0, 0.1)
+shadow_size = 3
+shadow_offset = Vector2(0, 2)
 
 [sub_resource type="StyleBoxFlat" id="score_card_style"]
-bg_color = Color(1, 1, 1, 0.1)
-corner_radius_top_left = 16
-corner_radius_top_right = 16
-corner_radius_bottom_right = 16
-corner_radius_bottom_left = 16
-content_margin_left = 24.0
-content_margin_top = 8.0
-content_margin_right = 24.0
-content_margin_bottom = 8.0
+bg_color = Color(1, 1, 1, 0.6)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+content_margin_left = 28.0
+content_margin_top = 10.0
+content_margin_right = 28.0
+content_margin_bottom = 10.0
+shadow_color = Color(0, 0, 0, 0.06)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
 
 [sub_resource type="StyleBoxFlat" id="progress_bg_style"]
 bg_color = Color(1, 1, 1, 0.1)
@@ -104,7 +110,7 @@ theme_override_styles/normal = SubResource("pause_btn_style")
 theme_override_styles/hover = SubResource("pause_btn_style")
 theme_override_styles/pressed = SubResource("pause_btn_style")
 theme_override_styles/focus = SubResource("pause_btn_style")
-theme_override_colors/font_color = Color(0.961, 0.941, 0.922, 1)
+theme_override_colors/font_color = Color(0.953, 0.941, 0.973, 1)
 theme_override_font_sizes/font_size = 16
 text = "||"
 

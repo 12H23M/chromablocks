@@ -25,12 +25,12 @@ const PATTERN := [
 ]
 
 const BLOCK_COLORS := [
-	Color("FF8A8A"),  # coral
-	Color("FFB347"),  # amber
-	Color("4FC3F7"),  # sky
-	Color("6BCB77"),  # mint
-	Color("9B8EC4"),  # lavender
-	Color("FFD93D"),  # lemon
+	Color("FF7E8E"),  # coral
+	Color("FFAA42"),  # amber
+	Color("42B9F5"),  # sky
+	Color("5EC97B"),  # mint
+	Color("A78BDF"),  # lavender
+	Color("FFD536"),  # lemon
 ]
 
 func _ready() -> void:
@@ -74,12 +74,23 @@ func _create_blocks() -> void:
 			if PATTERN[row][col] == 0:
 				continue
 
-			var block := ColorRect.new()
+			# Bubble-style block using Panel + StyleBoxFlat
+			var block := Panel.new()
 			block.size = Vector2(BLOCK_SIZE, BLOCK_SIZE)
 			var target_x := start_x + col * (BLOCK_SIZE + BLOCK_GAP)
 			var target_y := start_y + row * (BLOCK_SIZE + BLOCK_GAP)
 			block.position = Vector2(target_x, -BLOCK_SIZE - randf_range(20, 120))
-			block.color = BLOCK_COLORS[color_idx % BLOCK_COLORS.size()]
+			var block_color: Color = BLOCK_COLORS[color_idx % BLOCK_COLORS.size()]
+			var style := StyleBoxFlat.new()
+			style.bg_color = block_color
+			style.corner_radius_top_left = int(BLOCK_SIZE * 0.35)
+			style.corner_radius_top_right = int(BLOCK_SIZE * 0.35)
+			style.corner_radius_bottom_left = int(BLOCK_SIZE * 0.35)
+			style.corner_radius_bottom_right = int(BLOCK_SIZE * 0.35)
+			style.shadow_color = Color(0, 0, 0, 0.15)
+			style.shadow_size = 3
+			style.shadow_offset = Vector2(0, 2)
+			block.add_theme_stylebox_override("panel", style)
 			block.modulate.a = 0.0
 			block_container.add_child(block)
 			_blocks.append(block)

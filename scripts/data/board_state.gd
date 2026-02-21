@@ -5,7 +5,7 @@ var rows: int
 var grid: Array  # Array[Array[Dictionary]] — {occupied: bool, color: int}
 
 
-func _init(p_cols: int = 10, p_rows: int = 10, p_grid: Array = []) -> void:
+func _init(p_cols: int = 8, p_rows: int = 8, p_grid: Array = []) -> void:
 	columns = p_cols
 	rows = p_rows
 	if p_grid.is_empty():
@@ -31,6 +31,15 @@ var is_empty: bool:
 				if grid[y][x]["occupied"]:
 					return false
 		return true
+
+
+func fill_ratio() -> float:
+	var occupied := 0
+	for y in rows:
+		for x in columns:
+			if grid[y][x]["occupied"]:
+				occupied += 1
+	return float(occupied) / float(rows * columns)
 
 
 func is_cell_occupied(x: int, y: int) -> bool:

@@ -312,9 +312,4 @@ func _weighted_pick(weights: Dictionary) -> int:
 # ── Utility ──
 
 func _board_fill_ratio(board: BoardState) -> float:
-	var occupied := 0
-	for y in board.rows:
-		for x in board.columns:
-			if board.grid[y][x]["occupied"]:
-				occupied += 1
-	return float(occupied) / float(board.rows * board.columns)
+	return board.fill_ratio()

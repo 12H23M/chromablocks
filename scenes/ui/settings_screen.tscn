@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/ui/settings_screen.gd" id="1_settings"]
 
 [sub_resource type="StyleBoxFlat" id="card_style"]
-bg_color = Color(0.961, 0.941, 0.922, 1)
+bg_color = Color(0.953, 0.941, 0.973, 1)
 corner_radius_top_left = 16
 corner_radius_top_right = 16
 corner_radius_bottom_right = 16
@@ -16,7 +16,7 @@ border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.91, 0.878, 0.847, 1)
+border_color = Color(0.894, 0.875, 0.941, 1)
 
 [sub_resource type="StyleBoxFlat" id="close_btn_style"]
 bg_color = Color(1, 0.42, 0.42, 1)
@@ -150,6 +150,6 @@ theme_override_styles/normal = SubResource("close_btn_style")
 theme_override_styles/hover = SubResource("close_btn_style")
 theme_override_styles/pressed = SubResource("close_btn_style")
 theme_override_styles/focus = SubResource("close_btn_style")
-theme_override_colors/font_color = Color(0.961, 0.941, 0.922, 1)
+theme_override_colors/font_color = Color(0.953, 0.941, 0.973, 1)
 theme_override_font_sizes/font_size = 16
 text = "CLOSE"

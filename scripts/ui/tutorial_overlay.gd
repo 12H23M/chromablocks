@@ -91,11 +91,9 @@ func _update_dots() -> void:
 		_dots.add_child(dot)
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if not visible:
-		return
+func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
-		get_viewport().set_input_as_handled()
+		accept_event()
 		SoundManager.play_sfx("button_press")
 		_current_step += 1
 		if _current_step >= _steps.size():

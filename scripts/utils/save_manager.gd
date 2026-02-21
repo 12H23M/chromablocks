@@ -96,6 +96,16 @@ func set_haptic_enabled(enabled: bool) -> void:
 	_mark_dirty()
 
 
+func get_music_track() -> String:
+	return _config.get_value("settings", "music_track", "classic")
+
+
+func set_music_track(track_id: String) -> void:
+	_config.set_value("settings", "music_track", track_id)
+	_mark_dirty()
+	flush()
+
+
 # --- End-of-game batch save -----------------------------------------------
 
 func save_end_of_game(score: int) -> void:
@@ -162,9 +172,12 @@ func load_active_game() -> GameState:
 	state.max_combo = _config.get_value(ACTIVE_SECTION, "max_combo", 0)
 	state.swaps_remaining = _config.get_value(ACTIVE_SECTION, "swaps_remaining", 1)
 
-	# Board grid
-	var cols: int = _config.get_value(ACTIVE_SECTION, "board_columns", 10)
-	var rows: int = _config.get_value(ACTIVE_SECTION, "board_rows", 10)
+	# Board grid — reject saves with mismatched dimensions
+	var cols: int = _config.get_value(ACTIVE_SECTION, "board_columns", GameConstants.BOARD_COLUMNS)
+	var rows: int = _config.get_value(ACTIVE_SECTION, "board_rows", GameConstants.BOARD_ROWS)
+	if cols != GameConstants.BOARD_COLUMNS or rows != GameConstants.BOARD_ROWS:
+		clear_active_game()
+		return null
 	var grid_data: Array = _config.get_value(ACTIVE_SECTION, "board_grid", [])
 	if grid_data.is_empty():
 		state.board = BoardState.new(cols, rows)
