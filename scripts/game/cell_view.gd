@@ -209,45 +209,12 @@ func _tween_to_empty(t: float) -> void:
 	_border_color = _border_color.lerp(AppColors.EMPTY_BORDER, 1.0 - t)
 	queue_redraw()
 
-## Draw a rounded rectangle using polygon approximation
+## Convenience wrappers for DrawUtils
 func _draw_rounded_rect(rect: Rect2, color: Color, filled: bool = true, line_width: float = 1.0, radius_ratio: float = 0.35) -> void:
-	if rect.size.x < 1.0 or rect.size.y < 1.0 or color.a < 0.005:
-		return
-	var r := minf(minf(rect.size.x, rect.size.y) * radius_ratio, minf(rect.size.x, rect.size.y) * 0.5)
-	var points := PackedVector2Array()
-	var segments := 8  # smoother arcs for bubble feel
-	# Top-left
-	for i in range(segments + 1):
-		var angle := PI + float(i) / segments * (PI / 2.0)
-		points.append(Vector2(rect.position.x + r + cos(angle) * r, rect.position.y + r + sin(angle) * r))
-	# Top-right
-	for i in range(segments + 1):
-		var angle := -PI / 2.0 + float(i) / segments * (PI / 2.0)
-		points.append(Vector2(rect.position.x + rect.size.x - r + cos(angle) * r, rect.position.y + r + sin(angle) * r))
-	# Bottom-right
-	for i in range(segments + 1):
-		var angle := 0.0 + float(i) / segments * (PI / 2.0)
-		points.append(Vector2(rect.position.x + rect.size.x - r + cos(angle) * r, rect.position.y + rect.size.y - r + sin(angle) * r))
-	# Bottom-left
-	for i in range(segments + 1):
-		var angle := PI / 2.0 + float(i) / segments * (PI / 2.0)
-		points.append(Vector2(rect.position.x + r + cos(angle) * r, rect.position.y + rect.size.y - r + sin(angle) * r))
+	DrawUtils.draw_rounded_rect(self, rect, color, filled, line_width, radius_ratio)
 
-	if filled:
-		draw_colored_polygon(points, color)
-	else:
-		points.append(points[0])  # close the loop
-		draw_polyline(points, color, line_width, true)
-
-## Draw a circle (for bubble specular highlight)
 func _draw_ellipse(center: Vector2, radius: Vector2, color: Color, segments: int = 12) -> void:
-	if radius.x < 0.5 or radius.y < 0.5 or color.a < 0.005:
-		return
-	var points := PackedVector2Array()
-	for i in range(segments + 1):
-		var angle := float(i) / segments * TAU
-		points.append(center + Vector2(cos(angle) * radius.x, sin(angle) * radius.y))
-	draw_colored_polygon(points, color)
+	DrawUtils.draw_ellipse(self, center, radius, color, segments)
 
 
 func _draw() -> void:
@@ -267,43 +234,12 @@ func _draw() -> void:
 	var _is_block := _occupied or (_scale_factor < 0.99 and _scale_factor > 0.01)
 	if _is_block and _bg_color.a > 0.1:
 		# === BUBBLE STYLE BLOCK ===
-		
-		# Layer 1: Drop shadow (soft, below)
-		var shadow_offset := Vector2(0, 2.0)
-		var shadow_rect := Rect2(bg_rect.position + shadow_offset, bg_rect.size)
-		_draw_rounded_rect(shadow_rect, Color(0.0, 0.0, 0.0, 0.12), true, 1.0, 0.35)
-		
-		# Layer 2: Glow aura
+		# Glow aura (behind bubble)
 		if _glow_color.a > 0.01:
 			var glow_rect := Rect2(bg_rect.position - Vector2(1, 1), bg_rect.size + Vector2(2, 2))
 			_draw_rounded_rect(glow_rect, _glow_color, true, 1.0, 0.35)
-		
-		# Layer 3: Base color (big rounded = bubble shape)
-		_draw_rounded_rect(bg_rect, _bg_color, true, 1.0, 0.35)
-		
-		# Layer 4: Bottom darkening (depth/3D feel)
-		var dark_color := Color(_bg_color.r * 0.75, _bg_color.g * 0.75, _bg_color.b * 0.75, 0.3)
-		var bottom_h := bg_rect.size.y * 0.4
-		var bottom_rect := Rect2(
-			Vector2(bg_rect.position.x, bg_rect.position.y + bg_rect.size.y - bottom_h),
-			Vector2(bg_rect.size.x, bottom_h))
-		_draw_rounded_rect(bottom_rect, dark_color, true, 1.0, 0.3)
-		
-		# Layer 5: Top shine (glossy bubble reflection)
-		var shine_alpha := 0.30
-		var shine_rect := Rect2(
-			bg_rect.position + Vector2(bg_rect.size.x * 0.15, bg_rect.size.y * 0.08),
-			Vector2(bg_rect.size.x * 0.7, bg_rect.size.y * 0.35))
-		_draw_rounded_rect(shine_rect, Color(1.0, 1.0, 1.0, shine_alpha), true, 1.0, 0.5)
-		
-		# Layer 6: Specular dot (tiny white circle, top-left)
-		var spec_center := bg_rect.position + Vector2(bg_rect.size.x * 0.28, bg_rect.size.y * 0.25)
-		var spec_radius := Vector2(bg_rect.size.x * 0.08, bg_rect.size.y * 0.08)
-		_draw_ellipse(spec_center, spec_radius, Color(1.0, 1.0, 1.0, 0.6))
-		
-		# Layer 7: Rim light (subtle edge highlight)
-		_draw_rounded_rect(bg_rect, Color(1.0, 1.0, 1.0, 0.08), false, 1.0, 0.35)
-	
+		# Full bubble with shadow, shine, specular, rim
+		DrawUtils.draw_bubble_block(self, bg_rect, _bg_color)
 	else:
 		# === EMPTY CELL ===
 		# Glow

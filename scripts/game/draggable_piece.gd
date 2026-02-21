@@ -24,51 +24,6 @@ func setup(p_piece: BlockPiece, p_index: int, p_cell_size: float) -> void:
 	custom_minimum_size = Vector2(0, piece_data.height * _cell_size)
 	queue_redraw()
 
-## Draw a rounded rectangle (matches cell_view bubble style)
-func _draw_rounded_rect_piece(rect: Rect2, color: Color, filled: bool = true, line_width: float = 1.0, radius_ratio: float = 0.35) -> void:
-	if rect.size.x < 1.0 or rect.size.y < 1.0 or color.a < 0.005:
-		return
-	var r := minf(minf(rect.size.x, rect.size.y) * radius_ratio, minf(rect.size.x, rect.size.y) * 0.5)
-	var points := PackedVector2Array()
-	var segments := 8
-	for corner in 4:
-		var base_angle := PI + corner * (PI / 2.0)
-		var center_x: float
-		var center_y: float
-		match corner:
-			0:  # top-left
-				center_x = rect.position.x + r
-				center_y = rect.position.y + r
-			1:  # top-right
-				center_x = rect.position.x + rect.size.x - r
-				center_y = rect.position.y + r
-				base_angle = -PI / 2.0
-			2:  # bottom-right
-				center_x = rect.position.x + rect.size.x - r
-				center_y = rect.position.y + rect.size.y - r
-				base_angle = 0.0
-			3:  # bottom-left
-				center_x = rect.position.x + r
-				center_y = rect.position.y + rect.size.y - r
-				base_angle = PI / 2.0
-		for i in range(segments + 1):
-			var angle := base_angle + float(i) / segments * (PI / 2.0)
-			points.append(Vector2(center_x + cos(angle) * r, center_y + sin(angle) * r))
-	if filled:
-		draw_colored_polygon(points, color)
-	else:
-		points.append(points[0])
-		draw_polyline(points, color, line_width, true)
-
-func _draw_ellipse_piece(center: Vector2, radius: Vector2, color: Color, segments: int = 12) -> void:
-	if radius.x < 0.5 or radius.y < 0.5 or color.a < 0.005:
-		return
-	var points := PackedVector2Array()
-	for i in range(segments + 1):
-		var angle := float(i) / segments * TAU
-		points.append(center + Vector2(cos(angle) * radius.x, sin(angle) * radius.y))
-	draw_colored_polygon(points, color)
-
 func _draw() -> void:
 	if piece_data == null:
 		return
@@ -92,41 +47,15 @@ func _draw() -> void:
 					Vector2(cx + inset, cy + inset),
 					Vector2(_cell_size - inset * 2, _cell_size - inset * 2))
 
-				# Shadow (lifted = stronger)
-				var shadow_alpha := 0.20 if _is_lifted else 0.12
-				var shadow_offset := 3.0 if _is_lifted else 2.0
-				var shadow_rect := Rect2(bg_rect.position + Vector2(0, shadow_offset), bg_rect.size)
-				_draw_rounded_rect_piece(shadow_rect, Color(0, 0, 0, shadow_alpha), true, 1.0, 0.35)
-
 				# Glow aura
 				if glow_color.a > 0.01:
 					var glow_rect := Rect2(bg_rect.position - Vector2(1, 1), bg_rect.size + Vector2(2, 2))
-					_draw_rounded_rect_piece(glow_rect, glow_color, true, 1.0, 0.35)
+					DrawUtils.draw_rounded_rect(self, glow_rect, glow_color)
 
-				# Base bubble
-				_draw_rounded_rect_piece(bg_rect, base_color, true, 1.0, 0.35)
-
-				# Bottom darkening (3D depth)
-				var dark_color := Color(base_color.r * 0.75, base_color.g * 0.75, base_color.b * 0.75, 0.3)
-				var bottom_h := bg_rect.size.y * 0.4
-				var bottom_rect := Rect2(
-					Vector2(bg_rect.position.x, bg_rect.position.y + bg_rect.size.y - bottom_h),
-					Vector2(bg_rect.size.x, bottom_h))
-				_draw_rounded_rect_piece(bottom_rect, dark_color, true, 1.0, 0.3)
-
-				# Top shine
-				var shine_rect := Rect2(
-					bg_rect.position + Vector2(bg_rect.size.x * 0.15, bg_rect.size.y * 0.08),
-					Vector2(bg_rect.size.x * 0.7, bg_rect.size.y * 0.35))
-				_draw_rounded_rect_piece(shine_rect, Color(1.0, 1.0, 1.0, 0.30), true, 1.0, 0.5)
-
-				# Specular dot
-				var spec_center := bg_rect.position + Vector2(bg_rect.size.x * 0.28, bg_rect.size.y * 0.25)
-				var spec_radius := Vector2(bg_rect.size.x * 0.08, bg_rect.size.y * 0.08)
-				_draw_ellipse_piece(spec_center, spec_radius, Color(1.0, 1.0, 1.0, 0.6))
-
-				# Rim light
-				_draw_rounded_rect_piece(bg_rect, Color(1.0, 1.0, 1.0, 0.08), false, 1.0, 0.35)
+				# Full bubble block (shadow + base + depth + shine + specular + rim)
+				var shadow_strength := 0.20 if _is_lifted else 0.12
+				var shadow_y := 3.0 if _is_lifted else 2.0
+				DrawUtils.draw_bubble_block(self, bg_rect, base_color, shadow_strength, shadow_y)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
