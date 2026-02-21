@@ -1,59 +1,59 @@
 extends Node
 
-# 기본 블록 색상 (default 테마 — 하드코딩 원본)
-var CORAL := Color("EF4444")
-var CORAL_LIGHT := Color("FCA5A5")
-var CORAL_GLOW := Color(Color("EF4444"), 0.35)
+# 기본 블록 색상 (default 테마 — Soft & Bright)
+var CORAL := Color("FF8A8A")
+var CORAL_LIGHT := Color("FFB8B8")
+var CORAL_GLOW := Color(Color("FF8A8A"), 0.35)
 
-var AMBER := Color("F59E0B")
-var AMBER_LIGHT := Color("FCD34D")
-var AMBER_GLOW := Color(Color("F59E0B"), 0.35)
+var AMBER := Color("FFB347")
+var AMBER_LIGHT := Color("FFD08A")
+var AMBER_GLOW := Color(Color("FFB347"), 0.35)
 
-var LEMON := Color("EAB308")
-var LEMON_LIGHT := Color("FDE047")
-var LEMON_GLOW := Color(Color("EAB308"), 0.35)
+var LEMON := Color("FFD93D")
+var LEMON_LIGHT := Color("FFE57A")
+var LEMON_GLOW := Color(Color("FFD93D"), 0.35)
 
-var MINT := Color("10B981")
-var MINT_LIGHT := Color("6EE7B7")
-var MINT_GLOW := Color(Color("10B981"), 0.35)
+var MINT := Color("6BCB77")
+var MINT_LIGHT := Color("A8E6A3")
+var MINT_GLOW := Color(Color("6BCB77"), 0.35)
 
-var SKY := Color("06B6D4")
-var SKY_LIGHT := Color("67E8F9")
-var SKY_GLOW := Color(Color("06B6D4"), 0.35)
+var SKY := Color("4FC3F7")
+var SKY_LIGHT := Color("8AD4F8")
+var SKY_GLOW := Color(Color("4FC3F7"), 0.35)
 
-var LAVENDER := Color("8B5CF6")
-var LAVENDER_LIGHT := Color("C4B5FD")
-var LAVENDER_GLOW := Color(Color("8B5CF6"), 0.35)
+var LAVENDER := Color("9B8EC4")
+var LAVENDER_LIGHT := Color("C5BBE0")
+var LAVENDER_GLOW := Color(Color("9B8EC4"), 0.35)
 
 var SPECIAL := Color("FFD700")
 
-# Dark Theme UI
-var BACKGROUND := Color("0D1B2A")
-var CARD_SURFACE := Color("162236")
-var CARD_BORDER := Color("1E3148")
-var ACCENT := Color("14B8A6")
-var ACCENT_TEXT := Color("2DD4BF")
-var TEXT_PRIMARY := Color("FFFFFF")
-var TEXT_SECONDARY := Color("6B8A9E")
-var TEXT_MUTED := Color("4A6577")
-var BORDER := Color("243B53")
-var GRID_LINE := Color("1A2940")
+# Light Theme UI — Soft & Bright
+var BACKGROUND := Color("F5F0EB")
+var CARD_SURFACE := Color("FFFFFF")
+var CARD_BORDER := Color("E8E0D8")
+var ACCENT := Color("FF6B6B")
+var ACCENT_TEXT := Color("FF8A8A")
+var TEXT_PRIMARY := Color("2D2D2D")
+var TEXT_SECONDARY := Color("8E8E93")
+var TEXT_MUTED := Color("AEAEB2")
+var BORDER := Color("E8E0D8")
+var GRID_LINE := Color("DDD5CC")
 
 # Score popup accents
 var GOLDEN := Color("FFD700")
-var SAGE_GREEN := Color("2DD4BF")
+var SAGE_GREEN := Color("6BCB77")
 
 # Ghost/highlight
-var HIGHLIGHT_VALID := Color(Color("10B981"), 0.25)
-var HIGHLIGHT_INVALID := Color(Color("EF4444"), 0.25)
+var HIGHLIGHT_VALID := Color(Color("6BCB77"), 0.30)
+var HIGHLIGHT_INVALID := Color(Color("FF8A8A"), 0.30)
 
-# Empty cell (matches board background)
-var EMPTY_CELL := Color("0F1D32")
-var EMPTY_BORDER := Color("1C2E45")
+# Empty cell (warm beige)
+var EMPTY_CELL := Color("EDE7E0")
+var EMPTY_BORDER := Color("DDD5CC")
 
 # Board
-var BOARD_BG := Color("0F1D32")
-var BOARD_BORDER := Color("1C2E45")
+var BOARD_BG := Color("E8E0D8")
+var BOARD_BORDER := Color("DDD5CC")
 
 # 테마 변경 시그널 — UI 갱신에 사용
 signal theme_changed()

@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/ui/home_screen.gd" id="1_home"]
 
 [sub_resource type="StyleBoxFlat" id="start_btn_style"]
-bg_color = Color(0.078, 0.722, 0.651, 1)
+bg_color = Color(1, 0.42, 0.42, 1)
 corner_radius_top_left = 24
 corner_radius_top_right = 24
 corner_radius_bottom_right = 24
@@ -14,7 +14,7 @@ content_margin_right = 24.0
 content_margin_bottom = 14.0
 
 [sub_resource type="StyleBoxFlat" id="continue_btn_style"]
-bg_color = Color(0.086, 0.133, 0.212, 1)
+bg_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 24
 corner_radius_top_right = 24
 corner_radius_bottom_right = 24
@@ -27,10 +27,10 @@ border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.078, 0.722, 0.651, 1)
+border_color = Color(1, 0.42, 0.42, 1)
 
 [sub_resource type="StyleBoxFlat" id="daily_btn_style"]
-bg_color = Color(0.086, 0.133, 0.212, 1)
+bg_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 24
 corner_radius_top_right = 24
 corner_radius_bottom_right = 24
@@ -46,7 +46,7 @@ border_width_bottom = 2
 border_color = Color(0.957, 0.62, 0.043, 1)
 
 [sub_resource type="StyleBoxFlat" id="how_btn_style"]
-bg_color = Color(0.086, 0.133, 0.212, 1)
+bg_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 24
 corner_radius_top_right = 24
 corner_radius_bottom_right = 24
@@ -59,7 +59,7 @@ border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.078, 0.722, 0.651, 0.3)
+border_color = Color(1, 0.42, 0.42, 0.3)
 
 [sub_resource type="StyleBoxFlat" id="icon_bg_style"]
 bg_color = Color(0.42, 0.55, 0.31, 1)
@@ -69,7 +69,7 @@ corner_radius_bottom_right = 20
 corner_radius_bottom_left = 20
 
 [sub_resource type="StyleBoxFlat" id="sound_btn_style"]
-bg_color = Color(0.086, 0.133, 0.212, 1)
+bg_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 24
 corner_radius_top_right = 24
 corner_radius_bottom_right = 24
@@ -96,7 +96,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.051, 0.106, 0.165, 1)
+color = Color(0.961, 0.941, 0.922, 1)
 
 [node name="VBox" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -162,14 +162,14 @@ color = Color(1, 1, 1, 0.6)
 [node name="Title" type="Label" parent="VBox/TopSection"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(0.176, 0.176, 0.176, 1)
 text = "ChromaBlocks"
 horizontal_alignment = 1
 
 [node name="Subtitle" type="Label" parent="VBox/TopSection"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
+theme_override_colors/font_color = Color(0.557, 0.557, 0.576, 1)
 text = "Color. Place. Clear."
 horizontal_alignment = 1
 
@@ -185,7 +185,7 @@ theme_override_styles/normal = SubResource("continue_btn_style")
 theme_override_styles/hover = SubResource("continue_btn_style")
 theme_override_styles/pressed = SubResource("continue_btn_style")
 theme_override_styles/focus = SubResource("continue_btn_style")
-theme_override_colors/font_color = Color(0.078, 0.722, 0.651, 1)
+theme_override_colors/font_color = Color(1, 0.42, 0.42, 1)
 theme_override_font_sizes/font_size = 18
 text = "CONTINUE"
 
@@ -196,7 +196,7 @@ theme_override_styles/normal = SubResource("start_btn_style")
 theme_override_styles/hover = SubResource("start_btn_style")
 theme_override_styles/pressed = SubResource("start_btn_style")
 theme_override_styles/focus = SubResource("start_btn_style")
-theme_override_colors/font_color = Color(0.051, 0.106, 0.165, 1)
+theme_override_colors/font_color = Color(0.961, 0.941, 0.922, 1)
 theme_override_font_sizes/font_size = 20
 text = "NEW GAME"
 
@@ -214,7 +214,7 @@ text = "DAILY CHALLENGE"
 [node name="DailyDesc" type="Label" parent="VBox/ButtonSection"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 11
-theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 0.8)
+theme_override_colors/font_color = Color(0.557, 0.557, 0.576, 0.8)
 text = "Same puzzle for everyone today"
 horizontal_alignment = 1
 
@@ -225,7 +225,7 @@ theme_override_styles/normal = SubResource("how_btn_style")
 theme_override_styles/hover = SubResource("how_btn_style")
 theme_override_styles/pressed = SubResource("how_btn_style")
 theme_override_styles/focus = SubResource("how_btn_style")
-theme_override_colors/font_color = Color(0.078, 0.722, 0.651, 1)
+theme_override_colors/font_color = Color(1, 0.42, 0.42, 1)
 theme_override_font_sizes/font_size = 14
 text = "HOW TO PLAY"
 
@@ -241,14 +241,14 @@ alignment = 1
 [node name="BestLabel" type="Label" parent="VBox/StatsSection/BestStat"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
-theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
+theme_override_colors/font_color = Color(0.557, 0.557, 0.576, 1)
 text = "BEST"
 horizontal_alignment = 1
 
 [node name="BestValue" type="Label" parent="VBox/StatsSection/BestStat"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(0.078, 0.722, 0.651, 1)
+theme_override_colors/font_color = Color(1, 0.42, 0.42, 1)
 text = "0"
 horizontal_alignment = 1
 
@@ -259,14 +259,14 @@ alignment = 1
 [node name="GamesLabel" type="Label" parent="VBox/StatsSection/GamesStat"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
-theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
+theme_override_colors/font_color = Color(0.557, 0.557, 0.576, 1)
 text = "GAMES"
 horizontal_alignment = 1
 
 [node name="GamesValue" type="Label" parent="VBox/StatsSection/GamesStat"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(0.545, 0.361, 0.965, 1)
+theme_override_colors/font_color = Color(0.608, 0.557, 0.769, 1)
 text = "0"
 horizontal_alignment = 1
 
@@ -277,7 +277,7 @@ alignment = 1
 [node name="AvgLabel" type="Label" parent="VBox/StatsSection/AvgStat"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
-theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
+theme_override_colors/font_color = Color(0.557, 0.557, 0.576, 1)
 text = "AVG"
 horizontal_alignment = 1
 
@@ -292,7 +292,7 @@ horizontal_alignment = 1
 layout_mode = 2
 custom_minimum_size = Vector2(200, 1)
 size_flags_horizontal = 4
-color = Color(0.141, 0.231, 0.325, 1)
+color = Color(0.91, 0.878, 0.847, 1)
 
 [node name="BottomRow" type="HBoxContainer" parent="VBox"]
 layout_mode = 2
@@ -306,7 +306,7 @@ theme_override_styles/normal = SubResource("sound_btn_style")
 theme_override_styles/hover = SubResource("sound_btn_style")
 theme_override_styles/pressed = SubResource("sound_btn_style")
 theme_override_styles/focus = SubResource("sound_btn_style")
-theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
+theme_override_colors/font_color = Color(0.557, 0.557, 0.576, 1)
 theme_override_font_sizes/font_size = 16
 text = "♪"
 
@@ -324,6 +324,6 @@ theme_override_styles/normal = SubResource("sound_btn_style")
 theme_override_styles/hover = SubResource("sound_btn_style")
 theme_override_styles/pressed = SubResource("sound_btn_style")
 theme_override_styles/focus = SubResource("sound_btn_style")
-theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
+theme_override_colors/font_color = Color(0.557, 0.557, 0.576, 1)
 theme_override_font_sizes/font_size = 16
 text = "⚙"

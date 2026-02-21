@@ -25,12 +25,12 @@ const PATTERN := [
 ]
 
 const BLOCK_COLORS := [
-	Color("EF4444"),  # coral
-	Color("F59E0B"),  # amber
-	Color("06B6D4"),  # sky
-	Color("10B981"),  # mint
-	Color("8B5CF6"),  # lavender
-	Color("EAB308"),  # lemon
+	Color("FF8A8A"),  # coral
+	Color("FFB347"),  # amber
+	Color("4FC3F7"),  # sky
+	Color("6BCB77"),  # mint
+	Color("9B8EC4"),  # lavender
+	Color("FFD93D"),  # lemon
 ]
 
 func _ready() -> void:

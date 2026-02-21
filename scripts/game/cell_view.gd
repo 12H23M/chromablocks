@@ -5,9 +5,9 @@ var _color: int = -1
 
 # Layer colors (set by set_filled / set_empty / set_highlight)
 var _glow_color := Color.TRANSPARENT
-var _bg_color := Color("0F1D32")
+var _bg_color := Color("EDE7E0")
 var _highlight_color := Color.TRANSPARENT
-var _border_color := Color("1C2E45")
+var _border_color := Color("DDD5CC")
 
 # Scale animation for clear effects
 var _scale_factor := 1.0
@@ -209,9 +209,38 @@ func _tween_to_empty(t: float) -> void:
 	_border_color = _border_color.lerp(AppColors.EMPTY_BORDER, 1.0 - t)
 	queue_redraw()
 
+## Draw a rounded rectangle using polygon approximation
+func _draw_rounded_rect(rect: Rect2, color: Color, filled: bool = true, line_width: float = 1.0) -> void:
+	var r := minf(rect.size.x, rect.size.y) * 0.20  # 20% corner radius
+	var points := PackedVector2Array()
+	var segments := 6  # segments per corner arc
+	# Top-left
+	for i in range(segments + 1):
+		var angle := PI + float(i) / segments * (PI / 2.0)
+		points.append(Vector2(rect.position.x + r + cos(angle) * r, rect.position.y + r + sin(angle) * r))
+	# Top-right
+	for i in range(segments + 1):
+		var angle := -PI / 2.0 + float(i) / segments * (PI / 2.0)
+		points.append(Vector2(rect.position.x + rect.size.x - r + cos(angle) * r, rect.position.y + r + sin(angle) * r))
+	# Bottom-right
+	for i in range(segments + 1):
+		var angle := 0.0 + float(i) / segments * (PI / 2.0)
+		points.append(Vector2(rect.position.x + rect.size.x - r + cos(angle) * r, rect.position.y + rect.size.y - r + sin(angle) * r))
+	# Bottom-left
+	for i in range(segments + 1):
+		var angle := PI / 2.0 + float(i) / segments * (PI / 2.0)
+		points.append(Vector2(rect.position.x + r + cos(angle) * r, rect.position.y + rect.size.y - r + sin(angle) * r))
+
+	if filled:
+		draw_colored_polygon(points, color)
+	else:
+		points.append(points[0])  # close the loop
+		draw_polyline(points, color, line_width, true)
+
+
 func _draw() -> void:
 	var cell_rect := Rect2(Vector2.ZERO, size)
-	var inset := 1.0
+	var inset := 2.0  # wider gap for casual feel
 
 	# Apply scale transform around cell center
 	if _scale_factor != 1.0 and _scale_factor > 0.01:
@@ -219,31 +248,37 @@ func _draw() -> void:
 		var offset := center * (1.0 - _scale_factor)
 		draw_set_transform(offset, 0.0, Vector2.ONE * _scale_factor)
 
-	# Layer 1: Glow (full cell area)
-	if _glow_color.a > 0.01:
-		draw_rect(cell_rect, _glow_color)
-
-	# Layer 2: Background (inset by 1px)
 	var bg_rect := Rect2(
 		Vector2(inset, inset),
 		Vector2(size.x - inset * 2, size.y - inset * 2))
-	draw_rect(bg_rect, _bg_color)
 
-	# Layer 3: Highlight band (top 35% of the inset area)
-	if _highlight_color.a > 0.01:
-		var band_height := (size.y - inset * 2) * 0.35
-		var band_rect := Rect2(
-			Vector2(inset, inset),
-			Vector2(size.x - inset * 2, band_height))
-		draw_rect(band_rect, _highlight_color)
+	# Layer 1: Soft shadow (offset down 1.5px, slightly darker)
+	if _occupied and _bg_color.a > 0.5:
+		var shadow_rect := Rect2(bg_rect.position + Vector2(0, 1.5), bg_rect.size)
+		var shadow_color := Color(0.0, 0.0, 0.0, 0.08)
+		_draw_rounded_rect(shadow_rect, shadow_color)
 
-	# Layer 4: Border (1px outline around the inset area)
-	draw_rect(bg_rect, _border_color, false, 1.0)
+	# Layer 2: Glow (behind block)
+	if _glow_color.a > 0.01:
+		_draw_rounded_rect(bg_rect, _glow_color)
+
+	# Layer 3: Background (rounded)
+	_draw_rounded_rect(bg_rect, _bg_color)
+
+	# Layer 4: Glossy highlight gradient (top → bottom, subtle)
+	if _highlight_color.a > 0.01 or (_occupied and _bg_color.a > 0.5):
+		var grad_alpha := _highlight_color.a if _highlight_color.a > 0.01 else 0.12
+		var grad_top := Color(1.0, 1.0, 1.0, grad_alpha)
+		var grad_bottom := Color(1.0, 1.0, 1.0, 0.0)
+		# Simple two-band approximation for gradient on rounded shape
+		var half_h := bg_rect.size.y * 0.5
+		var top_rect := Rect2(bg_rect.position, Vector2(bg_rect.size.x, half_h))
+		_draw_rounded_rect(top_rect, grad_top.lerp(grad_bottom, 0.3))
 
 	# Layer 5: Line prediction overlay + accented border
 	if _line_prediction_active:
-		draw_rect(bg_rect, _line_prediction_overlay)
-		draw_rect(bg_rect, _line_prediction_border, false, 1.5)
+		_draw_rounded_rect(bg_rect, _line_prediction_overlay)
+		_draw_rounded_rect(bg_rect, _line_prediction_border, false, 1.5)
 
 	# Reset transform
 	if _scale_factor != 1.0:

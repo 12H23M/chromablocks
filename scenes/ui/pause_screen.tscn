@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/ui/pause_screen.gd" id="1_pause"]
 
 [sub_resource type="StyleBoxFlat" id="card_panel_style"]
-bg_color = Color(0.086, 0.133, 0.212, 1)
+bg_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 24
 corner_radius_top_right = 24
 corner_radius_bottom_right = 24
@@ -16,10 +16,10 @@ border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.118, 0.192, 0.282, 1)
+border_color = Color(0.91, 0.878, 0.847, 1)
 
 [sub_resource type="StyleBoxFlat" id="resume_btn_style"]
-bg_color = Color(0.078, 0.722, 0.651, 1)
+bg_color = Color(1, 0.42, 0.42, 1)
 corner_radius_top_left = 16
 corner_radius_top_right = 16
 corner_radius_bottom_right = 16
@@ -94,13 +94,13 @@ theme_override_constants/separation = 16
 [node name="PausedLabel" type="Label" parent="Card/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(0.176, 0.176, 0.176, 1)
 text = "PAUSED"
 horizontal_alignment = 1
 
 [node name="Separator" type="HSeparator" parent="Card/VBox"]
 layout_mode = 2
-theme_override_colors/separator_color = Color(0.141, 0.231, 0.325, 1)
+theme_override_colors/separator_color = Color(0.91, 0.878, 0.847, 1)
 
 [node name="SoundRow" type="HBoxContainer" parent="Card/VBox"]
 layout_mode = 2
@@ -109,7 +109,7 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 15
-theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
+theme_override_colors/font_color = Color(0.557, 0.557, 0.576, 1)
 text = "Sound"
 
 [node name="SoundToggle" type="Button" parent="Card/VBox/SoundRow"]
@@ -120,7 +120,7 @@ theme_override_styles/hover = SubResource("toggle_btn_style")
 theme_override_styles/pressed = SubResource("toggle_btn_style")
 theme_override_styles/focus = SubResource("toggle_btn_style")
 theme_override_font_sizes/font_size = 13
-theme_override_colors/font_color = Color(0.176, 0.831, 0.749, 1)
+theme_override_colors/font_color = Color(1, 0.541, 0.541, 1)
 text = "ON"
 
 [node name="HapticRow" type="HBoxContainer" parent="Card/VBox"]
@@ -130,7 +130,7 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 15
-theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
+theme_override_colors/font_color = Color(0.557, 0.557, 0.576, 1)
 text = "Vibration"
 
 [node name="HapticToggle" type="Button" parent="Card/VBox/HapticRow"]
@@ -141,12 +141,12 @@ theme_override_styles/hover = SubResource("toggle_btn_style")
 theme_override_styles/pressed = SubResource("toggle_btn_style")
 theme_override_styles/focus = SubResource("toggle_btn_style")
 theme_override_font_sizes/font_size = 13
-theme_override_colors/font_color = Color(0.176, 0.831, 0.749, 1)
+theme_override_colors/font_color = Color(1, 0.541, 0.541, 1)
 text = "ON"
 
 [node name="Separator2" type="HSeparator" parent="Card/VBox"]
 layout_mode = 2
-theme_override_colors/separator_color = Color(0.141, 0.231, 0.325, 1)
+theme_override_colors/separator_color = Color(0.91, 0.878, 0.847, 1)
 
 [node name="ResumeButton" type="Button" parent="Card/VBox"]
 layout_mode = 2
@@ -156,7 +156,7 @@ theme_override_styles/normal = SubResource("resume_btn_style")
 theme_override_styles/hover = SubResource("resume_btn_style")
 theme_override_styles/pressed = SubResource("resume_btn_style")
 theme_override_styles/focus = SubResource("resume_btn_style")
-theme_override_colors/font_color = Color(0.051, 0.106, 0.165, 1)
+theme_override_colors/font_color = Color(0.961, 0.941, 0.922, 1)
 theme_override_font_sizes/font_size = 16
 text = "RESUME"
 
@@ -168,6 +168,6 @@ theme_override_styles/normal = SubResource("quit_btn_style")
 theme_override_styles/hover = SubResource("quit_btn_style")
 theme_override_styles/pressed = SubResource("quit_btn_style")
 theme_override_styles/focus = SubResource("quit_btn_style")
-theme_override_colors/font_color = Color(0.42, 0.541, 0.62, 1)
+theme_override_colors/font_color = Color(0.557, 0.557, 0.576, 1)
 theme_override_font_sizes/font_size = 14
 text = "QUIT"
