@@ -11,7 +11,7 @@ const GRID_ROWS := 5
 @onready var subtitle_label: Label = $SubtitleLabel
 @onready var block_container: Control = $BlockContainer
 
-var _blocks: Array[ColorRect] = []
+var _blocks: Array[Panel] = []
 var _skippable := false
 var _tweens: Array[Tween] = []
 

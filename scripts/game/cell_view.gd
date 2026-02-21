@@ -211,7 +211,9 @@ func _tween_to_empty(t: float) -> void:
 
 ## Draw a rounded rectangle using polygon approximation
 func _draw_rounded_rect(rect: Rect2, color: Color, filled: bool = true, line_width: float = 1.0, radius_ratio: float = 0.35) -> void:
-	var r := minf(rect.size.x, rect.size.y) * radius_ratio
+	if rect.size.x < 1.0 or rect.size.y < 1.0 or color.a < 0.005:
+		return
+	var r := minf(minf(rect.size.x, rect.size.y) * radius_ratio, minf(rect.size.x, rect.size.y) * 0.5)
 	var points := PackedVector2Array()
 	var segments := 8  # smoother arcs for bubble feel
 	# Top-left
@@ -239,6 +241,8 @@ func _draw_rounded_rect(rect: Rect2, color: Color, filled: bool = true, line_wid
 
 ## Draw a circle (for bubble specular highlight)
 func _draw_ellipse(center: Vector2, radius: Vector2, color: Color, segments: int = 12) -> void:
+	if radius.x < 0.5 or radius.y < 0.5 or color.a < 0.005:
+		return
 	var points := PackedVector2Array()
 	for i in range(segments + 1):
 		var angle := float(i) / segments * TAU
@@ -259,7 +263,9 @@ func _draw() -> void:
 		Vector2(inset, inset),
 		Vector2(size.x - inset * 2, size.y - inset * 2))
 
-	if _occupied and _bg_color.a > 0.5:
+	# Use bubble style for occupied cells AND during clear animation (scale_factor tweening)
+	var _is_block := _occupied or (_scale_factor < 0.99 and _scale_factor > 0.01)
+	if _is_block and _bg_color.a > 0.1:
 		# === BUBBLE STYLE BLOCK ===
 		
 		# Layer 1: Drop shadow (soft, below)

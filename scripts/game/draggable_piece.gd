@@ -26,7 +26,9 @@ func setup(p_piece: BlockPiece, p_index: int, p_cell_size: float) -> void:
 
 ## Draw a rounded rectangle (matches cell_view bubble style)
 func _draw_rounded_rect_piece(rect: Rect2, color: Color, filled: bool = true, line_width: float = 1.0, radius_ratio: float = 0.35) -> void:
-	var r := minf(rect.size.x, rect.size.y) * radius_ratio
+	if rect.size.x < 1.0 or rect.size.y < 1.0 or color.a < 0.005:
+		return
+	var r := minf(minf(rect.size.x, rect.size.y) * radius_ratio, minf(rect.size.x, rect.size.y) * 0.5)
 	var points := PackedVector2Array()
 	var segments := 8
 	for corner in 4:
@@ -59,6 +61,8 @@ func _draw_rounded_rect_piece(rect: Rect2, color: Color, filled: bool = true, li
 		draw_polyline(points, color, line_width, true)
 
 func _draw_ellipse_piece(center: Vector2, radius: Vector2, color: Color, segments: int = 12) -> void:
+	if radius.x < 0.5 or radius.y < 0.5 or color.a < 0.005:
+		return
 	var points := PackedVector2Array()
 	for i in range(segments + 1):
 		var angle := float(i) / segments * TAU
