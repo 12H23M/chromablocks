@@ -25,6 +25,11 @@ var _sparkles: Array = []
 var _deco_blocks: Array = []
 var _logo_blocks: Array = []
 var _play_glow_tween: Tween
+var _btn_section: VBoxContainer
+var _stats_section: MarginContainer
+var _bottom_section: CenterContainer
+var _board_frame: PanelContainer
+var _badge_panel: PanelContainer
 
 # ─── Colors ───
 const BG_COLOR := Color("#110d30")
@@ -99,6 +104,7 @@ func _build_ui() -> void:
 	# Mini board
 	var board_section := _build_mini_board()
 	main_vbox.add_child(board_section)
+	# _board_frame is set inside _build_mini_board
 
 	# Spacer
 	var sp1 := Control.new()
@@ -106,8 +112,8 @@ func _build_ui() -> void:
 	main_vbox.add_child(sp1)
 
 	# Buttons
-	var btn_section := _build_buttons()
-	main_vbox.add_child(btn_section)
+	_btn_section = _build_buttons()
+	main_vbox.add_child(_btn_section)
 
 	# Flexible spacer
 	var flex := Control.new()
@@ -115,12 +121,12 @@ func _build_ui() -> void:
 	main_vbox.add_child(flex)
 
 	# Stats
-	var stats_section := _build_stats()
-	main_vbox.add_child(stats_section)
+	_stats_section = _build_stats()
+	main_vbox.add_child(_stats_section)
 
 	# Bottom bar
-	var bottom := _build_bottom_bar()
-	main_vbox.add_child(bottom)
+	_bottom_section = _build_bottom_bar()
+	main_vbox.add_child(_bottom_section)
 
 	# Bottom padding
 	var bot_pad := Control.new()
@@ -267,7 +273,7 @@ func _build_mini_board() -> CenterContainer:
 	# Start hidden for entrance animation
 	frame.modulate.a = 0.0
 	frame.scale = Vector2(0.9, 0.9)
-	frame.name = "BoardFrame"
+	_board_frame = frame
 
 	return center
 
@@ -300,7 +306,7 @@ func _build_buttons() -> VBoxContainer:
 	daily_wrap.custom_minimum_size = Vector2(0, 58)
 
 	_daily_btn = _create_game_button(
-		"📅  Daily Challenge", 19,
+		"Daily Challenge", 18,
 		Color("#ffc852"), Color("#dd8810"), Color("#a06008"),
 		6, 18, 0.80
 	)
@@ -320,13 +326,24 @@ func _build_buttons() -> VBoxContainer:
 	daily_vbox.add_child(_center_wrap(_daily_btn, 0.80))
 	daily_vbox.add_child(_daily_desc)
 
-	# Fire badge
+	# Fire badge — dot + number style
+	var badge_hbox := HBoxContainer.new()
+	badge_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	badge_hbox.set("theme_override_constants/separation", 4)
+
+	var fire_dot := ColorRect.new()
+	fire_dot.color = Color("#FFD536")
+	fire_dot.custom_minimum_size = Vector2(8, 8)
+	fire_dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge_hbox.add_child(fire_dot)
+
 	_fire_badge = Label.new()
-	_fire_badge.text = "🔥 7"
+	_fire_badge.text = "7"
 	_fire_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_fire_badge.add_theme_font_size_override("font_size", 11)
 	_fire_badge.add_theme_color_override("font_color", Color.WHITE)
 	_fire_badge.name = "FireBadge"
+	badge_hbox.add_child(_fire_badge)
 
 	var badge_panel := PanelContainer.new()
 	var badge_style := StyleBoxFlat.new()
@@ -337,47 +354,44 @@ func _build_buttons() -> VBoxContainer:
 	badge_style.corner_radius_bottom_left = 12
 	badge_style.content_margin_left = 8
 	badge_style.content_margin_right = 8
-	badge_style.content_margin_top = 2
-	badge_style.content_margin_bottom = 2
+	badge_style.content_margin_top = 3
+	badge_style.content_margin_bottom = 3
 	badge_style.shadow_color = Color(1, 0.2, 0.31, 0.55)
 	badge_style.shadow_size = 5
 	badge_panel.add_theme_stylebox_override("panel", badge_style)
-	badge_panel.add_child(_fire_badge)
+	badge_panel.add_child(badge_hbox)
 	badge_panel.name = "BadgePanel"
+
+	# Add badge to the daily button wrapper
+	_badge_panel = badge_panel
+	daily_vbox.add_child(badge_panel)
 
 	vbox.add_child(daily_vbox)
 
-	# How to Play button
+	# How to Play — text link style (not a big button)
 	_howto_btn = Button.new()
-	_howto_btn.text = "📖  How to Play"
+	_howto_btn.text = "How to Play"
 	_howto_btn.name = "HowToPlayButton"
-	_howto_btn.add_theme_font_size_override("font_size", 15)
-	_howto_btn.add_theme_color_override("font_color", Color("#b8a6e0"))
+	_howto_btn.add_theme_font_size_override("font_size", 14)
+	_howto_btn.add_theme_color_override("font_color", Color("#9B8AC4"))
 
 	var howto_style := StyleBoxFlat.new()
-	howto_style.bg_color = Color(0.65, 0.55, 0.87, 0.12)
-	howto_style.corner_radius_top_left = 14
-	howto_style.corner_radius_top_right = 14
-	howto_style.corner_radius_bottom_right = 14
-	howto_style.corner_radius_bottom_left = 14
-	howto_style.border_width_left = 1
-	howto_style.border_width_top = 1
-	howto_style.border_width_right = 1
-	howto_style.border_width_bottom = 4
-	howto_style.border_color = Color(0.31, 0.22, 0.55, 0.35)
-	howto_style.content_margin_left = 20
-	howto_style.content_margin_top = 12
-	howto_style.content_margin_right = 20
-	howto_style.content_margin_bottom = 12
+	howto_style.bg_color = Color(0, 0, 0, 0)
+	howto_style.border_width_bottom = 1
+	howto_style.border_color = Color(0.61, 0.54, 0.77, 0.3)
+	howto_style.content_margin_left = 16
+	howto_style.content_margin_top = 6
+	howto_style.content_margin_right = 16
+	howto_style.content_margin_bottom = 6
 	_howto_btn.add_theme_stylebox_override("normal", howto_style)
 	_howto_btn.add_theme_stylebox_override("hover", howto_style)
 	_howto_btn.add_theme_stylebox_override("pressed", howto_style)
+	_howto_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 
-	vbox.add_child(_center_wrap(_howto_btn, 0.55))
+	vbox.add_child(_center_wrap(_howto_btn, 0.45))
 
-	# Hide for entrance
-	for child in vbox.get_children():
-		child.modulate.a = 0.0
+	# Hide entire section for entrance animation
+	vbox.modulate.a = 0.0
 
 	return vbox
 
@@ -431,7 +445,7 @@ func _build_stats() -> MarginContainer:
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
 
 	var colors := [Color("#FFD536"), Color("#42B9F5"), Color("#5EC97B")]
-	var icons := ["🏆", "🎮", "📊"]
+	var icons := ["★", "♦", "≈"]
 	var labels_text := ["BEST", "GAMES", "AVG"]
 
 	_best_value = Label.new()
@@ -464,30 +478,46 @@ func _build_stat_card(icon_text: String, value_label: Label, label_text: String,
 	style.corner_radius_bottom_right = 14
 	style.corner_radius_bottom_left = 14
 	style.border_width_left = 1
-	style.border_width_top = 2
+	style.border_width_top = 3
 	style.border_width_right = 1
 	style.border_width_bottom = 3
 	style.border_color = Color(1, 1, 1, 0.06)
 	style.content_margin_left = 4
-	style.content_margin_top = 10
+	style.content_margin_top = 12
 	style.content_margin_right = 4
 	style.content_margin_bottom = 10
 
-	# Top accent — use border top with accent color
-	style.border_width_top = 2
-	style.border_color = accent_color.lerp(Color(1, 1, 1, 0.06), 0.5)
+	# Top accent bar color
+	style.border_color = accent_color
 
 	panel.add_theme_stylebox_override("panel", style)
 
 	var vbox := VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.set("theme_override_constants/separation", 2)
+	vbox.set("theme_override_constants/separation", 4)
+
+	# Icon — colored circle background with text symbol
+	var icon_bg := PanelContainer.new()
+	icon_bg.custom_minimum_size = Vector2(28, 28)
+	var icon_style := StyleBoxFlat.new()
+	icon_style.bg_color = Color(accent_color, 0.15)
+	icon_style.corner_radius_top_left = 14
+	icon_style.corner_radius_top_right = 14
+	icon_style.corner_radius_bottom_right = 14
+	icon_style.corner_radius_bottom_left = 14
+	icon_bg.add_theme_stylebox_override("panel", icon_style)
 
 	var icon := Label.new()
 	icon.text = icon_text
 	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	icon.add_theme_font_size_override("font_size", 16)
-	vbox.add_child(icon)
+	icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	icon.add_theme_font_size_override("font_size", 14)
+	icon.add_theme_color_override("font_color", accent_color)
+	icon_bg.add_child(icon)
+
+	var icon_center := CenterContainer.new()
+	icon_center.add_child(icon_bg)
+	vbox.add_child(icon_center)
 
 	value_label.text = "0"
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -510,19 +540,27 @@ func _build_bottom_bar() -> CenterContainer:
 	var center := CenterContainer.new()
 
 	var hbox := HBoxContainer.new()
-	hbox.set("theme_override_constants/separation", 20)
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.set("theme_override_constants/separation", 12)
 
 	_sound_btn = Button.new()
-	_sound_btn.text = "🔊 Sound"
+	_sound_btn.text = "Sound"
 	_sound_btn.name = "SoundToggle"
 	_style_bottom_btn(_sound_btn)
 
+	# Divider
+	var divider := ColorRect.new()
+	divider.color = Color(0.42, 0.35, 0.6, 0.2)
+	divider.custom_minimum_size = Vector2(1, 16)
+	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
 	_settings_btn = Button.new()
-	_settings_btn.text = "⚙️ Settings"
+	_settings_btn.text = "Settings"
 	_settings_btn.name = "SettingsButton"
 	_style_bottom_btn(_settings_btn)
 
 	hbox.add_child(_sound_btn)
+	hbox.add_child(divider)
 	hbox.add_child(_settings_btn)
 	center.add_child(hbox)
 
@@ -534,18 +572,13 @@ func _style_bottom_btn(btn: Button) -> void:
 	btn.add_theme_font_size_override("font_size", 13)
 	btn.add_theme_color_override("font_color", Color("#6B5A98"))
 
+	# Transparent / no background — text only
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(1, 1, 1, 0.04)
-	style.corner_radius_top_left = 12
-	style.corner_radius_top_right = 12
-	style.corner_radius_bottom_right = 12
-	style.corner_radius_bottom_left = 12
-	style.border_width_bottom = 2
-	style.border_color = Color(0, 0, 0, 0.15)
-	style.content_margin_left = 16
-	style.content_margin_top = 8
-	style.content_margin_right = 16
-	style.content_margin_bottom = 8
+	style.bg_color = Color(0, 0, 0, 0)
+	style.content_margin_left = 8
+	style.content_margin_top = 4
+	style.content_margin_right = 8
+	style.content_margin_bottom = 4
 	btn.add_theme_stylebox_override("normal", style)
 	btn.add_theme_stylebox_override("hover", style)
 	btn.add_theme_stylebox_override("pressed", style)
@@ -661,42 +694,34 @@ func _play_entrance_animations() -> void:
 		tween.parallel().tween_property(block, "position:y", 0.0, 0.5).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 
 	# Board frame entrance
-	var board_frame := _find_child_by_name("BoardFrame")
-	if board_frame:
+	if _board_frame:
 		var bt := create_tween()
 		bt.tween_interval(0.8)
-		bt.tween_property(board_frame, "modulate:a", 1.0, 0.5).set_ease(Tween.EASE_OUT)
-		bt.parallel().tween_property(board_frame, "scale", Vector2.ONE, 0.5).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+		bt.tween_property(_board_frame, "modulate:a", 1.0, 0.5).set_ease(Tween.EASE_OUT)
+		bt.parallel().tween_property(_board_frame, "scale", Vector2.ONE, 0.5).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 
-	# Buttons entrance (staggered)
-	var btn_section := _play_btn.get_parent().get_parent()  # CenterContainer → VBoxContainer
-	if btn_section:
-		var parent := btn_section.get_parent()
-		if parent:
-			var children := parent.get_children()
-			var btn_idx := 0
-			for child in children:
-				if child.modulate.a < 0.5 and child != btn_section:
-					continue
-				if child is CenterContainer or child is VBoxContainer:
-					var delay := 1.0 + btn_idx * 0.15
-					var tw := create_tween()
-					tw.tween_interval(delay)
-					tw.tween_property(child, "modulate:a", 1.0, 0.4).set_ease(Tween.EASE_OUT)
-					btn_idx += 1
+	# Buttons entrance
+	if _btn_section:
+		var tw := create_tween()
+		tw.tween_interval(1.0)
+		tw.tween_property(_btn_section, "modulate:a", 1.0, 0.5).set_ease(Tween.EASE_OUT)
 
-	# Stats + bottom entrance
-	await get_tree().create_timer(1.5).timeout
-	for child in get_children():
-		if child is MarginContainer and child.modulate.a < 0.5:
-			var tw := create_tween()
-			tw.tween_property(child, "modulate:a", 1.0, 0.4).set_ease(Tween.EASE_OUT)
-		if child is CenterContainer and child.modulate.a < 0.5:
-			var tw2 := create_tween()
-			tw2.tween_property(child, "modulate:a", 1.0, 0.4).set_ease(Tween.EASE_OUT)
+	# Stats entrance
+	if _stats_section:
+		var tw2 := create_tween()
+		tw2.tween_interval(1.3)
+		tw2.tween_property(_stats_section, "modulate:a", 1.0, 0.4).set_ease(Tween.EASE_OUT)
 
-	# Start idle animations
-	_start_idle_animations()
+	# Bottom bar entrance
+	if _bottom_section:
+		var tw3 := create_tween()
+		tw3.tween_interval(1.5)
+		tw3.tween_property(_bottom_section, "modulate:a", 1.0, 0.4).set_ease(Tween.EASE_OUT)
+
+	# Start idle animations after entrance completes
+	var idle_tw := create_tween()
+	idle_tw.tween_interval(2.0)
+	idle_tw.tween_callback(_start_idle_animations)
 
 
 func _start_idle_animations() -> void:
@@ -755,9 +780,9 @@ func _star_sparkle_loop() -> void:
 
 
 func _badge_bounce_loop() -> void:
-	var badge := _find_child_by_name("BadgePanel")
-	if not badge:
+	if not _badge_panel or not _badge_panel.is_inside_tree():
 		return
+	var badge := _badge_panel
 	var tw := create_tween().set_loops()
 	tw.tween_property(badge, "scale", Vector2(1.1, 1.1), 0.5).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_property(badge, "scale", Vector2.ONE, 0.5).set_ease(Tween.EASE_IN_OUT)
@@ -791,7 +816,7 @@ func _toggle_sound() -> void:
 
 func _update_sound_label() -> void:
 	if _sound_btn:
-		_sound_btn.text = "🔊 Sound" if SaveManager.is_sound_enabled() else "🔇 Sound"
+		_sound_btn.text = "Sound ON" if SaveManager.is_sound_enabled() else "Sound OFF"
 
 
 func _update_daily_button() -> void:
@@ -801,9 +826,9 @@ func _update_daily_button() -> void:
 
 	if played:
 		var best := DailyChallengeSystem.get_daily_best()
-		_daily_btn.text = "📅  DAILY  %s  -  %d pts" % [date_str, best]
+		_daily_btn.text = "DAILY  %s  -  %d pts" % [date_str, best]
 	else:
-		_daily_btn.text = "📅  DAILY CHALLENGE  %s" % date_str
+		_daily_btn.text = "Daily Challenge  %s" % date_str
 
 	if _daily_desc:
 		var streak := DailyChallengeSystem.get_streak()
@@ -815,13 +840,13 @@ func _update_daily_button() -> void:
 			_daily_desc.text = "Same puzzle for everyone today"
 
 	# Update fire badge
-	if _fire_badge:
+	if _fire_badge and _badge_panel:
 		var streak := DailyChallengeSystem.get_streak()
 		if streak >= 2:
-			_fire_badge.text = "🔥 %d" % streak
-			_fire_badge.get_parent().visible = true
+			_fire_badge.text = "%d" % streak
+			_badge_panel.visible = true
 		else:
-			_fire_badge.get_parent().visible = false
+			_badge_panel.visible = false
 
 
 func _try_daily_reward() -> void:
