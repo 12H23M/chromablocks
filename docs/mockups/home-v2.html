@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+  
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    width: 393px;
+    height: 852px;
+    font-family: 'Fredoka', sans-serif;
+    color: #FFFFFF;
+    overflow: hidden;
+    position: relative;
+    background: #1a1145;
+  }
+
+  /* Layered game background */
+  .bg {
+    position: absolute;
+    inset: 0;
+    background: 
+      /* grid pattern overlay */
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.03) 39px, rgba(255,255,255,0.03) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.03) 39px, rgba(255,255,255,0.03) 40px),
+      /* main gradient */
+      linear-gradient(170deg, #2d1b69 0%, #1a1145 40%, #0f0d2e 100%);
+    z-index: 0;
+  }
+
+  /* Floating decorative blocks */
+  .deco-block {
+    position: absolute;
+    border-radius: 8px;
+    opacity: 0.12;
+    z-index: 1;
+    transform: rotate(var(--rot));
+  }
+
+  .d1 { width: 48px; height: 48px; background: #FF7E8E; top: 80px; left: -10px; --rot: 15deg; }
+  .d2 { width: 32px; height: 32px; background: #42B9F5; top: 160px; right: 10px; --rot: -20deg; }
+  .d3 { width: 56px; height: 24px; background: #FFD536; top: 420px; left: 8px; --rot: 25deg; }
+  .d4 { width: 24px; height: 56px; background: #5EC97B; top: 380px; right: 15px; --rot: -10deg; }
+  .d5 { width: 40px; height: 40px; background: #A78BDF; bottom: 200px; left: 20px; --rot: 30deg; }
+  .d6 { width: 36px; height: 36px; background: #FFAA42; bottom: 160px; right: 8px; --rot: -25deg; }
+  .d7 { width: 24px; height: 24px; background: #FF7E8E; top: 300px; left: 30px; --rot: 45deg; }
+  .d8 { width: 20px; height: 20px; background: #42B9F5; bottom: 300px; right: 40px; --rot: -15deg; }
+
+  /* Glow orbs */
+  .glow-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    z-index: 1;
+  }
+  .go1 { width: 200px; height: 200px; background: rgba(66,185,245,0.15); top: 50px; right: -60px; }
+  .go2 { width: 250px; height: 250px; background: rgba(167,139,223,0.12); bottom: 100px; left: -80px; }
+  .go3 { width: 150px; height: 150px; background: rgba(255,126,142,0.1); top: 350px; right: -30px; }
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    padding: 48px 24px 32px;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Logo */
+  .logo-section {
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .logo-blocks {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+
+  .logo-block {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    position: relative;
+    /* 3D raised effect */
+    border-bottom: 4px solid rgba(0,0,0,0.3);
+    border-right: 1px solid rgba(0,0,0,0.15);
+  }
+  .logo-block::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px; right: 6px; bottom: 8px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 5px;
+  }
+
+  .lb1 { background: #FF7E8E; box-shadow: 0 0 20px rgba(255,126,142,0.5), 0 4px 0 #cc5a68; }
+  .lb2 { background: #FFAA42; box-shadow: 0 0 20px rgba(255,170,66,0.5), 0 4px 0 #cc8830; }
+  .lb3 { background: #FFD536; box-shadow: 0 0 20px rgba(255,213,54,0.5), 0 4px 0 #ccaa28; }
+  .lb4 { background: #5EC97B; box-shadow: 0 0 20px rgba(94,201,123,0.5), 0 4px 0 #3fa05c; }
+  .lb5 { background: #42B9F5; box-shadow: 0 0 20px rgba(66,185,245,0.5), 0 4px 0 #2a8ec5; }
+  .lb6 { background: #A78BDF; box-shadow: 0 0 20px rgba(167,139,223,0.5), 0 4px 0 #7d64b3; }
+
+  .logo-title {
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(180deg, #FFFFFF 30%, #c8b8ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
+  }
+
+  .logo-subtitle {
+    font-size: 14px;
+    color: #A78BDF;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  /* Buttons */
+  .buttons {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 32px;
+  }
+
+  .btn {
+    width: 100%;
+    border: none;
+    border-radius: 18px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Primary — big playful button */
+  .btn-primary {
+    background: linear-gradient(180deg, #56d87a 0%, #2eb85c 50%, #25a04e 100%);
+    color: #FFFFFF;
+    padding: 22px 28px;
+    font-size: 22px;
+    font-weight: 700;
+    justify-content: center;
+    border-bottom: 5px solid #1a7a38;
+    border-radius: 20px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    box-shadow: 0 6px 24px rgba(46,184,92,0.4), inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%);
+    border-radius: 20px 20px 0 0;
+  }
+
+  .btn-play-icon {
+    width: 32px;
+    height: 32px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  /* Secondary — glass cards */
+  .btn-secondary {
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.04) 100%);
+    color: #FFFFFF;
+    border: 1.5px solid rgba(255,255,255,0.12);
+    padding: 16px 20px;
+    border-bottom: 3px solid rgba(0,0,0,0.2);
+    backdrop-filter: blur(10px);
+  }
+  .btn-secondary .btn-sub {
+    margin-left: auto;
+    font-size: 13px;
+    color: #8892B0;
+    font-weight: 400;
+  }
+
+  /* Daily — warm glow */
+  .btn-daily {
+    background: linear-gradient(135deg, rgba(255,170,66,0.2) 0%, rgba(255,213,54,0.12) 100%);
+    color: #FFD536;
+    border: 1.5px solid rgba(255,213,54,0.25);
+    padding: 16px 20px;
+    border-bottom: 3px solid rgba(204,170,40,0.3);
+  }
+
+  .btn-icon {
+    font-size: 22px;
+    width: 32px;
+    text-align: center;
+    filter: none;
+  }
+
+  .badge {
+    margin-left: auto;
+    background: linear-gradient(135deg, #FF7E8E, #FFAA42);
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(255,126,142,0.4);
+  }
+
+  /* Stats area — game-style cards */
+  .stats {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    margin-top: auto;
+    margin-bottom: 16px;
+  }
+
+  .stat-card {
+    flex: 1;
+    background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 14px 8px;
+    text-align: center;
+    position: relative;
+    border-bottom: 3px solid rgba(0,0,0,0.2);
+  }
+
+  .stat-icon {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: #7B6BA8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+  }
+
+  .stat-card:nth-child(1) .stat-value { color: #FFD536; }
+  .stat-card:nth-child(2) .stat-value { color: #42B9F5; }
+  .stat-card:nth-child(3) .stat-value { color: #5EC97B; }
+
+  /* Bottom bar */
+  .bottom-bar {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .bottom-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #7B6BA8;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+    cursor: pointer;
+    padding: 10px 20px;
+    border-bottom: 2px solid rgba(0,0,0,0.15);
+  }
+
+  .bottom-icon {
+    font-size: 18px;
+  }
+</style>
+</head>
+<body>
+  <div class="bg"></div>
+
+  <!-- Decorative floating blocks -->
+  <div class="deco-block d1"></div>
+  <div class="deco-block d2"></div>
+  <div class="deco-block d3"></div>
+  <div class="deco-block d4"></div>
+  <div class="deco-block d5"></div>
+  <div class="deco-block d6"></div>
+  <div class="deco-block d7"></div>
+  <div class="deco-block d8"></div>
+
+  <!-- Glow orbs -->
+  <div class="glow-orb go1"></div>
+  <div class="glow-orb go2"></div>
+  <div class="glow-orb go3"></div>
+
+  <div class="container">
+    <!-- Logo -->
+    <div class="logo-section">
+      <div class="logo-blocks">
+        <div class="logo-block lb1"></div>
+        <div class="logo-block lb2"></div>
+        <div class="logo-block lb3"></div>
+        <div class="logo-block lb4"></div>
+        <div class="logo-block lb5"></div>
+        <div class="logo-block lb6"></div>
+      </div>
+      <div class="logo-title">ChromaBlocks</div>
+      <div class="logo-subtitle">Block Puzzle</div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="buttons">
+      <button class="btn btn-primary">
+        <span class="btn-play-icon">▶</span>
+        New Game
+      </button>
+      
+      <button class="btn btn-secondary">
+        <span class="btn-icon">↩️</span>
+        Continue
+        <span class="btn-sub">Lv.12 · 4,280</span>
+      </button>
+
+      <button class="btn btn-daily">
+        <span class="btn-icon">📅</span>
+        Daily Challenge
+        <span class="badge">🔥 7 Days</span>
+      </button>
+
+      <button class="btn btn-secondary">
+        <span class="btn-icon">📖</span>
+        How to Play
+      </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-icon">🏆</div>
+        <div class="stat-value">12,480</div>
+        <div class="stat-label">Best</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🎮</div>
+        <div class="stat-value">47</div>
+        <div class="stat-label">Games</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-value">3,820</div>
+        <div class="stat-label">Average</div>
+      </div>
+    </div>
+
+    <!-- Bottom -->
+    <div class="bottom-bar">
+      <button class="bottom-btn">
+        <span class="bottom-icon">🔊</span> Sound
+      </button>
+      <button class="bottom-btn">
+        <span class="bottom-icon">⚙️</span> Settings
+      </button>
+    </div>
+  </div>
+</body>
+</html>
