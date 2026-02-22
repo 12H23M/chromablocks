@@ -27,17 +27,17 @@ var LAVENDER_GLOW := Color(Color("A78BDF"), 0.40)
 
 var SPECIAL := Color("FFD700")
 
-# Light Theme UI — Bubble Pop
-var BACKGROUND := Color("F3F0F8")
-var CARD_SURFACE := Color("FFFFFF")
-var CARD_BORDER := Color("E4DFF0")
-var ACCENT := Color("FF6B6B")
-var ACCENT_TEXT := Color("FF8A8A")
-var TEXT_PRIMARY := Color("2D2D2D")
-var TEXT_SECONDARY := Color("8E8E93")
-var TEXT_MUTED := Color("AEAEB2")
-var BORDER := Color("E4DFF0")
-var GRID_LINE := Color("DCD7EA")
+# Dark Theme UI
+var BACKGROUND := Color("110d30")
+var CARD_SURFACE := Color("1a1145")
+var CARD_BORDER := Color("2d1b69")
+var ACCENT := Color("42B9F5")
+var ACCENT_TEXT := Color("5EC0F7")
+var TEXT_PRIMARY := Color("FFFFFF")
+var TEXT_SECONDARY := Color("9B8AC4")
+var TEXT_MUTED := Color("6B5A98")
+var BORDER := Color("2d1b69")
+var GRID_LINE := Color("1f1550")
 
 # Score popup accents
 var GOLDEN := Color("FFD700")
@@ -47,13 +47,13 @@ var SAGE_GREEN := Color("6BCB77")
 var HIGHLIGHT_VALID := Color(Color("6BCB77"), 0.30)
 var HIGHLIGHT_INVALID := Color(Color("FF8A8A"), 0.30)
 
-# Empty cell (soft lavender well)
-var EMPTY_CELL := Color("EBE7F4")
-var EMPTY_BORDER := Color("DCD7EA")
+# Empty cell (dark well)
+var EMPTY_CELL := Color("1a1145")
+var EMPTY_BORDER := Color("2d1b69")
 
 # Board
-var BOARD_BG := Color("E4DFF0")
-var BOARD_BORDER := Color("DCD7EA")
+var BOARD_BG := Color("0f0d2e")
+var BOARD_BORDER := Color("2d1b69")
 
 # 테마 변경 시그널 — UI 갱신에 사용
 signal theme_changed()

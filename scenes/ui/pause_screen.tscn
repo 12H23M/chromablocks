@@ -3,47 +3,53 @@
 [ext_resource type="Script" path="res://scripts/ui/pause_screen.gd" id="1_pause"]
 
 [sub_resource type="StyleBoxFlat" id="card_panel_style"]
-bg_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 28
-corner_radius_top_right = 28
-corner_radius_bottom_right = 28
-corner_radius_bottom_left = 28
-content_margin_left = 24.0
-content_margin_top = 24.0
-content_margin_right = 24.0
-content_margin_bottom = 24.0
+bg_color = Color(0.1, 0.075, 0.22, 0.97)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+content_margin_left = 28.0
+content_margin_top = 28.0
+content_margin_right = 28.0
+content_margin_bottom = 28.0
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.894, 0.875, 0.941, 1)
-shadow_color = Color(0, 0, 0, 0.1)
-shadow_size = 10
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 0.08)
+shadow_color = Color(0, 0, 0, 0.4)
+shadow_size = 16
 
 [sub_resource type="StyleBoxFlat" id="resume_btn_style"]
-bg_color = Color(1, 0.42, 0.42, 1)
-corner_radius_top_left = 16
-corner_radius_top_right = 16
-corner_radius_bottom_right = 16
-corner_radius_bottom_left = 16
+bg_color = Color(0.42, 0.77, 0.54, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
 content_margin_left = 24.0
-content_margin_top = 12.0
+content_margin_top = 14.0
 content_margin_right = 24.0
-content_margin_bottom = 12.0
+content_margin_bottom = 14.0
+border_width_bottom = 5
+border_color = Color(0.1, 0.48, 0.22, 1)
+shadow_color = Color(0.42, 0.77, 0.54, 0.35)
+shadow_size = 8
 
 [sub_resource type="StyleBoxFlat" id="quit_btn_style"]
-bg_color = Color(0, 0, 0, 0)
-corner_radius_top_left = 16
-corner_radius_top_right = 16
-corner_radius_bottom_right = 16
-corner_radius_bottom_left = 16
+bg_color = Color(1, 1, 1, 0.06)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
 content_margin_left = 24.0
 content_margin_top = 10.0
 content_margin_right = 24.0
 content_margin_bottom = 10.0
+border_width_bottom = 3
+border_color = Color(0, 0, 0, 0.2)
 
 [sub_resource type="StyleBoxFlat" id="toggle_btn_style"]
-bg_color = Color(0.894, 0.875, 0.941, 1)
+bg_color = Color(1, 1, 1, 0.08)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
@@ -71,7 +77,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.176, 0.176, 0.176, 0.4)
+color = Color(0.04, 0.03, 0.12, 0.6)
 
 [node name="Card" type="PanelContainer" parent="."]
 layout_mode = 1
@@ -80,10 +86,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -130.0
-offset_top = -140.0
-offset_right = 130.0
-offset_bottom = 140.0
+offset_left = -140.0
+offset_top = -150.0
+offset_right = 140.0
+offset_bottom = 150.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("card_panel_style")
@@ -95,14 +101,14 @@ theme_override_constants/separation = 16
 
 [node name="PausedLabel" type="Label" parent="Card/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(0.176, 0.176, 0.176, 1)
+theme_override_font_sizes/font_size = 26
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 text = "PAUSED"
 horizontal_alignment = 1
 
 [node name="Separator" type="HSeparator" parent="Card/VBox"]
 layout_mode = 2
-theme_override_colors/separator_color = Color(0.894, 0.875, 0.941, 1)
+theme_override_colors/separator_color = Color(1, 1, 1, 0.08)
 
 [node name="SoundRow" type="HBoxContainer" parent="Card/VBox"]
 layout_mode = 2
@@ -111,7 +117,7 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 15
-theme_override_colors/font_color = Color(0.557, 0.557, 0.576, 1)
+theme_override_colors/font_color = Color(0.61, 0.54, 0.77, 1)
 text = "Sound"
 
 [node name="SoundToggle" type="Button" parent="Card/VBox/SoundRow"]
@@ -122,7 +128,7 @@ theme_override_styles/hover = SubResource("toggle_btn_style")
 theme_override_styles/pressed = SubResource("toggle_btn_style")
 theme_override_styles/focus = SubResource("toggle_btn_style")
 theme_override_font_sizes/font_size = 13
-theme_override_colors/font_color = Color(1, 0.541, 0.541, 1)
+theme_override_colors/font_color = Color(0.37, 0.73, 0.96, 1)
 text = "ON"
 
 [node name="HapticRow" type="HBoxContainer" parent="Card/VBox"]
@@ -132,7 +138,7 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 15
-theme_override_colors/font_color = Color(0.557, 0.557, 0.576, 1)
+theme_override_colors/font_color = Color(0.61, 0.54, 0.77, 1)
 text = "Vibration"
 
 [node name="HapticToggle" type="Button" parent="Card/VBox/HapticRow"]
@@ -143,33 +149,33 @@ theme_override_styles/hover = SubResource("toggle_btn_style")
 theme_override_styles/pressed = SubResource("toggle_btn_style")
 theme_override_styles/focus = SubResource("toggle_btn_style")
 theme_override_font_sizes/font_size = 13
-theme_override_colors/font_color = Color(1, 0.541, 0.541, 1)
+theme_override_colors/font_color = Color(0.37, 0.73, 0.96, 1)
 text = "ON"
 
 [node name="Separator2" type="HSeparator" parent="Card/VBox"]
 layout_mode = 2
-theme_override_colors/separator_color = Color(0.894, 0.875, 0.941, 1)
+theme_override_colors/separator_color = Color(1, 1, 1, 0.08)
 
 [node name="ResumeButton" type="Button" parent="Card/VBox"]
 layout_mode = 2
 size_flags_horizontal = 4
-custom_minimum_size = Vector2(180, 50)
+custom_minimum_size = Vector2(200, 52)
 theme_override_styles/normal = SubResource("resume_btn_style")
 theme_override_styles/hover = SubResource("resume_btn_style")
 theme_override_styles/pressed = SubResource("resume_btn_style")
 theme_override_styles/focus = SubResource("resume_btn_style")
-theme_override_colors/font_color = Color(0.953, 0.941, 0.973, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 18
 text = "RESUME"
 
 [node name="QuitButton" type="Button" parent="Card/VBox"]
 layout_mode = 2
 size_flags_horizontal = 4
-custom_minimum_size = Vector2(180, 44)
+custom_minimum_size = Vector2(200, 44)
 theme_override_styles/normal = SubResource("quit_btn_style")
 theme_override_styles/hover = SubResource("quit_btn_style")
 theme_override_styles/pressed = SubResource("quit_btn_style")
 theme_override_styles/focus = SubResource("quit_btn_style")
-theme_override_colors/font_color = Color(0.557, 0.557, 0.576, 1)
+theme_override_colors/font_color = Color(0.44, 0.38, 0.65, 1)
 theme_override_font_sizes/font_size = 14
 text = "QUIT"

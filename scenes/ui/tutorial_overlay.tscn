@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/ui/tutorial_overlay.gd" id="1_tutorial"]
 
 [sub_resource type="StyleBoxFlat" id="card_style"]
-bg_color = Color(0.953, 0.941, 0.973, 1)
+bg_color = Color(0.1, 0.075, 0.22, 0.97)
 corner_radius_top_left = 16
 corner_radius_top_right = 16
 corner_radius_bottom_right = 16
@@ -16,7 +16,7 @@ border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.894, 0.875, 0.941, 1)
+border_color = Color(1, 1, 1, 0.08)
 
 [node name="TutorialOverlay" type="Control"]
 unique_name_in_owner = true
@@ -75,7 +75,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(1, 0.42, 0.42, 1)
+theme_override_colors/font_color = Color(0.37, 0.73, 0.96, 1)
 text = "Drag & Place"
 horizontal_alignment = 1
 
@@ -84,7 +84,7 @@ layout_mode = 2
 custom_minimum_size = Vector2(32, 32)
 mouse_filter = 0
 theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.557, 0.557, 0.576, 1)
+theme_override_colors/font_color = Color(0.61, 0.54, 0.77, 1)
 flat = true
 text = "✕"
 
@@ -104,7 +104,7 @@ layout_mode = 2
 custom_minimum_size = Vector2(0, 32)
 mouse_filter = 2
 theme_override_font_sizes/font_size = 12
-theme_override_colors/font_color = Color(0.557, 0.557, 0.576, 1)
+theme_override_colors/font_color = Color(0.61, 0.54, 0.77, 1)
 text = "Hint text"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -120,6 +120,6 @@ theme_override_constants/separation = 8
 layout_mode = 2
 mouse_filter = 2
 theme_override_font_sizes/font_size = 11
-theme_override_colors/font_color = Color(0.29, 0.396, 0.467, 1)
+theme_override_colors/font_color = Color(0.44, 0.38, 0.65, 1)
 text = "Tap anywhere to continue (1/5)"
 horizontal_alignment = 1

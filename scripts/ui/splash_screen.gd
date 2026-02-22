@@ -87,8 +87,10 @@ func _create_blocks() -> void:
 			style.corner_radius_top_right = int(BLOCK_SIZE * 0.35)
 			style.corner_radius_bottom_left = int(BLOCK_SIZE * 0.35)
 			style.corner_radius_bottom_right = int(BLOCK_SIZE * 0.35)
-			style.shadow_color = Color(0, 0, 0, 0.15)
-			style.shadow_size = 3
+			style.border_width_bottom = 4
+			style.border_color = block_color.darkened(0.3)
+			style.shadow_color = Color(block_color, 0.4)
+			style.shadow_size = 10
 			block.add_theme_stylebox_override("panel", style)
 			block.modulate.a = 0.0
 			block_container.add_child(block)

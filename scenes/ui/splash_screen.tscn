@@ -18,7 +18,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.953, 0.941, 0.973, 1)
+color = Color(0.067, 0.051, 0.188, 1)
 
 [node name="BlockContainer" type="Control" parent="."]
 layout_mode = 1
@@ -43,7 +43,7 @@ offset_bottom = 70.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 36
-theme_override_colors/font_color = Color(0.176, 0.176, 0.176, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 text = "ChromaBlocks"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -62,7 +62,7 @@ offset_bottom = 100.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(1, 0.42, 0.42, 1)
+theme_override_colors/font_color = Color(0.545, 0.478, 0.722, 1)
 text = "Color. Place. Clear."
 horizontal_alignment = 1
 vertical_alignment = 1
