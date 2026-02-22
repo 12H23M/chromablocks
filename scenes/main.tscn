@@ -98,6 +98,7 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="HomeScreen" parent="UILayer" instance=ExtResource("5_home")]
+unique_name_in_owner = true
 
 [node name="GameOverScreen" parent="UILayer" instance=ExtResource("6_gameover")]
 
