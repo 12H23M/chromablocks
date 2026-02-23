@@ -41,6 +41,11 @@ const SHAPES: Dictionary = {
 	Enums.PieceType.RECT_2x3: [[1, 1], [1, 1], [1, 1]],
 	Enums.PieceType.SQ_3x3: [[1, 1, 1], [1, 1, 1], [1, 1, 1]],
 	Enums.PieceType.RECT_3x2: [[1, 1, 1], [1, 1, 1]],
+	# N-shaped (5-cell, zigzag variants)
+	Enums.PieceType.PENT_N: [[1, 0], [1, 1], [0, 1], [0, 1]],       # ⌐ 세로 N
+	Enums.PieceType.PENT_N_R: [[0, 1], [1, 1], [1, 0], [1, 0]],     # ⌐ 세로 N 반전
+	Enums.PieceType.PENT_N_V: [[1, 1, 0], [0, 1, 1], [0, 0, 1]],    # 가로 N
+	Enums.PieceType.PENT_N_V2: [[0, 0, 1], [0, 1, 1], [1, 1, 0]],   # 가로 N 반전
 }
 
 const PIECE_COLORS: Dictionary = {
@@ -78,4 +83,8 @@ const PIECE_COLORS: Dictionary = {
 	Enums.PieceType.RECT_2x3: Enums.BlockColor.CORAL,
 	Enums.PieceType.SQ_3x3: Enums.BlockColor.LAVENDER,
 	Enums.PieceType.RECT_3x2: Enums.BlockColor.CORAL,
+	Enums.PieceType.PENT_N: Enums.BlockColor.CORAL,
+	Enums.PieceType.PENT_N_R: Enums.BlockColor.CORAL,
+	Enums.PieceType.PENT_N_V: Enums.BlockColor.CORAL,
+	Enums.PieceType.PENT_N_V2: Enums.BlockColor.CORAL,
 }

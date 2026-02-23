@@ -1,10 +1,9 @@
 class_name PieceGenerator
-## Smart piece generation system that controls tray composition
-## for balanced, fun gameplay through:
-##   - Size-category-based tray templates (no 3x huge pieces)
-##   - Board density mercy (lighter pieces when board is full)
-##   - Anti-repetition (no duplicates in tray, reduce recent pieces)
-##   - Color clustering (occasional same-color pairs for combo potential)
+## Smart piece generation with Block Blast-style Dynamic Difficulty Adjustment:
+##   - Empty board → large pieces (快速 fill → line clear rush)
+##   - Dense board → small/placeable pieces (survival mercy)
+##   - Color mercy: boost same-color near chain threshold
+##   - Anti-repetition + color clustering preserved
 
 # ── Size categories ──
 
@@ -43,12 +42,15 @@ const CATEGORY_PIECES: Dictionary = {
 		Enums.PieceType.PENT_PLUS,
 		Enums.PieceType.PENT_U,
 		Enums.PieceType.PENT_T,
-		Enums.PieceType.PENT_LINE,
-		Enums.PieceType.PENT_LINE_V,
+		# PENT_LINE / PENT_LINE_V removed — replaced by N-shapes
 		Enums.PieceType.PENT_L3,
 		Enums.PieceType.PENT_J3,
 		Enums.PieceType.PENT_L3_R,
 		Enums.PieceType.PENT_J3_R,
+		Enums.PieceType.PENT_N,
+		Enums.PieceType.PENT_N_R,
+		Enums.PieceType.PENT_N_V,
+		Enums.PieceType.PENT_N_V2,
 	],
 	SizeCat.HUGE: [
 		Enums.PieceType.RECT_2x3,
@@ -57,9 +59,10 @@ const CATEGORY_PIECES: Dictionary = {
 	],
 }
 
+# Flat list of all generated piece types (excludes PENT_LINE/PENT_LINE_V)
+var _all_types: Array = []
+
 # ── Tray templates ──
-# Each entry: { "template": [SizeCat, SizeCat, SizeCat], "weight": float }
-# Templates define the SIZE MIX of each 3-piece tray.
 
 const TEMPLATES_EASY: Array = [
 	{ "t": [SizeCat.SMALL, SizeCat.MEDIUM, SizeCat.MEDIUM], "w": 0.22 },
@@ -101,39 +104,66 @@ const TEMPLATES_EXPERT: Array = [
 	{ "t": [SizeCat.SMALL, SizeCat.HUGE], "w": 0.10 },
 ]
 
-# Progressive piece exclusion lists per level range
-# Level 1-2: Exclude T-variants, Z/S, and complex pentominoes
+# ── DDA: Block Blast style templates for empty/sparse boards ──
+const TEMPLATES_RUSH: Array = [
+	{ "t": [SizeCat.LARGE, SizeCat.LARGE, SizeCat.HUGE], "w": 0.30 },
+	{ "t": [SizeCat.MEDIUM, SizeCat.LARGE, SizeCat.HUGE], "w": 0.25 },
+	{ "t": [SizeCat.LARGE, SizeCat.HUGE, SizeCat.HUGE], "w": 0.20 },
+	{ "t": [SizeCat.MEDIUM, SizeCat.LARGE, SizeCat.LARGE], "w": 0.15 },
+	{ "t": [SizeCat.LARGE, SizeCat.LARGE, SizeCat.LARGE], "w": 0.10 },
+]
+
+# Progressive piece exclusion by level
 const EXCLUDED_LV1: Array = [
 	Enums.PieceType.TET_T_R, Enums.PieceType.TET_T_L,
 	Enums.PieceType.TET_Z, Enums.PieceType.TET_S,
 	Enums.PieceType.TET_Z_V, Enums.PieceType.TET_S_V,
 	Enums.PieceType.PENT_PLUS, Enums.PieceType.PENT_U,
 	Enums.PieceType.PENT_T,
+	Enums.PieceType.PENT_N, Enums.PieceType.PENT_N_R,
+	Enums.PieceType.PENT_N_V, Enums.PieceType.PENT_N_V2,
 ]
-# Level 3-4: Allow T-variants, still exclude Z/S and complex pentominoes
 const EXCLUDED_LV3: Array = [
 	Enums.PieceType.TET_Z, Enums.PieceType.TET_S,
 	Enums.PieceType.TET_Z_V, Enums.PieceType.TET_S_V,
 	Enums.PieceType.PENT_PLUS, Enums.PieceType.PENT_U,
 	Enums.PieceType.PENT_T,
+	Enums.PieceType.PENT_N, Enums.PieceType.PENT_N_R,
+	Enums.PieceType.PENT_N_V, Enums.PieceType.PENT_N_V2,
 ]
-# Level 5-7: Allow Z/S, still exclude complex pentominoes
 const EXCLUDED_LV5: Array = [
 	Enums.PieceType.PENT_PLUS, Enums.PieceType.PENT_U,
 	Enums.PieceType.PENT_T,
 ]
-# Level 8+: All pieces allowed (empty array)
+# Level 8+: All pieces allowed
 
-# Board density thresholds for mercy system
-const MERCY_MILD_THRESHOLD := 0.60
-const MERCY_STRONG_THRESHOLD := 0.75
-const MERCY_CRITICAL_THRESHOLD := 0.80
-const COLOR_CLUSTER_CHANCE := 0.25
+# ── DDA thresholds ──
+const DDA_RUSH_THRESHOLD := 0.30       # fill < 30% → rush mode (big pieces)
+const DDA_RUSH_CHANCE := 0.80           # 80% chance to use rush templates
+const DDA_MERCY_MILD := 0.55            # fill 55-70% → mild mercy
+const DDA_MERCY_STRONG := 0.70          # fill 70-80% → strong mercy
+const DDA_MERCY_CRITICAL := 0.80        # fill 80%+ → critical mercy
+const DDA_FIT_CHECK_CHANCE := 0.50      # placeable-only filter chance (55%+)
+const DDA_FIT_CRITICAL_CHANCE := 0.70   # placeable-only filter (80%+)
+
+# ── Color mercy ──
+const COLOR_CLUSTER_CHANCE := 0.25      # basic tray color clustering
+const COLOR_MERCY_THRESHOLD := 0.35     # board fill to activate color mercy
+const COLOR_MERCY_CHANCE := 0.40        # chance to assign cluster color
+const COLOR_MERCY_MIN_GROUP := 4        # min cluster size (chain triggers at 5)
 
 # ── State ──
 
 var _rng := RandomNumberGenerator.new()
-var _previous_tray_types: Array = []  # PieceType values from last tray
+var _previous_tray_types: Array = []
+
+
+func _init() -> void:
+	# Build flat list of all generatable types
+	for cat in CATEGORY_PIECES.values():
+		for pt in cat:
+			if pt not in _all_types:
+				_all_types.append(pt)
 
 
 func reset() -> void:
@@ -146,47 +176,138 @@ func set_seed(seed_value: int) -> void:
 
 
 func generate_tray(level: int, board: BoardState) -> Array:
-	var templates := _get_templates_for_level(level)
 	var excluded := _get_excluded_for_level(level)
-	var fill_ratio := _board_fill_ratio(board)
+	var fill := _board_fill_ratio(board)
 
-	# Apply mercy: shift toward lighter templates when board is dense
-	templates = _apply_mercy(templates, fill_ratio)
+	# ── DDA: Pick template set based on board density ──
+	var templates: Array
+	if fill < DDA_RUSH_THRESHOLD and _rng.randf() < DDA_RUSH_CHANCE:
+		# Empty board → rush mode! Big pieces for fast line clears
+		templates = TEMPLATES_RUSH.duplicate(true)
+	else:
+		templates = _get_templates_for_level(level)
+		templates = _apply_mercy(templates, fill)
 
-	# Pick a tray template
 	var template: Array = _pick_template(templates)
 
-	# Critical mercy: guarantee at least one TINY piece when board >= 80% full
-	if fill_ratio >= MERCY_CRITICAL_THRESHOLD:
+	# Critical mercy: guarantee TINY piece
+	if fill >= DDA_MERCY_CRITICAL:
 		var has_tiny := false
 		for cat in template:
 			if cat == SizeCat.TINY:
 				has_tiny = true
 				break
 		if not has_tiny:
-			# Force the first slot to TINY
 			template[0] = SizeCat.TINY
 
-	# Generate pieces for each slot
+	# ── Color mercy: find largest near-chain cluster ──
+	var mercy_color := -1
+	if fill > COLOR_MERCY_THRESHOLD and _rng.randf() < COLOR_MERCY_CHANCE:
+		mercy_color = _find_near_chain_color(board)
+
+	# ── Generate pieces ──
 	var tray: Array = []
-	var used_types: Array = []  # track types within this tray
+	var used_types: Array = []
 	var first_color := -1
 
 	for i in template.size():
 		var cat: int = template[i]
-		var piece := _pick_piece(cat, excluded, used_types, first_color if i > 0 else -1, level)
+		var piece := _pick_piece_dda(cat, excluded, used_types, first_color if i > 0 else -1, level, board, fill, mercy_color)
 		tray.append(piece)
 		used_types.append(piece.type)
 		if i == 0:
 			first_color = piece.color
 
-	# Update history for anti-repetition
 	_previous_tray_types = used_types.duplicate()
-
 	return tray
 
 
-# ── Template selection ──
+# ═══════════════════════════════════════════
+# DDA-aware piece selection
+# ═══════════════════════════════════════════
+
+func _pick_piece_dda(category: int, excluded: Array, used_types: Array, cluster_color: int, level: int, board: BoardState, fill: float, mercy_color: int) -> BlockPiece:
+	var pool: Array = CATEGORY_PIECES[category].duplicate()
+
+	for ex in excluded:
+		pool.erase(ex)
+	for used in used_types:
+		pool.erase(used)
+	if pool.is_empty():
+		pool = CATEGORY_PIECES[category].duplicate()
+
+	# ── DDA fit check: when board is dense, prefer placeable pieces ──
+	var fit_chance := 0.0
+	if fill >= DDA_MERCY_CRITICAL:
+		fit_chance = DDA_FIT_CRITICAL_CHANCE
+	elif fill >= DDA_MERCY_MILD:
+		fit_chance = DDA_FIT_CHECK_CHANCE
+
+	if fit_chance > 0.0 and _rng.randf() < fit_chance:
+		var placeable_pool: Array = []
+		for pt in pool:
+			if _can_place_type_on_board(pt, board):
+				placeable_pool.append(pt)
+		if not placeable_pool.is_empty():
+			pool = placeable_pool
+
+	# Build weights with anti-repetition
+	var weights: Dictionary = {}
+	for piece_type in pool:
+		var w := 1.0
+		if piece_type in _previous_tray_types:
+			w *= 0.4
+		weights[piece_type] = w
+
+	var chosen_type := _weighted_pick(weights)
+	var piece_shape: Array = PieceDefinitions.SHAPES[chosen_type]
+
+	# ── Color selection with mercy ──
+	var color_count := _get_color_count(level)
+	var piece_color: int
+
+	if mercy_color >= 0 and _rng.randf() < 0.50:
+		# Color mercy: assign near-chain cluster color
+		piece_color = mercy_color
+	elif cluster_color >= 0 and _rng.randf() < COLOR_CLUSTER_CHANCE:
+		piece_color = cluster_color
+	else:
+		piece_color = _rng.randi_range(0, color_count - 1)
+
+	return BlockPiece.new(chosen_type, piece_color, piece_shape)
+
+
+func _can_place_type_on_board(piece_type: int, board: BoardState) -> bool:
+	"""Check if a piece type can be placed anywhere on the board."""
+	var shape: Array = PieceDefinitions.SHAPES[piece_type]
+	var piece := BlockPiece.new(piece_type, 0, shape)
+	var h := shape.size()
+	var w := shape[0].size()
+	for gy in range(board.rows - h + 1):
+		for gx in range(board.columns - w + 1):
+			if board.can_place_piece_at(piece, gx, gy):
+				return true
+	return false
+
+
+func _find_near_chain_color(board: BoardState) -> int:
+	"""Find the color of the largest cluster that's close to chain threshold (4+ cells)."""
+	var groups := board.find_color_matches_threshold(COLOR_MERCY_MIN_GROUP)
+	if groups.is_empty():
+		return -1
+	# Find the largest group
+	var best_group: Array = groups[0]
+	for g in groups:
+		if g.size() > best_group.size():
+			best_group = g
+	# Return the color of that group
+	var pos: Vector2i = best_group[0]
+	return board.grid[pos.y][pos.x]["color"]
+
+
+# ═══════════════════════════════════════════
+# Template selection
+# ═══════════════════════════════════════════
 
 func _get_templates_for_level(level: int) -> Array:
 	if level <= 5:
@@ -208,11 +329,10 @@ func _get_excluded_for_level(level: int) -> Array:
 	return []
 
 
-func _apply_mercy(templates: Array, fill_ratio: float) -> Array:
-	if fill_ratio < MERCY_MILD_THRESHOLD:
+func _apply_mercy(templates: Array, fill: float) -> Array:
+	if fill < DDA_MERCY_MILD:
 		return templates
 
-	# Boost templates that contain TINY or SMALL pieces
 	var result := templates.duplicate(true)
 	for entry in result:
 		var t: Array = entry["t"]
@@ -222,14 +342,12 @@ func _apply_mercy(templates: Array, fill_ratio: float) -> Array:
 				has_small = true
 				break
 
-		if fill_ratio >= MERCY_STRONG_THRESHOLD:
-			# Strong mercy: heavily favor light trays
+		if fill >= DDA_MERCY_STRONG:
 			if has_small:
 				entry["w"] *= 3.0
 			else:
 				entry["w"] *= 0.3
 		else:
-			# Mild mercy: moderately favor light trays
 			if has_small:
 				entry["w"] *= 1.8
 			else:
@@ -242,55 +360,17 @@ func _pick_template(templates: Array) -> Array:
 	var total := 0.0
 	for entry in templates:
 		total += entry["w"]
-
 	var roll := _rng.randf() * total
 	for entry in templates:
 		roll -= entry["w"]
 		if roll <= 0.0:
 			return entry["t"]
-
 	return templates.back()["t"]
 
 
-# ── Piece selection ──
-
-func _pick_piece(category: int, excluded: Array, used_types: Array, cluster_color: int, level: int = 0) -> BlockPiece:
-	var pool: Array = CATEGORY_PIECES[category].duplicate()
-
-	# Remove excluded types
-	for ex in excluded:
-		pool.erase(ex)
-
-	# Remove types already in this tray (anti-duplicate)
-	for used in used_types:
-		pool.erase(used)
-
-	# If pool is empty (edge case), fall back to full category
-	if pool.is_empty():
-		pool = CATEGORY_PIECES[category].duplicate()
-
-	# Build weights: reduce recently-seen types
-	var weights: Dictionary = {}
-	for piece_type in pool:
-		var w := 1.0
-		if piece_type in _previous_tray_types:
-			w *= 0.4  # reduce recent pieces
-		weights[piece_type] = w
-
-	# Weighted random selection for shape (color is independent)
-	var chosen_type := _weighted_pick(weights)
-	var piece_shape: Array = PieceDefinitions.SHAPES[chosen_type]
-
-	# Random color decoupled from shape
-	var color_count := _get_color_count(level)
-	var piece_color: int
-	if cluster_color >= 0 and _rng.randf() < COLOR_CLUSTER_CHANCE:
-		piece_color = cluster_color
-	else:
-		piece_color = _rng.randi_range(0, color_count - 1)
-
-	return BlockPiece.new(chosen_type, piece_color, piece_shape)
-
+# ═══════════════════════════════════════════
+# Utilities
+# ═══════════════════════════════════════════
 
 func _get_color_count(level: int) -> int:
 	return GameConstants.EXPERT_COLOR_COUNT if level >= GameConstants.EXPERT_COLOR_REDUCE_LEVEL else 6
@@ -300,17 +380,13 @@ func _weighted_pick(weights: Dictionary) -> int:
 	var total := 0.0
 	for w in weights.values():
 		total += w
-
 	var roll := _rng.randf() * total
 	for key in weights:
 		roll -= weights[key]
 		if roll <= 0.0:
 			return key
-
 	return weights.keys().back()
 
-
-# ── Utility ──
 
 func _board_fill_ratio(board: BoardState) -> float:
 	return board.fill_ratio()
