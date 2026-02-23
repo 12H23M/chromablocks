@@ -3,7 +3,7 @@ extends Control
 const CellScene := preload("res://scenes/game/cell.tscn")
 const ClearParticlesScript := preload("res://scripts/game/clear_particles.gd")
 const CORNER_RADIUS := 12
-const BORDER_WIDTH := 1.0
+const BORDER_WIDTH := 2.0
 
 var _cells: Array = []  # Array[Array[CellView]] — [y][x]
 var _cell_size: float = 36.0
@@ -123,6 +123,8 @@ func play_place_effect(cells: Array) -> void:
 
 
 func play_line_clear_effect(rows: Array, cols: Array) -> void:
+	# Immediate micro-tick before the main burst haptic fires
+	HapticManager.cell_clear()
 	# Collect cell positions and colors for particles before clearing
 	var particle_positions: Array = []
 	var particle_colors: Array = []
@@ -388,9 +390,30 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
+	# Outer frame glow — border color at ~30% opacity behind the board
+	var frame_glow := Color(AppColors.BOARD_BORDER.r, AppColors.BOARD_BORDER.g, AppColors.BOARD_BORDER.b, 0.30)
+	for i in range(3, 0, -1):
+		var expand := float(i) * 3.0
+		var alpha := frame_glow.a * (1.0 - float(i) / 4.0)
+		var c := Color(frame_glow.r, frame_glow.g, frame_glow.b, alpha)
+		draw_rect(Rect2(Vector2(-expand, -expand), size + Vector2(expand * 2, expand * 2)), c, false, 2.0)
+
 	# Draw dark rounded background with border
 	if _bg_style:
 		draw_style_box(_bg_style, Rect2(Vector2.ZERO, size))
+
+	# Subtle inner glow — radial gradient overlay from corners
+	var glow_base := Color(AppColors.BOARD_BORDER.r, AppColors.BOARD_BORDER.g, AppColors.BOARD_BORDER.b, 0.08)
+	var corners := [Vector2.ZERO, Vector2(size.x, 0), Vector2(0, size.y), size]
+	for corner in corners:
+		var glow_radius := size.length() * 0.35
+		var steps := 8
+		for s in range(steps, 0, -1):
+			var t := float(s) / float(steps)
+			var radius := glow_radius * t
+			var alpha := glow_base.a * (1.0 - t)
+			var c := Color(glow_base.r, glow_base.g, glow_base.b, alpha)
+			draw_circle(corner, radius, c)
 
 	# Draw grid lines
 	for i in range(1, GameConstants.BOARD_COLUMNS):

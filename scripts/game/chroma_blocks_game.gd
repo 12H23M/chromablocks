@@ -50,7 +50,7 @@ func _ready() -> void:
 	settings_screen.closed.connect(_hide_settings)
 	piece_tray.swap_pressed.connect(_on_swap_pressed)
 
-	var pause_btn := hud.get_node_or_null("HudRow1/PauseButton")
+	var pause_btn := hud.get_node_or_null("PauseButton")
 	if pause_btn:
 		pause_btn.pressed.connect(pause_game)
 
@@ -315,9 +315,10 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 			total_cells += g.size()
 		AnalyticsManager.color_match(color_result["groups"].size(), total_cells)
 
-	if new_combo >= 2:
-		SoundManager.play_combo_sfx(new_combo)
-		HapticManager.combo(new_combo)
+	if new_combo >= 1:
+		if new_combo >= 2:
+			SoundManager.play_combo_sfx(new_combo)
+			HapticManager.combo(new_combo)
 		_spawn_combo_popup(new_combo)
 		if new_combo >= 3:
 			_apply_hit_stop(0.05)
@@ -430,11 +431,18 @@ func _apply_hit_stop(duration: float) -> void:
 	)
 
 func _spawn_combo_popup(combo: int) -> void:
-	var popup := Label.new()
+	var popup := Control.new()
 	popup.set_script(preload("res://scripts/game/combo_popup.gd"))
-	drag_layer.add_child(popup)
+	# Add to a dedicated CanvasLayer so it renders on top of everything
+	var overlay_layer := CanvasLayer.new()
+	overlay_layer.layer = 20  # Above UI (default layer 1)
+	add_child(overlay_layer)
+	overlay_layer.add_child(popup)
 	var board_center := board_renderer.global_position + board_renderer.size / 2.0
 	popup.show_combo(combo, board_center)
+	HapticManager.combo(combo)
+	# Clean up the CanvasLayer when popup is freed
+	popup.tree_exited.connect(overlay_layer.queue_free)
 
 func _spawn_score_popup(value: int, gx: int, gy: int) -> void:
 	var popup := Label.new()

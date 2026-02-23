@@ -28,9 +28,9 @@ var LAVENDER_GLOW := Color(Color("A78BDF"), 0.40)
 var SPECIAL := Color("FFD700")
 
 # Dark Theme UI
-var BACKGROUND := Color("110d30")
-var CARD_SURFACE := Color("1a1145")
-var CARD_BORDER := Color("2d1b69")
+var BACKGROUND := Color("141040")
+var CARD_SURFACE := Color("1E1A5A")
+var CARD_BORDER := Color("2E2A78")
 var ACCENT := Color("42B9F5")
 var ACCENT_TEXT := Color("5EC0F7")
 var TEXT_PRIMARY := Color("FFFFFF")
@@ -48,12 +48,12 @@ var HIGHLIGHT_VALID := Color(Color("6BCB77"), 0.30)
 var HIGHLIGHT_INVALID := Color(Color("FF8A8A"), 0.30)
 
 # Empty cell (dark well)
-var EMPTY_CELL := Color("1a1145")
-var EMPTY_BORDER := Color("2d1b69")
+var EMPTY_CELL := Color("1F1B68")
+var EMPTY_BORDER := Color("252168")
 
 # Board
-var BOARD_BG := Color("0f0d2e")
-var BOARD_BORDER := Color("2d1b69")
+var BOARD_BG := Color("1C1868")
+var BOARD_BORDER := Color("3B35A0")
 
 # 테마 변경 시그널 — UI 갱신에 사용
 signal theme_changed()

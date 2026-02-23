@@ -27,6 +27,11 @@ static func _vibrate_delayed(duration_ms: int, delay_sec: float) -> void:
 	)
 
 
+## Individual cell clear — light tick
+static func cell_clear() -> void:
+	_vibrate(15)
+
+
 static func light() -> void:
 	_vibrate(20)
 
