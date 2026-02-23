@@ -240,11 +240,38 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	# 1. Place on board
 	var board := _state.board.place_piece(piece, gx, gy)
 
-	# 2. Line clear
+	# 2. Get completed lines BEFORE clearing (need colors for blast check)
+	var completed_rows := board.get_completed_rows()
+	var completed_cols := board.get_completed_columns()
+	var has_line_clear := completed_rows.size() > 0 or completed_cols.size() > 0
+
+	# 3. Check Chroma Blast conditions (needs cell colors before clear)
+	var blast_result := {"blast_colors": [], "trigger_lines": []}
+	if has_line_clear:
+		blast_result = ChromaBlastSystem.check_blast(board, completed_rows, completed_cols)
+
+	# 4. Line clear (existing logic)
 	var clear_result := ClearSystem.check_and_clear(board)
 	board = clear_result["board"]
 
-	# 3. Color match (toggle via GameConstants.COLOR_MATCH_ENABLED)
+	# 5. Execute Chroma Blast
+	var blast_executed := {"cells_removed": 0, "removed_positions": []}
+	if not blast_result["blast_colors"].is_empty():
+		blast_executed = ChromaBlastSystem.execute_blast(board, blast_result["blast_colors"])
+		board = blast_executed["board"]
+		# Blast may complete more lines
+		var blast_line_result := board.clear_completed_lines()
+		board = blast_line_result["board"]
+		clear_result["lines_cleared"] += blast_line_result["lines_cleared"]
+
+	# 6. Chroma Chain (only after line clear)
+	var chain_result := {"cascades": 0, "total_cells_cleared": 0, "groups_per_cascade": [], "extra_lines_cleared": 0}
+	if has_line_clear:
+		chain_result = ChromaChainSystem.process_chains(board)
+		board = chain_result["board"]
+		clear_result["lines_cleared"] += chain_result["extra_lines_cleared"]
+
+	# 7. Color match (toggle via GameConstants.COLOR_MATCH_ENABLED)
 	var color_result: Dictionary
 	if GameConstants.COLOR_MATCH_ENABLED:
 		color_result = ColorMatchSystem.check_color_match(board)
@@ -252,23 +279,38 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	else:
 		color_result = {"board": board, "groups": [], "total_removed": 0, "has_matches": false}
 
-	# 4. Scoring
-	var did_clear: bool = clear_result["lines_cleared"] > 0 or color_result["has_matches"]
+	# 8. Scoring (base + chroma bonus)
+	var did_clear: bool = clear_result["lines_cleared"] > 0 or color_result["has_matches"] or blast_executed["cells_removed"] > 0 or chain_result["total_cells_cleared"] > 0
 	var new_combo: int = (_state.combo + 1) if did_clear else 0
 
 	var score_result := ScoringSystem.calculate(
 		piece.cell_count, clear_result, color_result, new_combo, _state.level)
 
-	# 5. Level check
+	# Chroma Chain bonus scoring
+	var chroma_bonus: int = 0
+	for cascade_idx in chain_result["cascades"]:
+		var pts_idx := mini(cascade_idx, GameConstants.CHROMA_CHAIN_POINTS_PER_CELL.size() - 1)
+		var groups: Array = chain_result["groups_per_cascade"][cascade_idx]
+		for group in groups:
+			chroma_bonus += group.size() * GameConstants.CHROMA_CHAIN_POINTS_PER_CELL[pts_idx]
+
+	# Chroma Blast bonus scoring
+	if blast_executed["cells_removed"] > 0:
+		chroma_bonus += blast_executed["cells_removed"] * GameConstants.CHROMA_BLAST_POINTS_PER_CELL
+		chroma_bonus += blast_result["blast_colors"].size() * GameConstants.CHROMA_BLAST_TRIGGER_BONUS
+
+	score_result["total"] += chroma_bonus
+
+	# 9. Level check
 	var total_lines: int = _state.lines_cleared + clear_result["lines_cleared"]
 	var new_level: int = DifficultySystem.calculate_level(total_lines)
 	var leveled_up: bool = new_level > _state.level
 
-	# 6. Update state
+	# 10. Update state
 	_state.apply_turn_result(board, score_result["total"],
 		clear_result["lines_cleared"], new_combo, new_level, piece)
 
-	# 7. Cache cell colors for clear animations BEFORE state update
+	# 11. Cache cell colors for clear animations BEFORE state update
 	if clear_result["has_clears"]:
 		board_renderer.cache_cell_colors_for_clear(clear_result["rows"], clear_result["cols"])
 
@@ -329,6 +371,23 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 
 	if score_result["total"] > 0:
 		_spawn_score_popup(score_result["total"], gx, gy)
+
+	# Chroma Blast effects
+	if blast_executed["cells_removed"] > 0:
+		_apply_hit_stop(0.09)
+		_spawn_blast_popup(blast_result["blast_colors"][0])
+		SoundManager.play_sfx("perfect_clear")  # reuse dramatic sound
+		HapticManager.chroma_blast()
+		board_renderer.play_screen_shake(12.0, 0.30)
+
+	# Chroma Chain effects
+	if chain_result["cascades"] > 0:
+		_apply_hit_stop(0.05)
+		_spawn_chain_popup(chain_result["cascades"])
+		SoundManager.play_sfx("line_clear")  # reuse for now
+		HapticManager.chroma_chain(chain_result["cascades"])
+		var shake_strength := 5.0 + chain_result["cascades"] * 3.0
+		board_renderer.play_screen_shake(shake_strength, 0.15 + chain_result["cascades"] * 0.05)
 
 	if clear_result.get("is_perfect", false):
 		_apply_hit_stop(0.09)
@@ -456,6 +515,28 @@ func _spawn_multi_clear_popup(lines: int) -> void:
 	overlay_layer.add_child(popup)
 	var board_center := board_renderer.global_position + board_renderer.size / 2.0
 	popup.show_multi_clear(lines, board_center)
+	popup.tree_exited.connect(overlay_layer.queue_free)
+
+func _spawn_chain_popup(cascade: int) -> void:
+	var popup := Control.new()
+	popup.set_script(preload("res://scripts/game/chain_popup.gd"))
+	var overlay_layer := CanvasLayer.new()
+	overlay_layer.layer = 20
+	add_child(overlay_layer)
+	overlay_layer.add_child(popup)
+	var board_center := board_renderer.global_position + board_renderer.size / 2.0
+	popup.show_chain(cascade, board_center)
+	popup.tree_exited.connect(overlay_layer.queue_free)
+
+func _spawn_blast_popup(blast_color_idx: int) -> void:
+	var popup := Control.new()
+	popup.set_script(preload("res://scripts/game/blast_popup.gd"))
+	var overlay_layer := CanvasLayer.new()
+	overlay_layer.layer = 21  # Above everything
+	add_child(overlay_layer)
+	overlay_layer.add_child(popup)
+	var board_center := board_renderer.global_position + board_renderer.size / 2.0
+	popup.show_blast(blast_color_idx, board_center)
 	popup.tree_exited.connect(overlay_layer.queue_free)
 
 func _spawn_score_popup(value: int, gx: int, gy: int) -> void:

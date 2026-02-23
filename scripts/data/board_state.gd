@@ -165,6 +165,47 @@ func clear_completed_lines() -> Dictionary:
 	}
 
 
+func find_color_matches_threshold(threshold: int) -> Array:
+	var visited: Array = []
+	for y in rows:
+		var row: Array = []
+		for x in columns:
+			row.append(false)
+		visited.append(row)
+
+	var matches: Array = []
+
+	for y in rows:
+		for x in columns:
+			if visited[y][x] or not grid[y][x]["occupied"]:
+				continue
+			var target_color: int = grid[y][x]["color"]
+			var group: Array = []
+			var stack: Array = [Vector2i(x, y)]
+
+			while not stack.is_empty():
+				var pos: Vector2i = stack.pop_back()
+				if pos.x < 0 or pos.x >= columns or pos.y < 0 or pos.y >= rows:
+					continue
+				if visited[pos.y][pos.x]:
+					continue
+				if not grid[pos.y][pos.x]["occupied"]:
+					continue
+				if grid[pos.y][pos.x]["color"] != target_color:
+					continue
+				visited[pos.y][pos.x] = true
+				group.append(pos)
+				stack.append(Vector2i(pos.x + 1, pos.y))
+				stack.append(Vector2i(pos.x - 1, pos.y))
+				stack.append(Vector2i(pos.x, pos.y + 1))
+				stack.append(Vector2i(pos.x, pos.y - 1))
+
+			if group.size() >= threshold:
+				matches.append(group)
+
+	return matches
+
+
 func find_color_matches() -> Array:
 	var visited: Array = []
 	for y in rows:

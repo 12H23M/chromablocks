@@ -112,3 +112,15 @@ static func perfect_clear() -> void:
 	_vibrate_delayed(80, 0.1)
 	_vibrate_delayed(60, 0.2)
 	_vibrate_delayed(100, 0.3)
+
+
+## Chroma chain — increasing intensity per cascade level
+static func chroma_chain(cascade: int) -> void:
+	var duration_ms := 50 + cascade * 30
+	_vibrate(duration_ms)
+
+
+## Chroma blast — strong double-pulse
+static func chroma_blast() -> void:
+	_vibrate(100)
+	_vibrate_delayed(200, 0.15)

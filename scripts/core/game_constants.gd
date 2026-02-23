@@ -49,6 +49,20 @@ const EXPERT_COLOR_REDUCE_LEVEL := 25
 const EXPERT_TRAY_REDUCE_LEVEL := 30
 const EXPERT_COLOR_COUNT := 6
 
+# Chroma Chain
+const CHROMA_CHAIN_ENABLED: bool = true
+const CHROMA_CHAIN_THRESHOLD: int = 5
+const CHROMA_CHAIN_MAX_CASCADE: int = 3
+const CHROMA_CHAIN_POINTS_PER_CELL: Array = [30, 60, 90]  # per cascade level
+const CHROMA_CHAIN_CASCADE_DELAY: float = 0.3
+
+# Chroma Blast
+const CHROMA_BLAST_ENABLED: bool = true
+const CHROMA_BLAST_THRESHOLD: int = 6  # cells of same color in cleared line
+const CHROMA_BLAST_POINTS_PER_CELL: int = 50
+const CHROMA_BLAST_TRIGGER_BONUS: int = 500
+const CHROMA_BLAST_LINE_BONUS: int = 200
+
 
 static func line_clear_score(lines: int) -> int:
 	if lines <= 0:

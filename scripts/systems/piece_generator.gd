@@ -277,22 +277,23 @@ func _pick_piece(category: int, excluded: Array, used_types: Array, cluster_colo
 			w *= 0.4  # reduce recent pieces
 		weights[piece_type] = w
 
-	# Color clustering: boost pieces matching the cluster color
-	if cluster_color >= 0 and _rng.randf() < COLOR_CLUSTER_CHANCE:
-		for piece_type in weights:
-			if PieceDefinitions.PIECE_COLORS[piece_type] == cluster_color:
-				weights[piece_type] *= 2.5
-
-	# Weighted random selection
+	# Weighted random selection for shape (color is independent)
 	var chosen_type := _weighted_pick(weights)
-	var piece_color: int = PieceDefinitions.PIECE_COLORS[chosen_type]
 	var piece_shape: Array = PieceDefinitions.SHAPES[chosen_type]
 
-	# Expert mode: reduce color palette at high levels
-	if level >= GameConstants.EXPERT_COLOR_REDUCE_LEVEL:
-		piece_color = piece_color % GameConstants.EXPERT_COLOR_COUNT
+	# Random color decoupled from shape
+	var color_count := _get_color_count(level)
+	var piece_color: int
+	if cluster_color >= 0 and _rng.randf() < COLOR_CLUSTER_CHANCE:
+		piece_color = cluster_color
+	else:
+		piece_color = _rng.randi_range(0, color_count - 1)
 
 	return BlockPiece.new(chosen_type, piece_color, piece_shape)
+
+
+func _get_color_count(level: int) -> int:
+	return GameConstants.EXPERT_COLOR_COUNT if level >= GameConstants.EXPERT_COLOR_REDUCE_LEVEL else 6
 
 
 func _weighted_pick(weights: Dictionary) -> int:
