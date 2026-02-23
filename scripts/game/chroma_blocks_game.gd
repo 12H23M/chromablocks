@@ -386,7 +386,7 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 		_spawn_chain_popup(chain_result["cascades"])
 		SoundManager.play_sfx("line_clear")  # reuse for now
 		HapticManager.chroma_chain(chain_result["cascades"])
-		var shake_strength := 5.0 + chain_result["cascades"] * 3.0
+		var shake_strength: float = 5.0 + float(chain_result["cascades"]) * 3.0
 		board_renderer.play_screen_shake(shake_strength, 0.15 + chain_result["cascades"] * 0.05)
 
 	if clear_result.get("is_perfect", false):
