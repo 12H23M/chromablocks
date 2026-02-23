@@ -502,11 +502,12 @@ func _draw() -> void:
 		var progress: float = sw["age"] / sw["duration"]
 		var radius: float = sw["max_radius"] * ease(progress, 0.5)
 		var alpha: float = (1.0 - progress * progress) * 0.7
-		var sw_color := Color(sw["color"].r, sw["color"].g, sw["color"].b, alpha)
-		var width := lerpf(4.0, 1.0, progress)
+		var sw_col: Color = sw["color"]
+		var sw_color: Color = Color(sw_col.r, sw_col.g, sw_col.b, alpha)
+		var width: float = lerpf(4.0, 1.0, progress)
 		# Outer glow ring
-		var glow_alpha := alpha * 0.3
-		var glow_color := Color(sw["color"].r, sw["color"].g, sw["color"].b, glow_alpha)
+		var glow_alpha: float = alpha * 0.3
+		var glow_color: Color = Color(sw_col.r, sw_col.g, sw_col.b, glow_alpha)
 		if radius > 2.0:
 			draw_arc(sw["center"], radius, 0.0, TAU, 48, glow_color, width + 3.0)
 		# Main ring

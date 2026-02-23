@@ -139,7 +139,7 @@ func _build_theme_section() -> void:
 		row.add_theme_constant_override("separation", 8)
 
 		# 색상 미리보기 (작은 색상 사각형들)
-		var preview := _create_color_preview(theme_info["colors"])
+		var preview: Control = _create_color_preview(theme_info["colors"])
 		row.add_child(preview)
 
 		# 테마 이름 + 잠금 상태 버튼
