@@ -92,6 +92,7 @@ func _start_new_game(daily: bool) -> void:
 		_piece_gen.set_seed(DailyChallengeSystem.get_today_seed())
 	_state.high_score = SaveManager.get_high_score()
 	_state.status = Enums.GameStatus.PLAYING
+	_prefill_board(_state.board)
 	SaveManager.increment_games_played()
 	game_over_screen.reset_ad_state()
 
@@ -634,6 +635,30 @@ func _double_score_after_ad() -> void:
 	hud.update_from_state(_state)
 	piece_tray.update_swap_state(_state.swaps_remaining)
 	game_over_screen.show_result(_state)
+
+## Pre-fill bottom rows with random blocks for an exciting start.
+## Fills 3 rows at ~65% density with gaps, ensuring no complete lines.
+func _prefill_board(board: BoardState) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var fill_rows := 3  # bottom 3 rows
+	var fill_chance := 0.65  # 65% of cells filled
+
+	for y in range(board.rows - fill_rows, board.rows):
+		var filled_in_row := 0
+		for x in range(board.columns):
+			if rng.randf() < fill_chance:
+				var color: int = rng.randi_range(0, 5)
+				board.grid[y][x]["occupied"] = true
+				board.grid[y][x]["color"] = color
+				filled_in_row += 1
+		# Ensure row is NOT complete (would auto-clear immediately)
+		if filled_in_row >= board.columns:
+			# Remove one random cell
+			var remove_x: int = rng.randi_range(0, board.columns - 1)
+			board.grid[y][remove_x]["occupied"] = false
+			board.grid[y][remove_x]["color"] = -1
+
 
 func _notification(what: int) -> void:
 	if what == MainLoop.NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
