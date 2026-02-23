@@ -77,9 +77,9 @@ func play_place_pulse(delay: float = 0.0) -> void:
 	, 1.0, 0.0, 0.15)
 
 
-func play_clear_flash(duration: float, delay: float = 0.0, cached_color: Color = Color(-1, 0, 0)) -> void:
+func play_clear_flash(duration: float, delay: float = 0.0, cached_color: Color = Color.TRANSPARENT) -> void:
 	var bright_color := Color.WHITE
-	if cached_color.r >= 0:
+	if cached_color.a > 0.01:
 		bright_color = cached_color
 	elif _occupied and _color >= 0:
 		bright_color = AppColors.get_block_light_color(_color)
