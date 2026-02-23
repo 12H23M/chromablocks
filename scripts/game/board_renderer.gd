@@ -35,6 +35,51 @@ func initialize() -> void:
 		_cells.append(row)
 
 	_layout_cells()
+	_setup_gem_overlay()
+
+## Gem overlay: draws on top of all cells
+var _gem_overlay: Control = null
+
+func _setup_gem_overlay() -> void:
+	if _gem_overlay:
+		_gem_overlay.queue_free()
+	_gem_overlay = Control.new()
+	_gem_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_gem_overlay.size = size
+	_gem_overlay.z_index = 10
+	add_child(_gem_overlay)
+	_gem_overlay.draw.connect(_draw_gems_on_overlay)
+
+func _draw_gems_on_overlay() -> void:
+	var gem_size := 10.0
+	var inset := 8.0
+	var s := _gem_overlay.size
+	var gem_data := [
+		{"pos": Vector2(inset, inset), "color": Color(0.231, 0.510, 0.965), "glow": Color(0.231, 0.510, 0.965, 0.5)},
+		{"pos": Vector2(s.x - inset, inset), "color": Color(0.925, 0.286, 0.600), "glow": Color(0.925, 0.286, 0.600, 0.5)},
+		{"pos": Vector2(inset, s.y - inset), "color": Color(0.063, 0.725, 0.506), "glow": Color(0.063, 0.725, 0.506, 0.5)},
+		{"pos": Vector2(s.x - inset, s.y - inset), "color": Color(0.961, 0.620, 0.043), "glow": Color(0.961, 0.620, 0.043, 0.5)},
+	]
+	for gem in gem_data:
+		var center: Vector2 = gem["pos"]
+		var color: Color = gem["color"]
+		var glow_color: Color = gem["glow"]
+		_gem_overlay.draw_circle(center, gem_size + 12, Color(glow_color.r, glow_color.g, glow_color.b, 0.15))
+		_gem_overlay.draw_circle(center, gem_size + 6, glow_color)
+		var points := PackedVector2Array([
+			center + Vector2(0, -gem_size),
+			center + Vector2(gem_size, 0),
+			center + Vector2(0, gem_size),
+			center + Vector2(-gem_size, 0),
+		])
+		_gem_overlay.draw_colored_polygon(points, color)
+		var highlight := PackedVector2Array([
+			center + Vector2(0, -gem_size),
+			center + Vector2(gem_size * 0.5, -gem_size * 0.5),
+			center,
+			center + Vector2(-gem_size * 0.5, -gem_size * 0.5),
+		])
+		_gem_overlay.draw_colored_polygon(highlight, Color(1, 1, 1, 0.25))
 
 ## Compute the board's correct rest position from the parent CenterContainer.
 ## This avoids stale cached positions that cause drift after shake/bounce.
@@ -428,8 +473,7 @@ func _draw() -> void:
 		var y := i * _cell_size
 		draw_line(Vector2(0, y), Vector2(size.x, y), AppColors.GRID_LINE, 1.0)
 
-	# Corner gems — rotated 45° diamond shapes with glow
-	_draw_corner_gems()
+	# Corner gems drawn by _gem_overlay (on top of cells)
 
 	# Shockwave rings with glow
 	for sw in _shockwaves:

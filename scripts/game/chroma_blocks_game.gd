@@ -267,23 +267,8 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	_state.apply_turn_result(board, score_result["total"],
 		clear_result["lines_cleared"], new_combo, new_level, piece)
 
-	# 7. Visual updates
-	board_renderer.update_from_state(board)
-	hud.update_from_state(_state)
-
-	# 7.5 Crisis warning (board density check)
-	board_renderer.update_crisis_state(board)
-
-	# 7.6 Placement pulse on newly placed cells
-	board_renderer.play_place_effect(piece.occupied_cells_at(gx, gy))
-	AnalyticsManager.piece_placed(Enums.PieceType.keys()[piece.type], gx, gy)
-
-	# 8. Effects
+	# 7. Effects BEFORE visual state update (so cells still have their colors)
 	var has_clear: bool = clear_result["has_clears"]
-
-	# Micro-bounce only when no clear (shake replaces it on clears)
-	if not has_clear:
-		board_renderer.play_place_bounce()
 
 	if has_clear:
 		var lines: int = clear_result["lines_cleared"]
@@ -292,6 +277,7 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 			_apply_hit_stop(0.05)
 		else:
 			_apply_hit_stop(0.03)
+		# Play clear effect BEFORE update_from_state so cells still know their color
 		board_renderer.play_line_clear_effect(clear_result["rows"], clear_result["cols"])
 		SoundManager.play_sfx("line_clear")
 		HapticManager.line_clear_burst(lines)
@@ -308,6 +294,7 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 
 	if color_result["has_matches"]:
 		_apply_hit_stop(0.03)
+		# Play color match BEFORE update_from_state so cells still have colors
 		board_renderer.play_color_match_effect(color_result["groups"])
 		SoundManager.play_sfx("color_match")
 		HapticManager.color_match()
@@ -316,6 +303,21 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 		for g in color_result["groups"]:
 			total_cells += g.size()
 		AnalyticsManager.color_match(color_result["groups"].size(), total_cells)
+
+	# NOW update visual state (cells become empty)
+	board_renderer.update_from_state(board)
+	hud.update_from_state(_state)
+
+	# Crisis warning (board density check)
+	board_renderer.update_crisis_state(board)
+
+	# Placement pulse on newly placed cells
+	board_renderer.play_place_effect(piece.occupied_cells_at(gx, gy))
+	AnalyticsManager.piece_placed(Enums.PieceType.keys()[piece.type], gx, gy)
+
+	# Micro-bounce only when no clear (shake replaces it on clears)
+	if not has_clear:
+		board_renderer.play_place_bounce()
 
 	if new_combo >= 1:
 		if new_combo >= 2:
