@@ -281,8 +281,9 @@ func _can_place_type_on_board(piece_type: int, board: BoardState) -> bool:
 	"""Check if a piece type can be placed anywhere on the board."""
 	var shape: Array = PieceDefinitions.SHAPES[piece_type]
 	var piece := BlockPiece.new(piece_type, 0, shape)
-	var h := shape.size()
-	var w := shape[0].size()
+	var h: int = shape.size()
+	var first_row: Array = shape[0]
+	var w: int = first_row.size()
 	for gy in range(board.rows - h + 1):
 		for gx in range(board.columns - w + 1):
 			if board.can_place_piece_at(piece, gx, gy):
