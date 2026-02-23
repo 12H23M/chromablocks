@@ -40,20 +40,26 @@ func initialize() -> void:
 ## Gem overlay: draws on top of all cells
 var _gem_overlay: Control = null
 
-var _gems_enabled := true
+var _gems_enabled := false  # Hidden by default, shown when game starts
+
+func enable_gems() -> void:
+	_gems_enabled = true
+	if _gem_overlay:
+		_gem_overlay.visible = true
 
 func disable_gems() -> void:
 	_gems_enabled = false
+	if _gem_overlay:
+		_gem_overlay.visible = false
 
 func _setup_gem_overlay() -> void:
-	if not _gems_enabled:
-		return
 	if _gem_overlay:
 		_gem_overlay.queue_free()
 	_gem_overlay = Control.new()
 	_gem_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_gem_overlay.size = size
 	_gem_overlay.z_index = 10
+	_gem_overlay.visible = _gems_enabled
 	add_child(_gem_overlay)
 	_gem_overlay.draw.connect(_draw_gems_on_overlay)
 

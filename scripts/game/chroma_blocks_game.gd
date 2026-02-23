@@ -98,6 +98,7 @@ func _start_new_game(daily: bool) -> void:
 	var tray := _piece_gen.generate_tray(_state.level, _state.board)
 	_state.tray_pieces = tray
 
+	board_renderer.enable_gems()
 	board_renderer.update_from_state(_state.board)
 	board_renderer.update_crisis_state(_state.board)
 	piece_tray.populate_tray(tray)
