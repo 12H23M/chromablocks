@@ -451,11 +451,12 @@ func _draw() -> void:
 
 func _draw_corner_gems() -> void:
 	var gem_size := 7.0  # Half-size of the diamond (14px total)
+	var inset := 8.0  # Inside the frame corners
 	var gem_data := [
-		{"pos": Vector2(-2, -2), "color": Color(0.231, 0.510, 0.965), "glow": Color(0.231, 0.510, 0.965, 0.5)},       # TL: blue #3B82F6
-		{"pos": Vector2(size.x + 2, -2), "color": Color(0.925, 0.286, 0.600), "glow": Color(0.925, 0.286, 0.600, 0.5)}, # TR: pink #EC4899
-		{"pos": Vector2(-2, size.y + 2), "color": Color(0.063, 0.725, 0.506), "glow": Color(0.063, 0.725, 0.506, 0.5)}, # BL: green #10B981
-		{"pos": Vector2(size.x + 2, size.y + 2), "color": Color(0.961, 0.620, 0.043), "glow": Color(0.961, 0.620, 0.043, 0.5)}, # BR: gold #F59E0B
+		{"pos": Vector2(inset, inset), "color": Color(0.231, 0.510, 0.965), "glow": Color(0.231, 0.510, 0.965, 0.5)},       # TL: blue #3B82F6
+		{"pos": Vector2(size.x - inset, inset), "color": Color(0.925, 0.286, 0.600), "glow": Color(0.925, 0.286, 0.600, 0.5)}, # TR: pink #EC4899
+		{"pos": Vector2(inset, size.y - inset), "color": Color(0.063, 0.725, 0.506), "glow": Color(0.063, 0.725, 0.506, 0.5)}, # BL: green #10B981
+		{"pos": Vector2(size.x - inset, size.y - inset), "color": Color(0.961, 0.620, 0.043), "glow": Color(0.961, 0.620, 0.043, 0.5)}, # BR: gold #F59E0B
 	]
 	for gem in gem_data:
 		var center: Vector2 = gem["pos"]
