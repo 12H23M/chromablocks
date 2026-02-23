@@ -149,6 +149,38 @@ theme_override_font_sizes/font_size = 14
 theme_override_colors/font_color = Color(0.37, 0.73, 0.96, 1)
 text = "ON"
 
+[node name="HapticTestRow" type="HBoxContainer" parent="Card/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TestLabel" type="Label" parent="Card/VBox/HapticTestRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.44, 0.38, 0.65, 1)
+text = "  Test"
+
+[node name="TestShort" type="Button" parent="Card/VBox/HapticTestRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(50, 32)
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.37, 0.73, 0.96, 1)
+text = "50ms"
+
+[node name="TestMed" type="Button" parent="Card/VBox/HapticTestRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(55, 32)
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.37, 0.73, 0.96, 1)
+text = "200ms"
+
+[node name="TestLong" type="Button" parent="Card/VBox/HapticTestRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(55, 32)
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.37, 0.73, 0.96, 1)
+text = "500ms"
+
 [node name="CloseButton" type="Button" parent="Card/VBox"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 48)
