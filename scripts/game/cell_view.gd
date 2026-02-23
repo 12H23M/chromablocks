@@ -13,27 +13,13 @@ var _border_color := Color("DCD7EA")
 var _scale_factor := 1.0
 # Cached color for clear-out tween (block-colored instead of white)
 var _clear_color := Color.WHITE
-# True while a clear animation is playing — prevents set_empty() from interrupting
-var _clearing := false
 var _clear_tween: Tween = null
 
 func set_empty() -> void:
-	if _clearing:
-		# Don't reset visuals — the clear tween will handle it
-		_occupied = false
-		_color = -1
-		return
-	_occupied = false
-	_color = -1
-	_glow_color = Color.TRANSPARENT
-	_bg_color = AppColors.EMPTY_CELL
-	_highlight_color = Color.TRANSPARENT
-	_border_color = AppColors.EMPTY_BORDER
-	_scale_factor = 1.0
-	queue_redraw()
-
-func _force_empty() -> void:
-	_clearing = false
+	# Kill any running clear animation
+	if _clear_tween and _clear_tween.is_valid():
+		_clear_tween.kill()
+		_clear_tween = null
 	_occupied = false
 	_color = -1
 	_glow_color = Color.TRANSPARENT
@@ -91,12 +77,13 @@ func play_place_pulse(delay: float = 0.0) -> void:
 	, 1.0, 0.0, 0.15)
 
 
-func play_clear_flash(duration: float, delay: float = 0.0) -> void:
+func play_clear_flash(duration: float, delay: float = 0.0, cached_color: Color = Color(-1, 0, 0)) -> void:
 	var bright_color := Color.WHITE
-	if _occupied and _color >= 0:
+	if cached_color.r >= 0:
+		bright_color = cached_color
+	elif _occupied and _color >= 0:
 		bright_color = AppColors.get_block_light_color(_color)
 	_clear_color = bright_color
-	_clearing = true
 
 	# Kill any existing clear tween
 	if _clear_tween and _clear_tween.is_valid():
@@ -138,18 +125,11 @@ func play_clear_flash(duration: float, delay: float = 0.0) -> void:
 	# Phase 4: Shrink + fade
 	tween.tween_method(_tween_clear_out, 1.0, 0.0, 0.25) \
 		 .set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
-	tween.tween_callback(_force_empty)
-
-	# Safety: wall-clock timer guarantees cleanup no matter what
-	var timer := get_tree().create_timer(1.0, true, false, true)
-	timer.timeout.connect(func():
-		if _clearing:
-			_force_empty()
+	tween.tween_callback(set_empty)
 	)
 
 func play_color_match_flash(duration: float, delay: float = 0.0) -> void:
 	var bright := AppColors.get_block_light_color(_color) if _occupied else Color.WHITE
-	_clearing = true
 
 	if _clear_tween and _clear_tween.is_valid():
 		_clear_tween.kill()
@@ -178,14 +158,7 @@ func play_color_match_flash(duration: float, delay: float = 0.0) -> void:
 		queue_redraw()
 	).set_delay(0.05)
 	tween.tween_method(_tween_to_empty, 1.0, 0.0, duration - 0.05)
-	tween.tween_callback(_force_empty)
-
-	# Safety wall-clock timer
-	var timer := get_tree().create_timer(1.0, true, false, true)
-	timer.timeout.connect(func():
-		if _clearing:
-			_force_empty()
-	)
+	tween.tween_callback(set_empty)
 
 func _tween_clear_out(t: float) -> void:
 	# Fade from block color toward empty cell

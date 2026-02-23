@@ -180,24 +180,38 @@ func play_place_effect(cells: Array) -> void:
 			delay += 0.015
 
 
+# Cache cell colors before board state update for clear animations
+var _cached_cell_colors: Dictionary = {}
+
+func cache_cell_colors_for_clear(rows: Array, cols: Array) -> void:
+	_cached_cell_colors.clear()
+	for row in rows:
+		for x in GameConstants.BOARD_COLUMNS:
+			_cached_cell_colors[Vector2i(x, row)] = _get_cell_light_color(x, row)
+	for col in cols:
+		for y in GameConstants.BOARD_ROWS:
+			var key := Vector2i(col, y)
+			if key not in _cached_cell_colors:
+				_cached_cell_colors[key] = _get_cell_light_color(col, y)
+
 func play_line_clear_effect(rows: Array, cols: Array) -> void:
-	# Immediate micro-tick before the main burst haptic fires
 	HapticManager.cell_clear()
-	# Collect cell positions and colors for particles before clearing
 	var particle_positions: Array = []
 	var particle_colors: Array = []
 
 	for row in rows:
 		for x in GameConstants.BOARD_COLUMNS:
 			particle_positions.append(Vector2(x * _cell_size, row * _cell_size))
-			particle_colors.append(_get_cell_light_color(x, row))
+			var key := Vector2i(x, row)
+			particle_colors.append(_cached_cell_colors.get(key, Color.WHITE))
 
 	for col in cols:
 		for y in GameConstants.BOARD_ROWS:
 			var pos := Vector2(col * _cell_size, y * _cell_size)
 			if pos not in particle_positions:
 				particle_positions.append(pos)
-				particle_colors.append(_get_cell_light_color(col, y))
+				var key := Vector2i(col, y)
+				particle_colors.append(_cached_cell_colors.get(key, Color.WHITE))
 
 	# Determine particle intensity based on total lines cleared
 	var total_lines := rows.size() + cols.size()
@@ -209,18 +223,22 @@ func play_line_clear_effect(rows: Array, cols: Array) -> void:
 
 	_emit_particles_and_shockwave(particle_positions, particle_colors, intensity, _cell_size * 4.0)
 
-	# Cell flash animations
+	# Cell flash animations — pass cached color since cells are already empty
 	var delay := 0.0
 	for row in rows:
 		for x in GameConstants.BOARD_COLUMNS:
+			var key := Vector2i(x, row)
+			var cached := _cached_cell_colors.get(key, Color.WHITE)
 			_cells[row][x].play_clear_flash(
-				GameConstants.LINE_CLEAR_ANIM_DURATION, delay)
+				GameConstants.LINE_CLEAR_ANIM_DURATION, delay, cached)
 			delay += 0.02
 	for col in cols:
 		delay = 0.0
 		for y in GameConstants.BOARD_ROWS:
+			var key := Vector2i(col, y)
+			var cached := _cached_cell_colors.get(key, Color.WHITE)
 			_cells[y][col].play_clear_flash(
-				GameConstants.LINE_CLEAR_ANIM_DURATION, delay)
+				GameConstants.LINE_CLEAR_ANIM_DURATION, delay, cached)
 			delay += 0.02
 
 func play_color_match_effect(groups: Array) -> void:

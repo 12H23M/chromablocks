@@ -268,24 +268,39 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	_state.apply_turn_result(board, score_result["total"],
 		clear_result["lines_cleared"], new_combo, new_level, piece)
 
-	# 7. Effects BEFORE visual state update (so cells still have their colors)
+	# 7. Cache cell colors for clear animations BEFORE state update
+	if clear_result["has_clears"]:
+		board_renderer.cache_cell_colors_for_clear(clear_result["rows"], clear_result["cols"])
+
+	# Update board state (set_empty kills any running tweens)
+	board_renderer.update_from_state(board)
+	hud.update_from_state(_state)
+
+	# 7.5 Crisis warning
+	board_renderer.update_crisis_state(board)
+
+	# 7.6 Placement pulse
+	board_renderer.play_place_effect(piece.occupied_cells_at(gx, gy))
+	AnalyticsManager.piece_placed(Enums.PieceType.keys()[piece.type], gx, gy)
+
+	# 8. Effects AFTER state update — animations start on already-empty cells
 	var has_clear: bool = clear_result["has_clears"]
+
+	if not has_clear:
+		board_renderer.play_place_bounce()
 
 	if has_clear:
 		var lines: int = clear_result["lines_cleared"]
-		# Freeze-frame hit stop — short and sharp
 		if lines >= 3:
 			_apply_hit_stop(0.05)
 		else:
 			_apply_hit_stop(0.03)
-		# Play clear effect BEFORE update_from_state so cells still know their color
 		board_renderer.play_line_clear_effect(clear_result["rows"], clear_result["cols"])
 		SoundManager.play_sfx("line_clear")
 		HapticManager.line_clear_burst(lines)
 		if lines >= 2:
 			_spawn_multi_clear_popup(lines)
 		AnalyticsManager.line_clear(lines, new_combo)
-		# Screen shake: boosted intensity for post-freeze punch
 		if lines >= 3:
 			board_renderer.play_screen_shake(9.0, 0.20)
 		elif lines >= 2:
@@ -295,7 +310,6 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 
 	if color_result["has_matches"]:
 		_apply_hit_stop(0.03)
-		# Play color match BEFORE update_from_state so cells still have colors
 		board_renderer.play_color_match_effect(color_result["groups"])
 		SoundManager.play_sfx("color_match")
 		HapticManager.color_match()
@@ -304,21 +318,6 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 		for g in color_result["groups"]:
 			total_cells += g.size()
 		AnalyticsManager.color_match(color_result["groups"].size(), total_cells)
-
-	# NOW update visual state (cells become empty)
-	board_renderer.update_from_state(board)
-	hud.update_from_state(_state)
-
-	# Crisis warning (board density check)
-	board_renderer.update_crisis_state(board)
-
-	# Placement pulse on newly placed cells
-	board_renderer.play_place_effect(piece.occupied_cells_at(gx, gy))
-	AnalyticsManager.piece_placed(Enums.PieceType.keys()[piece.type], gx, gy)
-
-	# Micro-bounce only when no clear (shake replaces it on clears)
-	if not has_clear:
-		board_renderer.play_place_bounce()
 
 	if new_combo >= 1:
 		if new_combo >= 2:
@@ -489,6 +488,7 @@ func _on_interstitial_closed() -> void:
 	_pending_action = ""
 
 func _show_home() -> void:
+	board_renderer.disable_gems()
 	home_screen.refresh_stats()
 	ScreenTransition.fade_in(home_screen)
 	ScreenTransition.fade_out(game_over_screen)
