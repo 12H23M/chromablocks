@@ -76,14 +76,21 @@ func play_clear_flash(duration: float, delay: float = 0.0) -> void:
 	var bright_color := Color.WHITE
 	if _occupied and _color >= 0:
 		bright_color = AppColors.get_block_light_color(_color)
-	# Cache the block's bright color for the fade-out tween
 	_clear_color = bright_color
 
+	# Mark cell as clearing immediately so board state is correct
+	var was_color := _color
+
 	var tween := create_tween()
+	tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	# Compensate for Engine.time_scale to keep animation at real-time speed
+	if Engine.time_scale > 0.01:
+		tween.set_speed_scale(1.0 / Engine.time_scale)
+
 	if delay > 0.0:
 		tween.tween_interval(delay)
 
-	# Phase 1: Bright flash (block color)
+	# Phase 1: Bright flash
 	tween.tween_callback(func():
 		_bg_color = bright_color
 		_glow_color = Color(bright_color.r, bright_color.g, bright_color.b, 1.0)
@@ -93,7 +100,7 @@ func play_clear_flash(duration: float, delay: float = 0.0) -> void:
 		queue_redraw()
 	)
 
-	# Phase 2: Intensified block color pop + scale up
+	# Phase 2: Pop
 	var peak_color := bright_color.lightened(0.4)
 	tween.tween_callback(func():
 		_bg_color = peak_color
@@ -104,10 +111,10 @@ func play_clear_flash(duration: float, delay: float = 0.0) -> void:
 	tween.tween_property(self, "_scale_factor", 1.3, 0.1) \
 		 .set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 
-	# Phase 3: Hold at peak briefly
+	# Phase 3: Hold
 	tween.tween_interval(0.06)
 
-	# Phase 4: Shrink + fade out (slower)
+	# Phase 4: Shrink + fade
 	tween.tween_method(_tween_clear_out, 1.0, 0.0, 0.25) \
 		 .set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
 	tween.tween_callback(func():
@@ -115,9 +122,8 @@ func play_clear_flash(duration: float, delay: float = 0.0) -> void:
 		set_empty()
 	)
 
-	# Safety timer: ensure set_empty() fires even if tween is affected by Engine.time_scale
-	var safety_time := duration + delay + 0.5
-	var timer := get_tree().create_timer(safety_time, true, false, true)  # ignore_time_scale=true
+	# Safety: wall-clock timer guarantees set_empty() no matter what
+	var timer := get_tree().create_timer(0.8, true, false, true)
 	timer.timeout.connect(func():
 		if _occupied and not _line_prediction_active:
 			_scale_factor = 1.0
@@ -128,6 +134,10 @@ func play_color_match_flash(duration: float, delay: float = 0.0) -> void:
 	var bright := AppColors.get_block_light_color(_color) if _occupied else Color.WHITE
 
 	var tween := create_tween()
+	tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	if Engine.time_scale > 0.01:
+		tween.set_speed_scale(1.0 / Engine.time_scale)
+
 	if delay > 0.0:
 		tween.tween_interval(delay)
 
@@ -148,9 +158,8 @@ func play_color_match_flash(duration: float, delay: float = 0.0) -> void:
 	tween.tween_method(_tween_to_empty, 1.0, 0.0, duration - 0.05)
 	tween.tween_callback(set_empty)
 
-	# Safety timer: ensure set_empty() fires even if tween is affected by Engine.time_scale
-	var safety_time := duration + delay + 0.5
-	var timer := get_tree().create_timer(safety_time, true, false, true)  # ignore_time_scale=true
+	# Safety wall-clock timer
+	var timer := get_tree().create_timer(0.8, true, false, true)
 	timer.timeout.connect(func():
 		if _occupied and not _line_prediction_active:
 			set_empty()
