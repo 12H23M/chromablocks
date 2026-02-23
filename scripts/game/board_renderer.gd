@@ -483,18 +483,7 @@ func _draw() -> void:
 	if _bg_style:
 		draw_style_box(_bg_style, Rect2(Vector2.ZERO, size))
 
-	# Subtle inner glow — radial gradient overlay from corners
-	var glow_base := Color(0.47, 0.39, 1.0, 0.06)
-	var board_corners := [Vector2.ZERO, Vector2(size.x, 0), Vector2(0, size.y), size]
-	for corner in board_corners:
-		var glow_radius := size.length() * 0.3
-		var steps := 6
-		for s in range(steps, 0, -1):
-			var t := float(s) / float(steps)
-			var radius := glow_radius * t
-			var a := glow_base.a * (1.0 - t)
-			var c := Color(glow_base.r, glow_base.g, glow_base.b, a)
-			draw_circle(corner, radius, c)
+	# Inner glow removed — was causing uneven empty cell appearance
 
 	# Draw grid lines
 	for i in range(1, GameConstants.BOARD_COLUMNS):
