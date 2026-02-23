@@ -23,7 +23,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.067, 0.051, 0.188, 1)
+color = Color(0.102, 0.059, 0.314, 1)
 
 [node name="GameUI" type="VBoxContainer" parent="UILayer"]
 anchors_preset = 15
@@ -36,15 +36,15 @@ theme_override_constants/separation = 0
 
 [node name="TopMargin" type="MarginContainer" parent="UILayer/GameUI"]
 layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 16
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 48
+theme_override_constants/margin_right = 14
 
 [node name="HUD" parent="UILayer/GameUI/TopMargin" instance=ExtResource("4_hud")]
 
 [node name="HudSpacer" type="Control" parent="UILayer/GameUI"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 24)
+custom_minimum_size = Vector2(0, 10)
 
 [node name="BoardContainer" type="CenterContainer" parent="UILayer/GameUI"]
 layout_mode = 2
@@ -54,7 +54,7 @@ unique_name_in_owner = true
 
 [node name="Spacer" type="Control" parent="UILayer/GameUI"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 28)
+custom_minimum_size = Vector2(0, 10)
 
 [node name="TrayMargin" type="MarginContainer" parent="UILayer/GameUI"]
 layout_mode = 2

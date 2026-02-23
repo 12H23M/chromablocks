@@ -50,7 +50,7 @@ func _ready() -> void:
 	settings_screen.closed.connect(_hide_settings)
 	piece_tray.swap_pressed.connect(_on_swap_pressed)
 
-	var pause_btn := hud.get_node_or_null("PauseButton")
+	var pause_btn := hud.get_node_or_null("TopBar/PauseButton")
 	if pause_btn:
 		pause_btn.pressed.connect(pause_game)
 

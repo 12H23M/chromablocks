@@ -2,8 +2,8 @@ extends Control
 
 const CellScene := preload("res://scenes/game/cell.tscn")
 const ClearParticlesScript := preload("res://scripts/game/clear_particles.gd")
-const CORNER_RADIUS := 12
-const BORDER_WIDTH := 2.0
+const CORNER_RADIUS := 20
+const BORDER_WIDTH := 2.5
 
 var _cells: Array = []  # Array[Array[CellView]] — [y][x]
 var _cell_size: float = 36.0
@@ -21,7 +21,7 @@ func initialize() -> void:
 	for child in get_children():
 		child.queue_free()
 
-	clip_children = Control.CLIP_CHILDREN_AND_DRAW
+	clip_children = Control.CLIP_CHILDREN_ONLY
 	_setup_styles()
 	_calculate_cell_size()
 
@@ -56,8 +56,8 @@ func _setup_styles() -> void:
 	_bg_style.border_width_right = int(BORDER_WIDTH)
 	_bg_style.border_width_bottom = int(BORDER_WIDTH)
 	_bg_style.border_color = AppColors.BOARD_BORDER
-	_bg_style.shadow_color = Color(0, 0, 0, 0.05)
-	_bg_style.shadow_size = 6
+	_bg_style.shadow_color = Color(0, 0, 0, 0.4)
+	_bg_style.shadow_size = 8
 
 func _calculate_cell_size() -> void:
 	var viewport_size := get_viewport_rect().size
@@ -390,29 +390,34 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	# Outer frame glow — border color at ~30% opacity behind the board
-	var frame_glow := Color(AppColors.BOARD_BORDER.r, AppColors.BOARD_BORDER.g, AppColors.BOARD_BORDER.b, 0.30)
+	# Outer frame glow — 3-layer expanding glow with decreasing alpha
 	for i in range(3, 0, -1):
-		var expand := float(i) * 3.0
-		var alpha := frame_glow.a * (1.0 - float(i) / 4.0)
-		var c := Color(frame_glow.r, frame_glow.g, frame_glow.b, alpha)
-		draw_rect(Rect2(Vector2(-expand, -expand), size + Vector2(expand * 2, expand * 2)), c, false, 2.0)
+		var expand := float(i) * 4.0
+		var alpha := 0.15 * (1.0 - float(i) / 4.0)
+		var glow_rect := Rect2(Vector2(-expand, -expand), size + Vector2(expand * 2, expand * 2))
+		var glow_style := StyleBoxFlat.new()
+		glow_style.bg_color = Color(0.39, 0.27, 1.0, alpha)
+		glow_style.corner_radius_top_left = CORNER_RADIUS + int(expand)
+		glow_style.corner_radius_top_right = CORNER_RADIUS + int(expand)
+		glow_style.corner_radius_bottom_left = CORNER_RADIUS + int(expand)
+		glow_style.corner_radius_bottom_right = CORNER_RADIUS + int(expand)
+		draw_style_box(glow_style, glow_rect)
 
 	# Draw dark rounded background with border
 	if _bg_style:
 		draw_style_box(_bg_style, Rect2(Vector2.ZERO, size))
 
 	# Subtle inner glow — radial gradient overlay from corners
-	var glow_base := Color(AppColors.BOARD_BORDER.r, AppColors.BOARD_BORDER.g, AppColors.BOARD_BORDER.b, 0.08)
-	var corners := [Vector2.ZERO, Vector2(size.x, 0), Vector2(0, size.y), size]
-	for corner in corners:
-		var glow_radius := size.length() * 0.35
-		var steps := 8
+	var glow_base := Color(0.47, 0.39, 1.0, 0.06)
+	var board_corners := [Vector2.ZERO, Vector2(size.x, 0), Vector2(0, size.y), size]
+	for corner in board_corners:
+		var glow_radius := size.length() * 0.3
+		var steps := 6
 		for s in range(steps, 0, -1):
 			var t := float(s) / float(steps)
 			var radius := glow_radius * t
-			var alpha := glow_base.a * (1.0 - t)
-			var c := Color(glow_base.r, glow_base.g, glow_base.b, alpha)
+			var a := glow_base.a * (1.0 - t)
+			var c := Color(glow_base.r, glow_base.g, glow_base.b, a)
 			draw_circle(corner, radius, c)
 
 	# Draw grid lines
@@ -422,6 +427,9 @@ func _draw() -> void:
 	for i in range(1, GameConstants.BOARD_ROWS):
 		var y := i * _cell_size
 		draw_line(Vector2(0, y), Vector2(size.x, y), AppColors.GRID_LINE, 1.0)
+
+	# Corner gems — rotated 45° diamond shapes with glow
+	_draw_corner_gems()
 
 	# Shockwave rings with glow
 	for sw in _shockwaves:
@@ -439,3 +447,35 @@ func _draw() -> void:
 			draw_arc(sw["center"], radius, 0.0, TAU, 48, glow_color, width + 3.0)
 		# Main ring
 		draw_arc(sw["center"], radius, 0.0, TAU, 48, sw_color, width)
+
+
+func _draw_corner_gems() -> void:
+	var gem_size := 7.0  # Half-size of the diamond (14px total)
+	var gem_data := [
+		{"pos": Vector2(-2, -2), "color": Color(0.231, 0.510, 0.965), "glow": Color(0.231, 0.510, 0.965, 0.5)},       # TL: blue #3B82F6
+		{"pos": Vector2(size.x + 2, -2), "color": Color(0.925, 0.286, 0.600), "glow": Color(0.925, 0.286, 0.600, 0.5)}, # TR: pink #EC4899
+		{"pos": Vector2(-2, size.y + 2), "color": Color(0.063, 0.725, 0.506), "glow": Color(0.063, 0.725, 0.506, 0.5)}, # BL: green #10B981
+		{"pos": Vector2(size.x + 2, size.y + 2), "color": Color(0.961, 0.620, 0.043), "glow": Color(0.961, 0.620, 0.043, 0.5)}, # BR: gold #F59E0B
+	]
+	for gem in gem_data:
+		var center: Vector2 = gem["pos"]
+		var color: Color = gem["color"]
+		var glow_color: Color = gem["glow"]
+		# Glow circle behind the gem
+		draw_circle(center, gem_size + 4, glow_color)
+		# Diamond shape (rotated 45° square)
+		var points := PackedVector2Array([
+			center + Vector2(0, -gem_size),   # top
+			center + Vector2(gem_size, 0),     # right
+			center + Vector2(0, gem_size),     # bottom
+			center + Vector2(-gem_size, 0),    # left
+		])
+		draw_colored_polygon(points, color)
+		# Highlight on top half of diamond for depth
+		var highlight_points := PackedVector2Array([
+			center + Vector2(0, -gem_size),
+			center + Vector2(gem_size * 0.5, -gem_size * 0.5),
+			center,
+			center + Vector2(-gem_size * 0.5, -gem_size * 0.5),
+		])
+		draw_colored_polygon(highlight_points, Color(1, 1, 1, 0.25))

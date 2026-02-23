@@ -1,9 +1,9 @@
-extends HBoxContainer
+extends VBoxContainer
 
-@onready var score_label: Label = $ScoreBox/ScoreContent/ScoreValue
-@onready var level_label: Label = $LevelBox/LevelContent/LevelValue
-@onready var level_progress: ProgressBar = $LevelBox/LevelContent/LevelProgress
-@onready var best_label: Label = $BestBox/BestContent/BestValue
+@onready var score_label: Label = $TopBar/ScoreDisplay/ScoreValue
+@onready var level_label: Label = $TopBar/LevelBadge/LevelContent/LevelValue
+@onready var best_label: Label = $InfoRow/BestChip/BestContent/BestValue
+@onready var xp_bar: Control = $InfoRow/XPBar
 
 var _prev_combo := 0
 var _combo_tween: Tween
@@ -18,7 +18,7 @@ func _ready() -> void:
 func update_from_state(state: GameState) -> void:
 	_animate_score(state.score)
 	level_label.text = "%02d" % state.level
-	best_label.text = str(state.high_score)
+	best_label.text = _format_number(state.high_score)
 	_update_combo(state.combo)
 	_update_level_progress(state.lines_cleared, state.level)
 
@@ -32,9 +32,9 @@ func _update_level_progress(lines_cleared: int, current_level: int) -> void:
 	var lines_to_next := GameConstants.lines_for_next_level(current_level)
 	var progress := lines_cleared - lines_at_current
 	if lines_to_next > 0:
-		level_progress.value = clampf(float(progress) / float(lines_to_next) * 100.0, 0.0, 100.0)
+		xp_bar.set_progress(clampf(float(progress) / float(lines_to_next), 0.0, 1.0))
 	else:
-		level_progress.value = 0.0
+		xp_bar.set_progress(0.0)
 
 
 func _animate_score(target_score: int) -> void:
@@ -64,7 +64,21 @@ func _animate_score(target_score: int) -> void:
 
 func _set_score_display(value: int) -> void:
 	_displayed_score = value
-	score_label.text = str(value)
+	score_label.text = _format_number(value)
+
+
+func _format_number(value: int) -> String:
+	var s := str(value)
+	if s.length() <= 3:
+		return s
+	var result := ""
+	var count := 0
+	for i in range(s.length() - 1, -1, -1):
+		result = s[i] + result
+		count += 1
+		if count % 3 == 0 and i > 0:
+			result = "," + result
+	return result
 
 
 func _update_combo(combo: int) -> void:

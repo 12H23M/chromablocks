@@ -8,16 +8,19 @@ signal swap_pressed()
 const DraggablePieceScene := preload("res://scenes/game/draggable_piece.tscn")
 const CARD_RADIUS := 16
 const CARD_BORDER_WIDTH := 1.5
+const PLATE_RADIUS := 18
 
 var _tray_cell_size: float = 28.0
 var _active_pieces: Array = []
 var _card_style: StyleBoxFlat
+var _plate_style: StyleBoxFlat
 
 @onready var _pieces_container: HBoxContainer = $PieceSlots
 @onready var _swap_button: Button = $SwapRow/SwapButton
 
 func _ready() -> void:
 	_setup_card_style()
+	_setup_plate_style()
 	# Hide swap feature for now
 	$SwapRow.visible = false
 	_swap_button.pressed.connect(func():
@@ -38,6 +41,22 @@ func _setup_card_style() -> void:
 	_card_style.border_color = Color(AppColors.CARD_BORDER, 0.5)
 	_card_style.shadow_color = Color(0, 0, 0, 0.06)
 	_card_style.shadow_size = 4
+
+func _setup_plate_style() -> void:
+	_plate_style = StyleBoxFlat.new()
+	_plate_style.bg_color = Color(0.118, 0.078, 0.314, 0.6)
+	_plate_style.corner_radius_top_left = PLATE_RADIUS
+	_plate_style.corner_radius_top_right = PLATE_RADIUS
+	_plate_style.corner_radius_bottom_left = PLATE_RADIUS
+	_plate_style.corner_radius_bottom_right = PLATE_RADIUS
+	_plate_style.border_width_left = 1
+	_plate_style.border_width_top = 1
+	_plate_style.border_width_right = 1
+	_plate_style.border_width_bottom = 1
+	_plate_style.border_color = Color(0.471, 0.392, 1.0, 0.12)
+	_plate_style.shadow_color = Color(0, 0, 0, 0.2)
+	_plate_style.shadow_size = 6
+	_plate_style.shadow_offset = Vector2(0, 2)
 
 func set_cell_size(board_cell_size: float) -> void:
 	_tray_cell_size = board_cell_size * 0.7
@@ -111,19 +130,34 @@ func remove_placeholder(placeholder: Control) -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_SORT_CHILDREN:
+		queue_redraw()
 		if _pieces_container:
 			_pieces_container.queue_redraw()
 
 func _draw() -> void:
-	if _card_style == null or _pieces_container == null:
+	if _pieces_container == null:
 		return
-	for child in _pieces_container.get_children():
-		if not is_instance_valid(child) or not child.visible:
-			continue
-		# Offset by pieces_container position since we draw from VBoxContainer
-		var child_global_rect := Rect2(
-			_pieces_container.position + child.position, child.size)
-		draw_style_box(_card_style, child_global_rect)
+
+	# Draw plate background behind all pieces
+	if _plate_style and _pieces_container.get_child_count() > 0:
+		var plate_rect := Rect2(
+			_pieces_container.position + Vector2(-8, -14),
+			_pieces_container.size + Vector2(16, 28))
+		draw_style_box(_plate_style, plate_rect)
+
+		# Draw subtle slot dividers between pieces
+		var children := _pieces_container.get_children()
+		for i in range(1, children.size()):
+			var child: Control = children[i]
+			if not is_instance_valid(child) or not child.visible:
+				continue
+			var divider_x := _pieces_container.position.x + child.position.x - 8.0
+			var divider_top := _pieces_container.position.y + 4.0
+			var divider_bottom := _pieces_container.position.y + _pieces_container.size.y - 4.0
+			draw_line(
+				Vector2(divider_x, divider_top),
+				Vector2(divider_x, divider_bottom),
+				Color(1, 1, 1, 0.04), 1.0)
 
 func _on_drag_started(piece_node: Control) -> void:
 	piece_drag_started.emit(piece_node)
