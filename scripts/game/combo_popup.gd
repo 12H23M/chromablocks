@@ -34,15 +34,15 @@ func show_combo(combo: int, center_pos: Vector2) -> void:
 
 	# Size scaling: small combos are subtle, big combos are dramatic
 	if combo >= 5:
-		_size_scale = 1.5
+		_size_scale = 1.8
 	elif combo >= 4:
-		_size_scale = 1.3
+		_size_scale = 1.5
 	elif combo >= 3:
-		_size_scale = 1.15
+		_size_scale = 1.25
 	elif combo >= 2:
 		_size_scale = 1.0
 	else:
-		_size_scale = 0.75
+		_size_scale = 0.6
 
 	# Colors and sub-text
 	var combo_color: Color

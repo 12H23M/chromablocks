@@ -80,11 +80,13 @@ static func grid_snap() -> void:
 
 ## Combo feedback — intensity scales with combo level
 static func combo(combo_level: int = 2) -> void:
-	var duration := clampi(40 + combo_level * 12, 50, 120)
+	var duration := clampi(30 + combo_level * 20, 40, 200)
 	_vibrate(duration)
-	# Extra pulse for high combos
+	# Extra pulses for high combos
 	if combo_level >= 4:
-		_vibrate_delayed(clampi(combo_level * 10, 40, 80), 0.08)
+		_vibrate_delayed(clampi(combo_level * 15, 50, 120), 0.1)
+	if combo_level >= 5:
+		_vibrate_delayed(clampi(combo_level * 12, 60, 100), 0.22)
 
 
 ## Level up - stronger pulse

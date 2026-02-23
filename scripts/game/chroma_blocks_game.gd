@@ -318,7 +318,7 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	if new_combo >= 1:
 		if new_combo >= 2:
 			SoundManager.play_combo_sfx(new_combo)
-			HapticManager.combo(new_combo)
+		HapticManager.combo(new_combo)
 		_spawn_combo_popup(new_combo)
 		if new_combo >= 3:
 			_apply_hit_stop(0.05)
@@ -440,7 +440,6 @@ func _spawn_combo_popup(combo: int) -> void:
 	overlay_layer.add_child(popup)
 	var board_center := board_renderer.global_position + board_renderer.size / 2.0
 	popup.show_combo(combo, board_center)
-	HapticManager.combo(combo)
 	# Clean up the CanvasLayer when popup is freed
 	popup.tree_exited.connect(overlay_layer.queue_free)
 
