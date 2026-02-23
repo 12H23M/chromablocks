@@ -2,7 +2,6 @@ class_name HapticManager
 
 
 static func _vibrate(duration_ms: int) -> void:
-	print("HAPTIC vibrate %dms enabled=%s" % [duration_ms, str(SaveManager.is_haptic_enabled())])
 	if not SaveManager.is_haptic_enabled():
 		return
 	Input.vibrate_handheld(duration_ms)
@@ -92,7 +91,6 @@ static func combo(combo_level: int = 2) -> void:
 		duration = 100
 	else:
 		duration = 80
-	print("HAPTIC combo level=%d duration=%dms" % [combo_level, duration])
 	_vibrate(duration)
 	# Extra pulses for high combos
 	if combo_level >= 5:

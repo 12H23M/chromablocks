@@ -33,20 +33,6 @@ func _ready() -> void:
 	_haptic_toggle.pressed.connect(_toggle_haptic)
 	_update_haptic_label()
 
-	# Haptic test buttons — bypass HapticManager to test raw vibration
-	$Card/VBox/HapticTestRow/TestShort.pressed.connect(func():
-		print("HAPTIC TEST: 50ms")
-		Input.vibrate_handheld(50)
-	)
-	$Card/VBox/HapticTestRow/TestMed.pressed.connect(func():
-		print("HAPTIC TEST: 200ms")
-		Input.vibrate_handheld(200)
-	)
-	$Card/VBox/HapticTestRow/TestLong.pressed.connect(func():
-		print("HAPTIC TEST: 500ms")
-		Input.vibrate_handheld(500)
-	)
-
 	# Close button
 	$Card/VBox/CloseButton.pressed.connect(func():
 		SoundManager.play_sfx("button_press")
