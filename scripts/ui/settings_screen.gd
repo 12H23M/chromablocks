@@ -74,7 +74,7 @@ func _update_music_label() -> void:
 
 func _cycle_track() -> void:
 	SoundManager.play_sfx("button_press")
-	var tracks := MusicGenerator.get_track_list()
+	var tracks := MusicManager.get_track_list()
 	var current_id := MusicManager.get_current_track_id()
 	var current_idx := 0
 	for i in tracks.size():
@@ -88,13 +88,13 @@ func _cycle_track() -> void:
 
 
 func _update_track_label() -> void:
-	var tracks := MusicGenerator.get_track_list()
+	var tracks := MusicManager.get_track_list()
 	var current_id := MusicManager.get_current_track_id()
 	for track in tracks:
 		if track["id"] == current_id:
 			_track_button.text = track["name"]
 			return
-	_track_button.text = "Classic"
+	_track_button.text = "Chroma Dream"
 
 
 func _update_haptic_label() -> void:
