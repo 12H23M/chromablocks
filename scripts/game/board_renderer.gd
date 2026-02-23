@@ -40,7 +40,14 @@ func initialize() -> void:
 ## Gem overlay: draws on top of all cells
 var _gem_overlay: Control = null
 
+var _gems_enabled := true
+
+func disable_gems() -> void:
+	_gems_enabled = false
+
 func _setup_gem_overlay() -> void:
+	if not _gems_enabled:
+		return
 	if _gem_overlay:
 		_gem_overlay.queue_free()
 	_gem_overlay = Control.new()
@@ -51,8 +58,8 @@ func _setup_gem_overlay() -> void:
 	_gem_overlay.draw.connect(_draw_gems_on_overlay)
 
 func _draw_gems_on_overlay() -> void:
-	var gem_size := 10.0
-	var inset := 8.0
+	var gem_size := 5.0
+	var inset := 4.0
 	var s := _gem_overlay.size
 	var gem_data := [
 		{"pos": Vector2(inset, inset), "color": Color(0.231, 0.510, 0.965), "glow": Color(0.231, 0.510, 0.965, 0.5)},
@@ -64,8 +71,8 @@ func _draw_gems_on_overlay() -> void:
 		var center: Vector2 = gem["pos"]
 		var color: Color = gem["color"]
 		var glow_color: Color = gem["glow"]
-		_gem_overlay.draw_circle(center, gem_size + 12, Color(glow_color.r, glow_color.g, glow_color.b, 0.15))
-		_gem_overlay.draw_circle(center, gem_size + 6, glow_color)
+		_gem_overlay.draw_circle(center, gem_size + 6, Color(glow_color.r, glow_color.g, glow_color.b, 0.12))
+		_gem_overlay.draw_circle(center, gem_size + 3, glow_color)
 		var points := PackedVector2Array([
 			center + Vector2(0, -gem_size),
 			center + Vector2(gem_size, 0),
