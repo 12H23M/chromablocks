@@ -126,7 +126,6 @@ func play_clear_flash(duration: float, delay: float = 0.0, cached_color: Color =
 	tween.tween_method(_tween_clear_out, 1.0, 0.0, 0.25) \
 		 .set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
 	tween.tween_callback(set_empty)
-	)
 
 func play_color_match_flash(duration: float, delay: float = 0.0) -> void:
 	var bright := AppColors.get_block_light_color(_color) if _occupied else Color.WHITE

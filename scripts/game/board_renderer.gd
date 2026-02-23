@@ -228,7 +228,7 @@ func play_line_clear_effect(rows: Array, cols: Array) -> void:
 	for row in rows:
 		for x in GameConstants.BOARD_COLUMNS:
 			var key := Vector2i(x, row)
-			var cached := _cached_cell_colors.get(key, Color.WHITE)
+			var cached: Color = _cached_cell_colors.get(key, Color.WHITE)
 			_cells[row][x].play_clear_flash(
 				GameConstants.LINE_CLEAR_ANIM_DURATION, delay, cached)
 			delay += 0.02
@@ -236,7 +236,7 @@ func play_line_clear_effect(rows: Array, cols: Array) -> void:
 		delay = 0.0
 		for y in GameConstants.BOARD_ROWS:
 			var key := Vector2i(col, y)
-			var cached := _cached_cell_colors.get(key, Color.WHITE)
+			var cached: Color = _cached_cell_colors.get(key, Color.WHITE)
 			_cells[y][col].play_clear_flash(
 				GameConstants.LINE_CLEAR_ANIM_DURATION, delay, cached)
 			delay += 0.02
