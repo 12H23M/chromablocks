@@ -295,6 +295,8 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 		board_renderer.play_line_clear_effect(clear_result["rows"], clear_result["cols"])
 		SoundManager.play_sfx("line_clear")
 		HapticManager.line_clear_burst(lines)
+		if lines >= 2:
+			_spawn_multi_clear_popup(lines)
 		AnalyticsManager.line_clear(lines, new_combo)
 		# Screen shake: boosted intensity for post-freeze punch
 		if lines >= 3:
@@ -441,6 +443,17 @@ func _spawn_combo_popup(combo: int) -> void:
 	var board_center := board_renderer.global_position + board_renderer.size / 2.0
 	popup.show_combo(combo, board_center)
 	# Clean up the CanvasLayer when popup is freed
+	popup.tree_exited.connect(overlay_layer.queue_free)
+
+func _spawn_multi_clear_popup(lines: int) -> void:
+	var popup := Control.new()
+	popup.set_script(preload("res://scripts/game/multi_clear_popup.gd"))
+	var overlay_layer := CanvasLayer.new()
+	overlay_layer.layer = 19  # Behind combo (20) but above game
+	add_child(overlay_layer)
+	overlay_layer.add_child(popup)
+	var board_center := board_renderer.global_position + board_renderer.size / 2.0
+	popup.show_multi_clear(lines, board_center)
 	popup.tree_exited.connect(overlay_layer.queue_free)
 
 func _spawn_score_popup(value: int, gx: int, gy: int) -> void:

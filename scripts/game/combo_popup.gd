@@ -21,6 +21,10 @@ const BURST_LINE_COUNT := 12
 
 # Scale factor based on combo level
 var _size_scale: float = 1.0
+# Per-level visual intensity
+var _outline_size: int = 6
+var _burst_width: float = 2.0
+var _burst_count: int = BURST_LINE_COUNT
 
 
 func show_combo(combo: int, center_pos: Vector2) -> void:
@@ -44,6 +48,28 @@ func show_combo(combo: int, center_pos: Vector2) -> void:
 	else:
 		_size_scale = 0.6
 
+	# Per-level outline, burst width, burst count
+	if combo >= 5:
+		_outline_size = 11
+		_burst_width = 5.0
+		_burst_count = 16
+	elif combo >= 4:
+		_outline_size = 9
+		_burst_width = 4.0
+		_burst_count = 12
+	elif combo >= 3:
+		_outline_size = 7
+		_burst_width = 3.0
+		_burst_count = 12
+	elif combo >= 2:
+		_outline_size = 5
+		_burst_width = 2.0
+		_burst_count = 12
+	else:
+		_outline_size = 3
+		_burst_width = 1.5
+		_burst_count = 12
+
 	# Colors and sub-text
 	var combo_color: Color
 	var sub_text: String
@@ -65,9 +91,9 @@ func show_combo(combo: int, center_pos: Vector2) -> void:
 		sub_text = "NICE!"
 		sub_color = Color("60A5FA")
 	else:
-		combo_color = Color("42B9F5")
+		combo_color = Color("60A5FA")
 		sub_text = "CLEAR!"
-		sub_color = Color("42B9F5")
+		sub_color = Color("60A5FA")
 
 	# Create text labels as children (guaranteed to render with theme font)
 	_combo_label = Label.new()
@@ -75,7 +101,7 @@ func show_combo(combo: int, center_pos: Vector2) -> void:
 	_combo_label.add_theme_font_size_override("font_size", int(52 * _size_scale))
 	_combo_label.add_theme_color_override("font_color", Color.WHITE)
 	_combo_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
-	_combo_label.add_theme_constant_override("outline_size", 6)
+	_combo_label.add_theme_constant_override("outline_size", _outline_size)
 	_combo_label.add_theme_color_override("font_shadow_color", Color(combo_color.r, combo_color.g, combo_color.b, 0.5))
 	_combo_label.add_theme_constant_override("shadow_offset_x", 0)
 	_combo_label.add_theme_constant_override("shadow_offset_y", 3)
@@ -89,7 +115,7 @@ func show_combo(combo: int, center_pos: Vector2) -> void:
 	_mult_label.add_theme_font_size_override("font_size", int(44 * _size_scale))
 	_mult_label.add_theme_color_override("font_color", Color("FFD700"))
 	_mult_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
-	_mult_label.add_theme_constant_override("outline_size", 5)
+	_mult_label.add_theme_constant_override("outline_size", _outline_size)
 	_mult_label.add_theme_color_override("font_shadow_color", Color(1.0, 0.84, 0.0, 0.4))
 	_mult_label.add_theme_constant_override("shadow_offset_x", 0)
 	_mult_label.add_theme_constant_override("shadow_offset_y", 2)
@@ -103,7 +129,7 @@ func show_combo(combo: int, center_pos: Vector2) -> void:
 	_sub_label.add_theme_font_size_override("font_size", int(24 * _size_scale))
 	_sub_label.add_theme_color_override("font_color", sub_color)
 	_sub_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
-	_sub_label.add_theme_constant_override("outline_size", 4)
+	_sub_label.add_theme_constant_override("outline_size", _outline_size)
 	_sub_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_sub_label.anchors_preset = Control.PRESET_FULL_RECT
 	_sub_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -114,8 +140,8 @@ func show_combo(combo: int, center_pos: Vector2) -> void:
 
 	# Burst lines
 	_burst_lines.clear()
-	for i in BURST_LINE_COUNT:
-		_burst_lines.append(float(i) / float(BURST_LINE_COUNT) * TAU)
+	for i in _burst_count:
+		_burst_lines.append(float(i) / float(_burst_count) * TAU)
 
 	_elapsed = 0.0
 	_scale_val = 0.0
@@ -203,6 +229,16 @@ func _draw() -> void:
 	var line_color := Color(1.0, 0.84, 0.0, 0.5 * _alpha)
 	for angle in _burst_lines:
 		var dir := Vector2(cos(angle), sin(angle))
-		draw_line(center + dir * line_inner, center + dir * line_outer, line_color, 2.0)
+		draw_line(center + dir * line_inner, center + dir * line_outer, line_color, _burst_width)
 		var fade_c := Color(line_color.r, line_color.g, line_color.b, line_color.a * 0.3)
-		draw_line(center + dir * line_outer, center + dir * (line_outer + 30.0 * _scale_val * _size_scale), fade_c, 1.0)
+		draw_line(center + dir * line_outer, center + dir * (line_outer + 30.0 * _scale_val * _size_scale), fade_c, maxf(_burst_width * 0.5, 1.0))
+
+	# 3. Secondary ring of burst lines for combo 4+
+	if _combo >= 4:
+		var ring2_inner := line_outer + 20.0 * _scale_val * _size_scale
+		var ring2_outer := ring2_inner + 50.0 * _scale_val * _size_scale
+		var ring2_color := Color(line_color.r, line_color.g, line_color.b, line_color.a * 0.6)
+		var ring2_offset := TAU / float(_burst_count) / 2.0
+		for angle in _burst_lines:
+			var dir := Vector2(cos(angle + ring2_offset), sin(angle + ring2_offset))
+			draw_line(center + dir * ring2_inner, center + dir * ring2_outer, ring2_color, _burst_width * 0.7)

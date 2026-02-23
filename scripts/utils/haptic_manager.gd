@@ -2,6 +2,7 @@ class_name HapticManager
 
 
 static func _vibrate(duration_ms: int) -> void:
+	print("HAPTIC vibrate %dms enabled=%s" % [duration_ms, str(SaveManager.is_haptic_enabled())])
 	if not SaveManager.is_haptic_enabled():
 		return
 	Input.vibrate_handheld(duration_ms)
@@ -80,13 +81,25 @@ static func grid_snap() -> void:
 
 ## Combo feedback — intensity scales with combo level
 static func combo(combo_level: int = 2) -> void:
-	var duration := clampi(30 + combo_level * 20, 40, 200)
+	var duration: int
+	if combo_level >= 5:
+		duration = 250
+	elif combo_level >= 4:
+		duration = 180
+	elif combo_level >= 3:
+		duration = 140
+	elif combo_level >= 2:
+		duration = 100
+	else:
+		duration = 80
+	print("HAPTIC combo level=%d duration=%dms" % [combo_level, duration])
 	_vibrate(duration)
 	# Extra pulses for high combos
-	if combo_level >= 4:
-		_vibrate_delayed(clampi(combo_level * 15, 50, 120), 0.1)
 	if combo_level >= 5:
-		_vibrate_delayed(clampi(combo_level * 12, 60, 100), 0.22)
+		_vibrate_delayed(150, 0.12)
+		_vibrate_delayed(100, 0.28)
+	elif combo_level >= 4:
+		_vibrate_delayed(100, 0.12)
 
 
 ## Level up - stronger pulse
