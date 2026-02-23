@@ -115,6 +115,15 @@ func play_clear_flash(duration: float, delay: float = 0.0) -> void:
 		set_empty()
 	)
 
+	# Safety timer: ensure set_empty() fires even if tween is affected by Engine.time_scale
+	var safety_time := duration + delay + 0.5
+	var timer := get_tree().create_timer(safety_time, true, false, true)  # ignore_time_scale=true
+	timer.timeout.connect(func():
+		if _occupied and not _line_prediction_active:
+			_scale_factor = 1.0
+			set_empty()
+	)
+
 func play_color_match_flash(duration: float, delay: float = 0.0) -> void:
 	var bright := AppColors.get_block_light_color(_color) if _occupied else Color.WHITE
 
@@ -138,6 +147,14 @@ func play_color_match_flash(duration: float, delay: float = 0.0) -> void:
 	).set_delay(0.05)
 	tween.tween_method(_tween_to_empty, 1.0, 0.0, duration - 0.05)
 	tween.tween_callback(set_empty)
+
+	# Safety timer: ensure set_empty() fires even if tween is affected by Engine.time_scale
+	var safety_time := duration + delay + 0.5
+	var timer := get_tree().create_timer(safety_time, true, false, true)  # ignore_time_scale=true
+	timer.timeout.connect(func():
+		if _occupied and not _line_prediction_active:
+			set_empty()
+	)
 
 func _tween_clear_out(t: float) -> void:
 	# Fade from block color toward empty cell

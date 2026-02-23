@@ -450,7 +450,7 @@ func _draw() -> void:
 
 
 func _draw_corner_gems() -> void:
-	var gem_size := 7.0  # Half-size of the diamond (14px total)
+	var gem_size := 10.0  # Half-size of the diamond (20px total)
 	var inset := 8.0  # Inside the frame corners
 	var gem_data := [
 		{"pos": Vector2(inset, inset), "color": Color(0.231, 0.510, 0.965), "glow": Color(0.231, 0.510, 0.965, 0.5)},       # TL: blue #3B82F6
@@ -462,8 +462,10 @@ func _draw_corner_gems() -> void:
 		var center: Vector2 = gem["pos"]
 		var color: Color = gem["color"]
 		var glow_color: Color = gem["glow"]
-		# Glow circle behind the gem
-		draw_circle(center, gem_size + 4, glow_color)
+		# Outer soft glow
+		draw_circle(center, gem_size + 12, Color(glow_color.r, glow_color.g, glow_color.b, 0.15))
+		# Inner glow circle behind the gem
+		draw_circle(center, gem_size + 6, glow_color)
 		# Diamond shape (rotated 45° square)
 		var points := PackedVector2Array([
 			center + Vector2(0, -gem_size),   # top
