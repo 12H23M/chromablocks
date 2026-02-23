@@ -128,8 +128,7 @@ const EXCLUDED_LV3: Array = [
 	Enums.PieceType.TET_Z_V, Enums.PieceType.TET_S_V,
 	Enums.PieceType.PENT_PLUS, Enums.PieceType.PENT_U,
 	Enums.PieceType.PENT_T,
-	Enums.PieceType.PENT_N, Enums.PieceType.PENT_N_R,
-	Enums.PieceType.PENT_N_V, Enums.PieceType.PENT_N_V2,
+	# N-pieces allowed from level 3+
 ]
 const EXCLUDED_LV5: Array = [
 	Enums.PieceType.PENT_PLUS, Enums.PieceType.PENT_U,

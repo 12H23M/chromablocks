@@ -212,6 +212,82 @@ static func generate_place_fail() -> AudioStreamWAV:
 	return _make_wav(samples)
 
 
+static func generate_chain_sound(cascade_level: int) -> AudioStreamWAV:
+	# Crystal bell tone — pitch rises with cascade level (C5 → E5 → G5)
+	var freq_table := [523.0, 659.0, 784.0]
+	var idx := clampi(cascade_level - 1, 0, freq_table.size() - 1)
+	var base_freq: float = freq_table[idx]
+
+	var samples := PackedByteArray()
+	var duration := 0.3
+	var total := int(SAMPLE_RATE * duration)
+
+	for i in total:
+		var t := float(i) / SAMPLE_RATE
+		var env := _exp_decay(t, 5.0) * _attack(t, 0.003) * 0.50
+		# Main crystal tone
+		var sample := sin(t * base_freq * TAU) * env
+		# Bright harmonic overtones for bell quality
+		sample += sin(t * base_freq * 2.0 * TAU) * env * 0.25
+		sample += sin(t * base_freq * 3.0 * TAU) * env * 0.08
+		# Slight detuned shimmer
+		sample += sin(t * (base_freq * 1.005) * TAU) * env * 0.15
+		# Higher cascade levels get sparkle layer
+		if cascade_level >= 2:
+			var sparkle_freq := base_freq * 4.0
+			sample += sin(t * sparkle_freq * TAU) * _exp_decay(t, 12.0) * _attack(t, 0.005) * 0.06
+		_write_sample(samples, sample)
+
+	return _make_wav(samples)
+
+
+static func generate_blast_sound() -> AudioStreamWAV:
+	# Powerful explosion: low thump + high sparkle layers
+	var samples := PackedByteArray()
+	var duration := 0.5
+	var total := int(SAMPLE_RATE * duration)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 777
+
+	for i in total:
+		var t := float(i) / SAMPLE_RATE
+		var ratio := t / duration
+
+		# Layer 1: Sub-bass thump (60-80Hz)
+		var sub_freq := lerpf(80.0, 60.0, ratio)
+		var sub_env := _exp_decay(t, 4.0) * _attack(t, 0.003) * 0.35
+		var sample := sin(t * sub_freq * TAU) * sub_env
+
+		# Layer 2: Impact transient (first 30ms)
+		var impact_env := _exp_decay(t, 50.0) * _attack(t, 0.001) * 0.30
+		sample += sin(t * 200.0 * TAU) * impact_env
+		sample += sin(t * 350.0 * TAU) * impact_env * 0.5
+
+		# Layer 3: High sparkle (crystal shimmer fading in slightly delayed)
+		var sparkle_t := maxf(0.0, t - 0.05)
+		var sparkle_env := _exp_decay(sparkle_t, 6.0) * _attack(sparkle_t, 0.01) * 0.20
+		sample += sin(sparkle_t * 1047.0 * TAU) * sparkle_env
+		sample += sin(sparkle_t * 1319.0 * TAU) * sparkle_env * 0.5
+		sample += sin(sparkle_t * 1568.0 * TAU) * sparkle_env * 0.3
+
+		# Layer 4: Noise burst for texture
+		var noise := rng.randf_range(-1.0, 1.0) * _exp_decay(t, 8.0) * _attack(t, 0.002) * 0.12
+
+		sample += noise
+
+		# Reverb-like tail via slow sine modulation
+		sample *= 1.0 + sin(t * 3.0 * TAU) * 0.08
+
+		# Fade out
+		var remaining := duration - t
+		if remaining < 0.08:
+			sample *= remaining / 0.08
+
+		_write_sample(samples, sample)
+
+	return _make_wav(samples)
+
+
 # ── Private Helpers ──
 
 ## Exponential decay envelope: fast natural falloff

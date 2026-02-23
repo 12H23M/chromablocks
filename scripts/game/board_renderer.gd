@@ -1,5 +1,7 @@
 extends Control
 
+signal cell_tapped(grid_x: int, grid_y: int)
+
 const CellScene := preload("res://scenes/game/cell.tscn")
 const ClearParticlesScript := preload("res://scripts/game/clear_particles.gd")
 const CORNER_RADIUS := 20
@@ -15,6 +17,7 @@ var _crisis_active: bool = false
 var _shockwaves: Array = []
 var _highlighted_cells: Array = []
 var _predicted_cells: Array = []
+var _blast_hint_cells: Array = []
 
 func initialize() -> void:
 	_cells.clear()
@@ -29,6 +32,7 @@ func initialize() -> void:
 		var row: Array = []
 		for x in GameConstants.BOARD_COLUMNS:
 			var cell_node := CellScene.instantiate()
+			cell_node.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			add_child(cell_node)
 			cell_node.set_empty()
 			row.append(cell_node)
@@ -153,7 +157,9 @@ func update_from_state(board: BoardState) -> void:
 		for x in board.columns:
 			var cell_data: Dictionary = board.grid[y][x]
 			if cell_data["occupied"]:
-				_cells[y][x].set_filled(cell_data["color"])
+				var age: int = cell_data.get("age", 0)
+				var special: int = cell_data.get("special_type", GameConstants.SPECIAL_TILE_NONE)
+				_cells[y][x].set_filled(cell_data["color"], age, special)
 			else:
 				_cells[y][x].set_empty()
 
@@ -299,6 +305,16 @@ func world_to_grid(local_pos: Vector2) -> Vector2i:
 	return Vector2i(gx, gy)
 
 
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mb: InputEventMouseButton = event
+		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+			var grid_pos := world_to_grid(mb.position)
+			if grid_pos.x >= 0 and grid_pos.x < GameConstants.BOARD_COLUMNS \
+			   and grid_pos.y >= 0 and grid_pos.y < GameConstants.BOARD_ROWS:
+				cell_tapped.emit(grid_pos.x, grid_pos.y)
+
+
 # --- Line Clear Prediction (2.2) ---
 
 func show_line_prediction(gx: int, gy: int, piece: BlockPiece, board: BoardState) -> void:
@@ -323,6 +339,39 @@ func clear_line_prediction() -> void:
 	for pos in _predicted_cells:
 		_cells[pos.y][pos.x].clear_line_prediction()
 	_predicted_cells.clear()
+
+
+# --- Blast Proximity Hint ---
+
+func show_blast_hint(blast_rows: Array, blast_cols: Array) -> void:
+	clear_blast_hint()
+	for row in blast_rows:
+		for x in GameConstants.BOARD_COLUMNS:
+			_cells[row][x].show_blast_hint()
+			_blast_hint_cells.append(Vector2i(x, row))
+	for col in blast_cols:
+		for y in GameConstants.BOARD_ROWS:
+			if not _blast_hint_cells.has(Vector2i(col, y)):
+				_cells[y][col].show_blast_hint()
+				_blast_hint_cells.append(Vector2i(col, y))
+
+func clear_blast_hint() -> void:
+	for pos in _blast_hint_cells:
+		_cells[pos.y][pos.x].clear_blast_hint()
+	_blast_hint_cells.clear()
+
+
+# --- Bomb Explosion Effect ---
+
+func play_bomb_effect(destroyed_cells: Array) -> void:
+	var positions: Array = []
+	var colors: Array = []
+	var bomb_color := Color(1.0, 0.6, 0.2)  # orange burst
+	for pos in destroyed_cells:
+		positions.append(Vector2(pos.x * _cell_size, pos.y * _cell_size))
+		colors.append(bomb_color)
+	if not positions.is_empty():
+		_emit_particles_and_shockwave(positions, colors, 1.5, _cell_size * 3.0)
 
 
 # --- Level Up Effect (2.3) ---

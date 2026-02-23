@@ -33,6 +33,7 @@ func _ready() -> void:
 	piece_tray.piece_drag_started.connect(_on_drag_started)
 	piece_tray.piece_drag_moved.connect(_on_drag_moved)
 	piece_tray.piece_drag_ended.connect(_on_drag_ended)
+	board_renderer.cell_tapped.connect(_on_cell_tapped)
 
 	home_screen.start_pressed.connect(start_game)
 	home_screen.continue_pressed.connect(continue_game)
@@ -187,14 +188,38 @@ func _on_drag_moved(piece_node: Control, global_pos: Vector2) -> void:
 		board_renderer.show_highlight(grid_pos.x, grid_pos.y, _dragging_piece, can_place)
 		if can_place:
 			board_renderer.show_line_prediction(grid_pos.x, grid_pos.y, _dragging_piece, _state.board)
+			# Blast proximity hint — only on lines that will actually complete
+			var predicted := _state.board.predict_completed_lines(_dragging_piece, grid_pos.x, grid_pos.y)
+			var pred_rows: Array = predicted["rows"]
+			var pred_cols: Array = predicted["cols"]
+			if not pred_rows.is_empty() or not pred_cols.is_empty():
+				var virtual_board := _state.board.place_piece(_dragging_piece, grid_pos.x, grid_pos.y)
+				var blast_potential := ChromaBlastSystem.check_blast_potential(virtual_board)
+				# Filter blast hints to only completed lines
+				var hint_rows: Array = []
+				for r in blast_potential["rows"]:
+					if r in pred_rows:
+						hint_rows.append(r)
+				var hint_cols: Array = []
+				for c in blast_potential["cols"]:
+					if c in pred_cols:
+						hint_cols.append(c)
+				if not hint_rows.is_empty() or not hint_cols.is_empty():
+					board_renderer.show_blast_hint(hint_rows, hint_cols)
+				else:
+					board_renderer.clear_blast_hint()
+			else:
+				board_renderer.clear_blast_hint()
 		else:
 			board_renderer.clear_line_prediction()
+			board_renderer.clear_blast_hint()
 
 func _on_drag_ended(piece_node: Control, global_pos: Vector2) -> void:
 	if _dragging_piece == null:
 		return
 	board_renderer.clear_highlights()
 	board_renderer.clear_line_prediction()
+	board_renderer.clear_blast_hint()
 	var grid_pos := _piece_to_grid(piece_node)
 
 	var can_place := PlacementSystem.can_place(
@@ -279,6 +304,15 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 		board = color_result["board"]
 	else:
 		color_result = {"board": board, "groups": [], "total_removed": 0, "has_matches": false}
+
+	# 7.1. Special tile drops (after all clearing settles)
+	var special_result := {"board": board, "dropped": []}
+	if has_line_clear:
+		special_result = SpecialTileSystem.try_drop_specials(board, completed_rows, completed_cols)
+		board = special_result["board"]
+
+	# 7.2. Increment all cell ages
+	board = board.increment_ages()
 
 	# 8. Scoring (base + chroma bonus)
 	var did_clear: bool = clear_result["lines_cleared"] > 0 or color_result["has_matches"] or blast_executed["cells_removed"] > 0 or chain_result["total_cells_cleared"] > 0
@@ -377,7 +411,7 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	if blast_executed["cells_removed"] > 0:
 		_apply_hit_stop(0.09)
 		_spawn_blast_popup(blast_result["blast_colors"][0])
-		SoundManager.play_sfx("perfect_clear")  # reuse dramatic sound
+		SoundManager.play_blast_sound()
 		HapticManager.chroma_blast()
 		board_renderer.play_screen_shake(12.0, 0.30)
 
@@ -385,7 +419,7 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	if chain_result["cascades"] > 0:
 		_apply_hit_stop(0.05)
 		_spawn_chain_popup(chain_result["cascades"])
-		SoundManager.play_sfx("line_clear")  # reuse for now
+		SoundManager.play_chain_sound(chain_result["cascades"])
 		HapticManager.chroma_chain(chain_result["cascades"])
 		var shake_strength: float = 5.0 + float(chain_result["cascades"]) * 3.0
 		board_renderer.play_screen_shake(shake_strength, 0.15 + chain_result["cascades"] * 0.05)
@@ -410,6 +444,57 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 		_check_game_over()
 
 	state_changed.emit(_state)
+
+func _on_cell_tapped(gx: int, gy: int) -> void:
+	if _state.status != Enums.GameStatus.PLAYING:
+		return
+	if _dragging_piece != null:
+		return
+	var cell: Dictionary = _state.board.grid[gy][gx]
+	if not cell["occupied"]:
+		return
+	var special: int = cell.get("special_type", GameConstants.SPECIAL_TILE_NONE)
+	if special != GameConstants.SPECIAL_TILE_BOMB:
+		return
+
+	# Execute BOMB
+	var bomb_result: Dictionary = SpecialTileSystem.execute_bomb(_state.board, gx, gy)
+	var board: BoardState = bomb_result["board"]
+	var destroyed: Array = bomb_result["destroyed"]
+
+	# Check if bomb created completed lines
+	var post_clear := board.clear_completed_lines()
+	board = post_clear["board"]
+	var bonus_lines: int = post_clear["lines_cleared"]
+
+	# Score
+	var score_bonus: int = bomb_result["score_bonus"]
+	if bonus_lines > 0:
+		score_bonus += GameConstants.line_clear_score(bonus_lines)
+	_state.score += score_bonus
+	_state.board = board
+
+	# Update visuals
+	board_renderer.update_from_state(board)
+	board_renderer.update_crisis_state(board)
+	hud.update_from_state(_state)
+
+	# Effects
+	_apply_hit_stop(0.06)
+	SoundManager.play_blast_sound()
+	HapticManager.chroma_blast()
+	board_renderer.play_screen_shake(8.0, 0.20)
+
+	# Particle effect at bomb location
+	board_renderer.play_bomb_effect(destroyed)
+
+	if score_bonus > 0:
+		_spawn_score_popup(score_bonus, gx, gy)
+
+	# Check game over after bomb
+	_check_game_over()
+	state_changed.emit(_state)
+
 
 func _on_swap_pressed() -> void:
 	if _state.status != Enums.GameStatus.PLAYING:

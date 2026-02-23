@@ -7,6 +7,8 @@ const MASTER_VOLUME_DB := -6.0
 # a shared pool and swapping the stream property mid-playback.
 var _sfx_players: Dictionary = {}   # sfx_name -> AudioStreamPlayer
 var _combo_players: Dictionary = {}  # level (int) -> AudioStreamPlayer
+var _chain_players: Dictionary = {}  # cascade level (int) -> AudioStreamPlayer
+var _blast_player: AudioStreamPlayer
 var _sfx_ready := false
 var _gen_thread: Thread
 
@@ -17,6 +19,9 @@ func _ready() -> void:
 		_sfx_players[sfx_name] = _create_empty_player()
 	for level in range(1, 8):
 		_combo_players[level] = _create_empty_player()
+	for level in range(1, 4):
+		_chain_players[level] = _create_empty_player()
+	_blast_player = _create_empty_player()
 
 	# Synthesize all SFX in a background thread
 	_gen_thread = Thread.new()
@@ -44,14 +49,22 @@ func _generate_all_sfx() -> void:
 	var combo_streams := {}
 	for level in range(1, 8):
 		combo_streams[level] = SFXGenerator.generate_combo_clear(level)
-	call_deferred("_apply_sfx_streams", sfx_streams, combo_streams)
+	var chain_streams := {}
+	for level in range(1, 4):
+		chain_streams[level] = SFXGenerator.generate_chain_sound(level)
+	var blast_stream := SFXGenerator.generate_blast_sound()
+	call_deferred("_apply_sfx_streams", sfx_streams, combo_streams, chain_streams, blast_stream)
 
 
-func _apply_sfx_streams(sfx_streams: Dictionary, combo_streams: Dictionary) -> void:
+func _apply_sfx_streams(sfx_streams: Dictionary, combo_streams: Dictionary, chain_streams: Dictionary = {}, blast_stream: AudioStreamWAV = null) -> void:
 	for sfx_name in sfx_streams:
 		_sfx_players[sfx_name].stream = sfx_streams[sfx_name]
 	for level in combo_streams:
 		_combo_players[level].stream = combo_streams[level]
+	for level in chain_streams:
+		_chain_players[level].stream = chain_streams[level]
+	if blast_stream:
+		_blast_player.stream = blast_stream
 	_sfx_ready = true
 
 
@@ -73,6 +86,23 @@ func play_combo_sfx(combo: int) -> void:
 		return
 	var level := clampi(combo, 1, 7)
 	_combo_players[level].play()
+
+
+func play_chain_sound(cascade_level: int) -> void:
+	if not _sfx_ready:
+		return
+	if not SaveManager.is_sound_enabled():
+		return
+	var level := clampi(cascade_level, 1, 3)
+	_chain_players[level].play()
+
+
+func play_blast_sound() -> void:
+	if not _sfx_ready:
+		return
+	if not SaveManager.is_sound_enabled():
+		return
+	_blast_player.play()
 
 
 func _exit_tree() -> void:

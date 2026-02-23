@@ -63,6 +63,22 @@ const CHROMA_BLAST_POINTS_PER_CELL: int = 50
 const CHROMA_BLAST_TRIGGER_BONUS: int = 500
 const CHROMA_BLAST_LINE_BONUS: int = 200
 
+# Cell Aging (Color Heat)
+const CELL_AGE_STAGE1: int = 10   # age 10-19: slightly darker
+const CELL_AGE_STAGE2: int = 20   # age 20+: crack effect + darker + shake
+const CELL_AGE_DARKEN_STAGE1: float = 0.15  # darken amount for stage 1
+const CELL_AGE_DARKEN_STAGE2: float = 0.30  # darken amount for stage 2
+
+# Special Tiles
+const SPECIAL_TILE_NONE: int = -1
+const SPECIAL_TILE_BOMB: int = 0    # 3x3 area destruction on tap
+const SPECIAL_TILE_RAINBOW: int = 1 # wildcard — matches any color in chains
+const SPECIAL_TILE_FREEZE: int = 2  # auto-activate: reset nearby cell ages
+const SPECIAL_TILE_DROP_CHANCE: float = 0.15  # per cleared line
+const SPECIAL_TILE_BOMB_RADIUS: int = 1       # 3x3 = center ± 1
+const SPECIAL_TILE_FREEZE_RADIUS: int = 2     # 5x5 diamond
+const SPECIAL_TILE_BOMB_BONUS: int = 300
+
 
 static func line_clear_score(lines: int) -> int:
 	if lines <= 0:

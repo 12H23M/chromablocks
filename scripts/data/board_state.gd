@@ -2,7 +2,7 @@ class_name BoardState
 
 var columns: int
 var rows: int
-var grid: Array  # Array[Array[Dictionary]] — {occupied: bool, color: int}
+var grid: Array  # Array[Array[Dictionary]] — {occupied, color, age, special_type}
 
 
 func _init(p_cols: int = 8, p_rows: int = 8, p_grid: Array = []) -> void:
@@ -12,6 +12,18 @@ func _init(p_cols: int = 8, p_rows: int = 8, p_grid: Array = []) -> void:
 		grid = _create_empty_grid()
 	else:
 		grid = p_grid
+		_normalize_grid()
+
+
+## Ensure all cells have age and special_type fields (backward compat with old saves)
+func _normalize_grid() -> void:
+	for y in rows:
+		for x in columns:
+			var cell: Dictionary = grid[y][x]
+			if not cell.has("age"):
+				cell["age"] = 0
+			if not cell.has("special_type"):
+				cell["special_type"] = GameConstants.SPECIAL_TILE_NONE
 
 
 func _create_empty_grid() -> Array:
@@ -19,9 +31,13 @@ func _create_empty_grid() -> Array:
 	for y in rows:
 		var row: Array = []
 		for x in columns:
-			row.append({"occupied": false, "color": -1})
+			row.append(_empty_cell())
 		g.append(row)
 	return g
+
+
+static func _empty_cell() -> Dictionary:
+	return {"occupied": false, "color": -1, "age": 0, "special_type": GameConstants.SPECIAL_TILE_NONE}
 
 
 var is_empty: bool:
@@ -61,7 +77,10 @@ func place_piece(piece: BlockPiece, gx: int, gy: int) -> BoardState:
 	var new_grid := _copy_grid()
 	for cell in piece.occupied_cells_at(gx, gy):
 		if cell.x >= 0 and cell.x < columns and cell.y >= 0 and cell.y < rows:
-			new_grid[cell.y][cell.x] = {"occupied": true, "color": piece.color}
+			new_grid[cell.y][cell.x] = {
+				"occupied": true, "color": piece.color,
+				"age": 0, "special_type": GameConstants.SPECIAL_TILE_NONE
+			}
 	return BoardState.new(columns, rows, new_grid)
 
 
@@ -150,11 +169,11 @@ func clear_completed_lines() -> Dictionary:
 
 	for row in completed_rows:
 		for x in columns:
-			new_grid[row][x] = {"occupied": false, "color": -1}
+			new_grid[row][x] = _empty_cell()
 
 	for col in completed_cols:
 		for y in rows:
-			new_grid[y][col] = {"occupied": false, "color": -1}
+			new_grid[y][col] = _empty_cell()
 
 	var new_board := BoardState.new(columns, rows, new_grid)
 	return {
@@ -179,6 +198,10 @@ func find_color_matches_threshold(threshold: int) -> Array:
 		for x in columns:
 			if visited[y][x] or not grid[y][x]["occupied"]:
 				continue
+			# Skip RAINBOW as BFS root — it gets absorbed by adjacent color groups
+			var cell_special: int = grid[y][x].get("special_type", GameConstants.SPECIAL_TILE_NONE)
+			if cell_special == GameConstants.SPECIAL_TILE_RAINBOW:
+				continue
 			var target_color: int = grid[y][x]["color"]
 			var group: Array = []
 			var stack: Array = [Vector2i(x, y)]
@@ -191,7 +214,9 @@ func find_color_matches_threshold(threshold: int) -> Array:
 					continue
 				if not grid[pos.y][pos.x]["occupied"]:
 					continue
-				if grid[pos.y][pos.x]["color"] != target_color:
+				var pos_special: int = grid[pos.y][pos.x].get("special_type", GameConstants.SPECIAL_TILE_NONE)
+				# Match if same color OR if RAINBOW wildcard
+				if grid[pos.y][pos.x]["color"] != target_color and pos_special != GameConstants.SPECIAL_TILE_RAINBOW:
 					continue
 				visited[pos.y][pos.x] = true
 				group.append(pos)
@@ -220,6 +245,9 @@ func find_color_matches() -> Array:
 		for x in columns:
 			if visited[y][x] or not grid[y][x]["occupied"]:
 				continue
+			var cell_special: int = grid[y][x].get("special_type", GameConstants.SPECIAL_TILE_NONE)
+			if cell_special == GameConstants.SPECIAL_TILE_RAINBOW:
+				continue
 			var target_color: int = grid[y][x]["color"]
 			var group: Array = []
 			var stack: Array = [Vector2i(x, y)]
@@ -232,7 +260,8 @@ func find_color_matches() -> Array:
 					continue
 				if not grid[pos.y][pos.x]["occupied"]:
 					continue
-				if grid[pos.y][pos.x]["color"] != target_color:
+				var pos_special: int = grid[pos.y][pos.x].get("special_type", GameConstants.SPECIAL_TILE_NONE)
+				if grid[pos.y][pos.x]["color"] != target_color and pos_special != GameConstants.SPECIAL_TILE_RAINBOW:
 					continue
 				visited[pos.y][pos.x] = true
 				group.append(pos)
@@ -250,7 +279,17 @@ func find_color_matches() -> Array:
 func remove_cells(cells: Array) -> BoardState:
 	var new_grid := _copy_grid()
 	for cell in cells:
-		new_grid[cell.y][cell.x] = {"occupied": false, "color": -1}
+		new_grid[cell.y][cell.x] = _empty_cell()
+	return BoardState.new(columns, rows, new_grid)
+
+
+## Return a new BoardState with all occupied cells' age incremented by 1.
+func increment_ages() -> BoardState:
+	var new_grid := _copy_grid()
+	for y in rows:
+		for x in columns:
+			if new_grid[y][x]["occupied"]:
+				new_grid[y][x]["age"] += 1
 	return BoardState.new(columns, rows, new_grid)
 
 
