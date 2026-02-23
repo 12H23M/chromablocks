@@ -89,16 +89,19 @@ func play_clear_flash(duration: float, delay: float = 0.0, cached_color: Color =
 	if _clear_tween and _clear_tween.is_valid():
 		_clear_tween.kill()
 
+	# Mark as not occupied immediately
+	_occupied = false
+	_color = -1
+
 	var tween := create_tween()
 	_clear_tween = tween
-	tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
-	if Engine.time_scale > 0.01:
-		tween.set_speed_scale(1.0 / Engine.time_scale)
+	# Use IDLE process to avoid time_scale issues entirely
+	tween.set_process_mode(Tween.TWEEN_PROCESS_IDLE)
 
 	if delay > 0.0:
 		tween.tween_interval(delay)
 
-	# Phase 1: Bright flash
+	# Phase 1: Bright flash (immediate)
 	tween.tween_callback(func():
 		_bg_color = bright_color
 		_glow_color = Color(bright_color.r, bright_color.g, bright_color.b, 1.0)
@@ -115,17 +118,26 @@ func play_clear_flash(duration: float, delay: float = 0.0, cached_color: Color =
 		_glow_color = Color(peak_color.r, peak_color.g, peak_color.b, 0.9)
 		_border_color = peak_color
 		queue_redraw()
-	).set_delay(0.08)
-	tween.tween_property(self, "_scale_factor", 1.3, 0.1) \
+	).set_delay(0.06)
+	tween.tween_property(self, "_scale_factor", 1.2, 0.08) \
 		 .set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 
-	# Phase 3: Hold
-	tween.tween_interval(0.06)
-
-	# Phase 4: Shrink + fade
-	tween.tween_method(_tween_clear_out, 1.0, 0.0, 0.25) \
+	# Phase 3: Shrink + fade (directly to empty appearance)
+	tween.tween_method(_tween_clear_out, 1.0, 0.0, 0.2) \
 		 .set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
-	tween.tween_callback(set_empty)
+
+	# Phase 4: Ensure fully reset — don't call set_empty (it kills tween mid-callback)
+	tween.tween_callback(func():
+		_clear_tween = null
+		_occupied = false
+		_color = -1
+		_glow_color = Color.TRANSPARENT
+		_bg_color = AppColors.EMPTY_CELL
+		_highlight_color = Color.TRANSPARENT
+		_border_color = AppColors.EMPTY_BORDER
+		_scale_factor = 1.0
+		queue_redraw()
+	)
 
 func play_color_match_flash(duration: float, delay: float = 0.0) -> void:
 	var bright := AppColors.get_block_light_color(_color) if _occupied else Color.WHITE
@@ -133,11 +145,12 @@ func play_color_match_flash(duration: float, delay: float = 0.0) -> void:
 	if _clear_tween and _clear_tween.is_valid():
 		_clear_tween.kill()
 
+	_occupied = false
+	_color = -1
+
 	var tween := create_tween()
 	_clear_tween = tween
-	tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
-	if Engine.time_scale > 0.01:
-		tween.set_speed_scale(1.0 / Engine.time_scale)
+	tween.set_process_mode(Tween.TWEEN_PROCESS_IDLE)
 
 	if delay > 0.0:
 		tween.tween_interval(delay)
@@ -157,7 +170,17 @@ func play_color_match_flash(duration: float, delay: float = 0.0) -> void:
 		queue_redraw()
 	).set_delay(0.05)
 	tween.tween_method(_tween_to_empty, 1.0, 0.0, duration - 0.05)
-	tween.tween_callback(set_empty)
+	tween.tween_callback(func():
+		_clear_tween = null
+		_occupied = false
+		_color = -1
+		_glow_color = Color.TRANSPARENT
+		_bg_color = AppColors.EMPTY_CELL
+		_highlight_color = Color.TRANSPARENT
+		_border_color = AppColors.EMPTY_BORDER
+		_scale_factor = 1.0
+		queue_redraw()
+	)
 
 func _tween_clear_out(t: float) -> void:
 	# Fade from block color toward empty cell
