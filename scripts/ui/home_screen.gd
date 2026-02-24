@@ -474,12 +474,16 @@ func _make_icon_btn(letter: String, lbl_text: String, accent: Color, letter_colo
 	panel.add_child(icon_lbl)
 
 	if dot:
-		var d := ColorRect.new()
-		d.color = Color("#F43F5E")
-		d.custom_minimum_size = Vector2(10, 10)
-		d.size = Vector2(10, 10)
-		d.position = Vector2(38, -2)
+		var d := Control.new()
+		d.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+		d.position = Vector2(42, -3)
+		d.size = Vector2(8, 8)
 		d.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var dot_rect := ColorRect.new()
+		dot_rect.color = Color("#F43F5E")
+		dot_rect.size = Vector2(8, 8)
+		dot_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		d.add_child(dot_rect)
 		panel.add_child(d)
 
 	vb.add_child(panel)
@@ -682,8 +686,14 @@ func refresh_stats() -> void:
 	_avg_value.text = FormatUtils.format_number(SaveManager.get_avg_score())
 	if _streak_value:
 		_streak_value.text = str(DailyChallengeSystem.get_streak())
+	# Always show Continue (dimmed if no save)
 	var has_save := SaveManager.has_active_game()
-	_continue_btn.visible = has_save
+	if has_save:
+		_continue_btn.modulate.a = 1.0
+		_continue_btn.disabled = false
+	else:
+		_continue_btn.modulate.a = 0.35
+		_continue_btn.disabled = true
 	_update_daily_button()
 	_try_daily_reward()
 	_update_sound_label()
