@@ -28,10 +28,10 @@ var _logo_blocks: Array = []
 var _play_glow_tween: Tween
 
 # ─── Sections for entrance anim ───
-var _logo_section: VBoxContainer
-var _hero_section: VBoxContainer
-var _btn_section: VBoxContainer
-var _bottom_section: HBoxContainer
+var _logo_section: Control
+var _hero_section: Control
+var _btn_section: Control
+var _bottom_section: Control
 
 # ─── Colors ───
 const BG_COLOR := Color("#0F0A35")
@@ -61,13 +61,12 @@ func _build_ui() -> void:
 	anchor_right = 1.0
 	anchor_bottom = 1.0
 
-	# ─── Background ───
+	# Background
 	_bg = ColorRect.new()
 	_bg.color = BG_COLOR
 	_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_bg)
 
-	# Glow orbs
 	_add_glow_orb(Vector2(320, 40), 220.0, Color(0.26, 0.73, 0.96, 0.1))
 	_add_glow_orb(Vector2(-80, 650), 280.0, Color(0.65, 0.55, 0.87, 0.08))
 	_add_glow_orb(Vector2(100, 400), 160.0, Color(1.0, 0.49, 0.56, 0.06))
@@ -75,90 +74,92 @@ func _build_ui() -> void:
 	_create_sparkles()
 	_create_deco_blocks()
 
-	# ─── Main container ───
+	# Main layout — use MarginContainer for consistent 28px side padding
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 28)
+	margin.add_theme_constant_override("margin_right", 28)
+	margin.add_theme_constant_override("margin_top", 0)
+	margin.add_theme_constant_override("margin_bottom", 0)
+	add_child(margin)
+
 	var main := VBoxContainer.new()
-	main.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	main.set("theme_override_constants/separation", 0)
-	add_child(main)
+	margin.add_child(main)
 
 	# Top padding
 	_add_spacer(main, 50)
 
-	# Logo section (icon + title + subtitle)
+	# 1. Logo (3x3 grid + title + subtitle)
 	_logo_section = _build_logo_section()
 	main.add_child(_logo_section)
 
-	_add_spacer(main, 24)
+	_add_spacer(main, 28)
 
-	# Hero score + mini stats
+	# 2. Hero score card + mini stats
 	_hero_section = _build_hero_section()
 	main.add_child(_hero_section)
 
-	_add_spacer(main, 32)
+	_add_spacer(main, 36)
 
-	# Buttons
+	# 3. Buttons (PLAY + Daily/Continue row)
 	_btn_section = _build_buttons()
 	main.add_child(_btn_section)
 
-	# Flexible spacer
+	# Flex spacer
 	var flex := Control.new()
 	flex.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	main.add_child(flex)
 
-	# Bottom icons
+	# 4. Bottom icons
 	_bottom_section = _build_bottom_icons()
 	main.add_child(_bottom_section)
 
-	_add_spacer(main, 48)
+	_add_spacer(main, 40)
 
 
-func _add_spacer(parent: Control, height: float) -> void:
+func _add_spacer(parent: Control, h: float) -> void:
 	var sp := Control.new()
-	sp.custom_minimum_size = Vector2(0, height)
+	sp.custom_minimum_size = Vector2(0, h)
 	parent.add_child(sp)
 
 
-# ─── Logo Section ───
+# ─── 1. Logo ───
 
 func _build_logo_section() -> VBoxContainer:
 	var vbox := VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.set("theme_override_constants/separation", 4)
+	vbox.set("theme_override_constants/separation", 2)
 	vbox.modulate.a = 0.0
 
-	# 3x3 Block grid logo
-	var logo_center := CenterContainer.new()
-	var logo_grid := GridContainer.new()
-	logo_grid.columns = 3
-	logo_grid.set("theme_override_constants/h_separation", 4)
-	logo_grid.set("theme_override_constants/v_separation", 4)
-	logo_grid.pivot_offset = Vector2(42, 42)
-	logo_grid.rotation_degrees = -5.0
+	# 3x3 block grid
+	var grid_center := CenterContainer.new()
+	var grid := GridContainer.new()
+	grid.columns = 3
+	grid.set("theme_override_constants/h_separation", 4)
+	grid.set("theme_override_constants/v_separation", 4)
+	grid.pivot_offset = Vector2(42, 42)
+	grid.rotation_degrees = -5.0
 
-	var grid_colors := [0, 1, 2, 3, 4, 5, 6, 0, 4]
-	var grid_alphas := [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.3, 0.3]
+	var colors := [0, 1, 2, 3, 4, 5, 6, 0, 4]
+	var alphas := [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.3, 0.3]
 	for i in range(9):
 		var block := PanelContainer.new()
 		block.custom_minimum_size = Vector2(24, 24)
-		var style := StyleBoxFlat.new()
-		style.bg_color = BLOCK_COLORS[grid_colors[i]][0]
-		style.corner_radius_top_left = 6
-		style.corner_radius_top_right = 6
-		style.corner_radius_bottom_right = 6
-		style.corner_radius_bottom_left = 6
-		style.shadow_color = Color(0, 0, 0, 0.3)
-		style.shadow_size = 4
-		block.add_theme_stylebox_override("panel", style)
-		block.modulate.a = grid_alphas[i]
-		logo_grid.add_child(block)
+		var s := StyleBoxFlat.new()
+		s.bg_color = BLOCK_COLORS[colors[i]][0]
+		_set_corner_radius(s, 6)
+		s.shadow_color = Color(0, 0, 0, 0.3)
+		s.shadow_size = 4
+		block.add_theme_stylebox_override("panel", s)
+		block.modulate.a = alphas[i]
+		grid.add_child(block)
 		_logo_blocks.append(block)
-
-	logo_center.add_child(logo_grid)
-	vbox.add_child(logo_center)
+	grid_center.add_child(grid)
+	vbox.add_child(grid_center)
 
 	_add_spacer(vbox, 16)
 
-	# Title
 	var title := Label.new()
 	title.text = "ChromaBlocks"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -166,129 +167,112 @@ func _build_logo_section() -> VBoxContainer:
 	title.add_theme_color_override("font_color", Color.WHITE)
 	vbox.add_child(title)
 
-	# Subtitle
-	var subtitle := Label.new()
-	subtitle.text = "BLOCK  PUZZLE"
-	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle.add_theme_font_size_override("font_size", 12)
-	subtitle.add_theme_color_override("font_color", Color("#8070B0"))
-	vbox.add_child(subtitle)
+	var sub := Label.new()
+	sub.text = "BLOCK  PUZZLE"
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sub.add_theme_font_size_override("font_size", 12)
+	sub.add_theme_color_override("font_color", Color("#8070B0"))
+	vbox.add_child(sub)
 
 	return vbox
 
 
-# ─── Hero Score + Mini Stats ───
+# ─── 2. Hero Score + Mini Stats ───
 
 func _build_hero_section() -> VBoxContainer:
 	var vbox := VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.set("theme_override_constants/separation", 20)
+	vbox.set("theme_override_constants/separation", 24)
 	vbox.modulate.a = 0.0
 
-	# Hero score card
+	# Score card
 	var card_center := CenterContainer.new()
 	var card := PanelContainer.new()
-	var card_style := StyleBoxFlat.new()
-	card_style.bg_color = Color(0.42, 0.36, 0.91, 0.12)
-	card_style.corner_radius_top_left = 24
-	card_style.corner_radius_top_right = 24
-	card_style.corner_radius_bottom_right = 24
-	card_style.corner_radius_bottom_left = 24
-	card_style.border_width_left = 1
-	card_style.border_width_top = 1
-	card_style.border_width_right = 1
-	card_style.border_width_bottom = 1
-	card_style.border_color = Color(0.42, 0.36, 0.91, 0.2)
-	card_style.content_margin_left = 40
-	card_style.content_margin_top = 18
-	card_style.content_margin_right = 40
-	card_style.content_margin_bottom = 18
-	card.add_theme_stylebox_override("panel", card_style)
+	var cs := StyleBoxFlat.new()
+	cs.bg_color = Color(0.42, 0.36, 0.91, 0.12)
+	_set_corner_radius(cs, 24)
+	_set_border(cs, 1, Color(0.42, 0.36, 0.91, 0.2))
+	cs.content_margin_left = 44
+	cs.content_margin_right = 44
+	cs.content_margin_top = 18
+	cs.content_margin_bottom = 16
+	card.add_theme_stylebox_override("panel", cs)
 
-	var card_vbox := VBoxContainer.new()
-	card_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	card_vbox.set("theme_override_constants/separation", 2)
+	var cv := VBoxContainer.new()
+	cv.alignment = BoxContainer.ALIGNMENT_CENTER
+	cv.set("theme_override_constants/separation", 0)
 
-	var best_label := Label.new()
-	best_label.text = "BEST SCORE"
-	best_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	best_label.add_theme_font_size_override("font_size", 12)
-	best_label.add_theme_color_override("font_color", Color("#8070B0"))
-	card_vbox.add_child(best_label)
+	var bl := Label.new()
+	bl.text = "BEST SCORE"
+	bl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	bl.add_theme_font_size_override("font_size", 12)
+	bl.add_theme_color_override("font_color", Color("#8070B0"))
+	cv.add_child(bl)
 
 	_best_value = Label.new()
 	_best_value.text = "0"
 	_best_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_best_value.add_theme_font_size_override("font_size", 44)
 	_best_value.add_theme_color_override("font_color", Color.WHITE)
-	card_vbox.add_child(_best_value)
+	cv.add_child(_best_value)
 
-	card.add_child(card_vbox)
+	card.add_child(cv)
 	card_center.add_child(card)
 	vbox.add_child(card_center)
 
 	# Mini stats row
-	var stats_center := CenterContainer.new()
-	var stats_hbox := HBoxContainer.new()
-	stats_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	stats_hbox.set("theme_override_constants/separation", 20)
+	var sc := CenterContainer.new()
+	var sh := HBoxContainer.new()
+	sh.alignment = BoxContainer.ALIGNMENT_CENTER
+	sh.set("theme_override_constants/separation", 24)
 
-	# Games
-	var games_vbox := _build_mini_stat("0", "GAMES")
-	_games_value = games_vbox.get_child(0) as Label
-	stats_hbox.add_child(games_vbox)
+	var g := _make_mini_stat("0", "GAMES")
+	_games_value = g.get_child(0) as Label
+	sh.add_child(g)
+	sh.add_child(_make_divider())
 
-	stats_hbox.add_child(_build_stat_divider())
+	var a := _make_mini_stat("0", "AVERAGE")
+	_avg_value = a.get_child(0) as Label
+	sh.add_child(a)
+	sh.add_child(_make_divider())
 
-	# Average
-	var avg_vbox := _build_mini_stat("0", "AVERAGE")
-	_avg_value = avg_vbox.get_child(0) as Label
-	stats_hbox.add_child(avg_vbox)
+	var st := _make_mini_stat("0", "STREAK")
+	_streak_value = st.get_child(0) as Label
+	sh.add_child(st)
 
-	stats_hbox.add_child(_build_stat_divider())
-
-	# Streak
-	var streak_vbox := _build_mini_stat("0", "STREAK")
-	_streak_value = streak_vbox.get_child(0) as Label
-	stats_hbox.add_child(streak_vbox)
-
-	stats_center.add_child(stats_hbox)
-	vbox.add_child(stats_center)
-
+	sc.add_child(sh)
+	vbox.add_child(sc)
 	return vbox
 
 
-func _build_mini_stat(value_text: String, label_text: String) -> VBoxContainer:
-	var vbox := VBoxContainer.new()
-	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.set("theme_override_constants/separation", 2)
-
-	var value := Label.new()
-	value.text = value_text
-	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	value.add_theme_font_size_override("font_size", 18)
-	value.add_theme_color_override("font_color", Color("#C8B8FF"))
-	vbox.add_child(value)
-
-	var lbl := Label.new()
-	lbl.text = label_text
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 10)
-	lbl.add_theme_color_override("font_color", Color("#6B5FA0"))
-	vbox.add_child(lbl)
-
-	return vbox
+func _make_mini_stat(val: String, lbl_text: String) -> VBoxContainer:
+	var v := VBoxContainer.new()
+	v.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.set("theme_override_constants/separation", 2)
+	var vl := Label.new()
+	vl.text = val
+	vl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vl.add_theme_font_size_override("font_size", 18)
+	vl.add_theme_color_override("font_color", Color("#C8B8FF"))
+	v.add_child(vl)
+	var ll := Label.new()
+	ll.text = lbl_text
+	ll.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ll.add_theme_font_size_override("font_size", 10)
+	ll.add_theme_color_override("font_color", Color("#6B5FA0"))
+	v.add_child(ll)
+	return v
 
 
-func _build_stat_divider() -> Label:
-	var div := Label.new()
-	div.text = "|"
-	div.add_theme_font_size_override("font_size", 16)
-	div.add_theme_color_override("font_color", Color(1, 1, 1, 0.1))
-	return div
+func _make_divider() -> Label:
+	var d := Label.new()
+	d.text = "|"
+	d.add_theme_font_size_override("font_size", 16)
+	d.add_theme_color_override("font_color", Color(1, 1, 1, 0.08))
+	return d
 
 
-# ─── Buttons ───
+# ─── 3. Buttons ───
 
 func _build_buttons() -> VBoxContainer:
 	var vbox := VBoxContainer.new()
@@ -296,67 +280,80 @@ func _build_buttons() -> VBoxContainer:
 	vbox.set("theme_override_constants/separation", 12)
 	vbox.modulate.a = 0.0
 
-	# PLAY button (purple)
-	_play_btn = _create_game_button(
-		"▶  PLAY", 24,
-		Color("#9B6EF3"), Color("#7B4ED3"), Color("#6B3ACD"),
-		7, 22, 0.88
-	)
+	# PLAY — full width, 68px, purple
+	_play_btn = Button.new()
+	_play_btn.text = "▶  PLAY"
 	_play_btn.name = "PlayButton"
-	_play_btn.custom_minimum_size.y = 68
-	vbox.add_child(_center_wrap(_play_btn, 0.88))
+	_play_btn.add_theme_font_size_override("font_size", 24)
+	_play_btn.add_theme_color_override("font_color", Color.WHITE)
+	_play_btn.custom_minimum_size = Vector2(0, 68)
+	var ps := StyleBoxFlat.new()
+	ps.bg_color = Color("#8B5CF6")
+	_set_corner_radius(ps, 22)
+	ps.border_width_bottom = 6
+	ps.border_color = Color("#6B3ACD")
+	ps.shadow_color = Color(0.49, 0.23, 0.93, 0.5)
+	ps.shadow_size = 16
+	_play_btn.add_theme_stylebox_override("normal", ps)
+	_play_btn.add_theme_stylebox_override("hover", ps)
+	var pp := ps.duplicate() as StyleBoxFlat
+	pp.bg_color = Color("#7B4CD6")
+	pp.shadow_size = 8
+	_play_btn.add_theme_stylebox_override("pressed", pp)
+	_play_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	vbox.add_child(_play_btn)
 
 	# Daily + Continue row
 	var row := HBoxContainer.new()
 	row.set("theme_override_constants/separation", 10)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
 
-	_daily_btn = _create_game_button(
-		"Daily Challenge", 15,
-		Color("#ffc852"), Color("#dd8810"), Color("#a06008"),
-		5, 16, 0.0
-	)
+	# Daily — amber, height 54
+	_daily_btn = Button.new()
+	_daily_btn.text = "Daily Challenge"
 	_daily_btn.name = "DailyButton"
+	_daily_btn.add_theme_font_size_override("font_size", 15)
+	_daily_btn.add_theme_color_override("font_color", Color("#78350F"))
+	_daily_btn.custom_minimum_size = Vector2(0, 54)
 	_daily_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var ds := StyleBoxFlat.new()
+	ds.bg_color = Color("#F5B020")
+	_set_corner_radius(ds, 16)
+	ds.border_width_bottom = 4
+	ds.border_color = Color("#C88A10")
+	ds.shadow_color = Color(0.96, 0.62, 0.04, 0.3)
+	ds.shadow_size = 10
+	_daily_btn.add_theme_stylebox_override("normal", ds)
+	_daily_btn.add_theme_stylebox_override("hover", ds)
+	var dp := ds.duplicate() as StyleBoxFlat
+	dp.bg_color = Color("#D8980A")
+	dp.shadow_size = 4
+	_daily_btn.add_theme_stylebox_override("pressed", dp)
+	_daily_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	row.add_child(_daily_btn)
 
+	# Continue — outline, height 54
 	_continue_btn = Button.new()
-	_continue_btn.text = "↩ Continue"
+	_continue_btn.text = "Continue"
 	_continue_btn.name = "ContinueButton"
 	_continue_btn.add_theme_font_size_override("font_size", 15)
 	_continue_btn.add_theme_color_override("font_color", Color("#C8B8FF"))
+	_continue_btn.custom_minimum_size = Vector2(0, 54)
 	_continue_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var cont_style := StyleBoxFlat.new()
-	cont_style.bg_color = Color(1, 1, 1, 0.05)
-	cont_style.corner_radius_top_left = 16
-	cont_style.corner_radius_top_right = 16
-	cont_style.corner_radius_bottom_right = 16
-	cont_style.corner_radius_bottom_left = 16
-	cont_style.border_width_left = 1
-	cont_style.border_width_top = 1
-	cont_style.border_width_right = 1
-	cont_style.border_width_bottom = 1
-	cont_style.border_color = Color(1, 1, 1, 0.15)
-	cont_style.content_margin_left = 16
-	cont_style.content_margin_top = 14
-	cont_style.content_margin_right = 16
-	cont_style.content_margin_bottom = 14
-	_continue_btn.add_theme_stylebox_override("normal", cont_style)
-	_continue_btn.add_theme_stylebox_override("hover", cont_style)
-	var cont_pressed := cont_style.duplicate() as StyleBoxFlat
-	cont_pressed.bg_color = Color(1, 1, 1, 0.1)
-	_continue_btn.add_theme_stylebox_override("pressed", cont_pressed)
+	var cs2 := StyleBoxFlat.new()
+	cs2.bg_color = Color(1, 1, 1, 0.05)
+	_set_corner_radius(cs2, 16)
+	_set_border(cs2, 1, Color(1, 1, 1, 0.15))
+	_continue_btn.add_theme_stylebox_override("normal", cs2)
+	_continue_btn.add_theme_stylebox_override("hover", cs2)
+	var cp := cs2.duplicate() as StyleBoxFlat
+	cp.bg_color = Color(1, 1, 1, 0.1)
+	_continue_btn.add_theme_stylebox_override("pressed", cp)
 	_continue_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-
-	row.add_child(_daily_btn)
 	row.add_child(_continue_btn)
 
-	var row_margin := MarginContainer.new()
-	row_margin.add_theme_constant_override("margin_left", 24)
-	row_margin.add_theme_constant_override("margin_right", 24)
-	row_margin.add_child(row)
-	vbox.add_child(row_margin)
+	vbox.add_child(row)
 
-	# Daily description
+	# Daily desc
 	_daily_desc = Label.new()
 	_daily_desc.name = "DailyDesc"
 	_daily_desc.text = ""
@@ -365,205 +362,153 @@ func _build_buttons() -> VBoxContainer:
 	_daily_desc.add_theme_color_override("font_color", Color("#6B5FA0"))
 	vbox.add_child(_daily_desc)
 
-	# Fire badge (hidden by default)
+	# Fire badge
 	_fire_badge = Label.new()
 	_fire_badge.name = "FireBadge"
 	_badge_panel = PanelContainer.new()
 	_badge_panel.visible = false
-	var badge_hbox := HBoxContainer.new()
-	badge_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	badge_hbox.set("theme_override_constants/separation", 4)
-	var fire_icon := Label.new()
-	fire_icon.text = "🔥"
-	fire_icon.add_theme_font_size_override("font_size", 12)
-	badge_hbox.add_child(fire_icon)
+	var bh := HBoxContainer.new()
+	bh.alignment = BoxContainer.ALIGNMENT_CENTER
+	bh.set("theme_override_constants/separation", 4)
+	var fi := Label.new()
+	fi.text = "STREAK"
+	fi.add_theme_font_size_override("font_size", 10)
+	fi.add_theme_color_override("font_color", Color.WHITE)
+	bh.add_child(fi)
 	_fire_badge.text = "7"
 	_fire_badge.add_theme_font_size_override("font_size", 11)
 	_fire_badge.add_theme_color_override("font_color", Color.WHITE)
-	badge_hbox.add_child(_fire_badge)
-
-	var badge_style := StyleBoxFlat.new()
-	badge_style.bg_color = Color("#FF2040")
-	badge_style.corner_radius_top_left = 12
-	badge_style.corner_radius_top_right = 12
-	badge_style.corner_radius_bottom_right = 12
-	badge_style.corner_radius_bottom_left = 12
-	badge_style.content_margin_left = 8
-	badge_style.content_margin_right = 8
-	badge_style.content_margin_top = 3
-	badge_style.content_margin_bottom = 3
-	_badge_panel.add_theme_stylebox_override("panel", badge_style)
-	_badge_panel.add_child(badge_hbox)
-
-	var badge_center := CenterContainer.new()
-	badge_center.add_child(_badge_panel)
-	vbox.add_child(badge_center)
+	bh.add_child(_fire_badge)
+	var bs := StyleBoxFlat.new()
+	bs.bg_color = Color("#FF2040")
+	_set_corner_radius(bs, 12)
+	bs.content_margin_left = 8
+	bs.content_margin_right = 8
+	bs.content_margin_top = 3
+	bs.content_margin_bottom = 3
+	_badge_panel.add_theme_stylebox_override("panel", bs)
+	_badge_panel.add_child(bh)
+	var bc := CenterContainer.new()
+	bc.add_child(_badge_panel)
+	vbox.add_child(bc)
 
 	return vbox
 
 
-func _create_game_button(text: String, font_size: int, color_top: Color, color_bot: Color, border_color: Color, border_w: int, radius: int, _width_ratio: float) -> Button:
-	var btn := Button.new()
-	btn.text = text
-	btn.add_theme_font_size_override("font_size", font_size)
-	btn.add_theme_color_override("font_color", Color.WHITE)
-
-	var style := StyleBoxFlat.new()
-	style.bg_color = color_top.lerp(color_bot, 0.4)
-	style.corner_radius_top_left = radius
-	style.corner_radius_top_right = radius
-	style.corner_radius_bottom_right = radius
-	style.corner_radius_bottom_left = radius
-	style.border_width_bottom = border_w
-	style.border_color = border_color
-	style.content_margin_left = 28
-	style.content_margin_top = 18
-	style.content_margin_right = 28
-	style.content_margin_bottom = 18
-	style.shadow_color = Color(color_top, 0.4)
-	style.shadow_size = 12
-
-	var pressed_style := style.duplicate() as StyleBoxFlat
-	pressed_style.bg_color = color_bot
-	pressed_style.border_width_bottom = max(border_w - 3, 2)
-	pressed_style.shadow_size = 6
-
-	btn.add_theme_stylebox_override("normal", style)
-	btn.add_theme_stylebox_override("hover", style)
-	btn.add_theme_stylebox_override("pressed", pressed_style)
-	btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-
-	return btn
-
-
-func _center_wrap(ctrl: Control, width_ratio: float) -> CenterContainer:
-	var center := CenterContainer.new()
-	ctrl.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	ctrl.custom_minimum_size.x = 393.0 * width_ratio
-	center.add_child(ctrl)
-	return center
-
-
-# ─── Bottom Icons ───
+# ─── 4. Bottom Icons ───
 
 func _build_bottom_icons() -> HBoxContainer:
 	var hbox := HBoxContainer.new()
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	hbox.set("theme_override_constants/separation", 14)
+	hbox.set("theme_override_constants/separation", 12)
 	hbox.modulate.a = 0.0
 
-	# Guide (purple)
-	var guide_btn := _build_icon_button("?", "Guide",
-		Color(0.49, 0.23, 0.93, 0.25), Color(0.49, 0.23, 0.93, 0.3),
-		false, Color("#C8A8FF"))
-	guide_btn.get_child(0).gui_input.connect(func(event: InputEvent):
-		if event is InputEventMouseButton and event.pressed:
+	# Each icon: colored glass panel + single letter + label
+	var guide := _make_icon_btn("?", "Guide", Color(0.49, 0.23, 0.93), Color("#C8A8FF"))
+	guide.get_child(0).gui_input.connect(func(e: InputEvent):
+		if e is InputEventMouseButton and e.pressed:
 			SoundManager.play_sfx("button_press")
 			how_to_play_pressed.emit())
-	hbox.add_child(guide_btn)
+	hbox.add_child(guide)
 
-	# Themes (amber)
-	var themes_btn := _build_icon_button("T", "Themes",
-		Color(0.96, 0.62, 0.04, 0.2), Color(0.96, 0.62, 0.04, 0.25),
-		false, Color("#FFD080"))
-	themes_btn.get_child(0).gui_input.connect(func(event: InputEvent):
-		if event is InputEventMouseButton and event.pressed:
+	var themes := _make_icon_btn("T", "Themes", Color(0.96, 0.62, 0.04), Color("#FFD080"))
+	themes.get_child(0).gui_input.connect(func(e: InputEvent):
+		if e is InputEventMouseButton and e.pressed:
 			SoundManager.play_sfx("button_press")
 			settings_pressed.emit())
-	hbox.add_child(themes_btn)
+	hbox.add_child(themes)
 
-	# Awards (teal) with notification dot
-	var awards_btn := _build_icon_button("W", "Awards",
-		Color(0.18, 0.83, 0.75, 0.2), Color(0.18, 0.83, 0.75, 0.25),
-		true, Color("#70F0E0"))
-	awards_btn.get_child(0).gui_input.connect(func(event: InputEvent):
-		if event is InputEventMouseButton and event.pressed:
+	var awards := _make_icon_btn("W", "Awards", Color(0.18, 0.83, 0.75), Color("#70F0E0"), true)
+	awards.get_child(0).gui_input.connect(func(e: InputEvent):
+		if e is InputEventMouseButton and e.pressed:
 			SoundManager.play_sfx("button_press"))
-	hbox.add_child(awards_btn)
+	hbox.add_child(awards)
 
-	# Sound (rose)
-	var sound_vbox := _build_icon_button("S", "Sound",
-		Color(0.96, 0.45, 0.71, 0.2), Color(0.96, 0.45, 0.71, 0.25),
-		false, Color("#FFA0C8"))
+	var sound := _make_icon_btn("S", "Sound", Color(0.96, 0.45, 0.71), Color("#FFA0C8"))
+	# Overlay invisible button for sound toggle
 	_sound_btn = Button.new()
 	_sound_btn.name = "SoundToggle"
 	_sound_btn.flat = true
-	_sound_btn.mouse_filter = Control.MOUSE_FILTER_PASS
 	_sound_btn.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_sound_btn.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 	_sound_btn.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
 	_sound_btn.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
 	_sound_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	sound_vbox.get_child(0).add_child(_sound_btn)
-	_sound_icon_label = sound_vbox.get_child(1) as Label
-	hbox.add_child(sound_vbox)
+	sound.get_child(0).add_child(_sound_btn)
+	_sound_icon_label = sound.get_child(1) as Label
+	hbox.add_child(sound)
 
-	# Settings (glass)
-	var settings_btn := _build_icon_button("G", "Settings",
-		Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.12),
-		false, Color("#A0A0B0"))
-	settings_btn.get_child(0).gui_input.connect(func(event: InputEvent):
-		if event is InputEventMouseButton and event.pressed:
+	var settings := _make_icon_btn("G", "Settings", Color(0.5, 0.5, 0.6), Color("#A0A0B0"))
+	settings.get_child(0).gui_input.connect(func(e: InputEvent):
+		if e is InputEventMouseButton and e.pressed:
 			SoundManager.play_sfx("button_press")
 			settings_pressed.emit())
-	hbox.add_child(settings_btn)
+	hbox.add_child(settings)
 
 	return hbox
 
 
-func _build_icon_button(icon_text: String, label_text: String, bg_color: Color, border_color: Color, show_dot: bool = false, icon_color: Color = Color.WHITE) -> VBoxContainer:
-	var vbox := VBoxContainer.new()
-	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.set("theme_override_constants/separation", 6)
+func _make_icon_btn(letter: String, lbl_text: String, accent: Color, letter_color: Color, dot: bool = false) -> VBoxContainer:
+	var vb := VBoxContainer.new()
+	vb.alignment = BoxContainer.ALIGNMENT_CENTER
+	vb.set("theme_override_constants/separation", 6)
 
-	var icon_panel := PanelContainer.new()
-	icon_panel.custom_minimum_size = Vector2(48, 48)
-	icon_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(50, 50)
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	var s := StyleBoxFlat.new()
+	s.bg_color = Color(accent.r, accent.g, accent.b, 0.18)
+	_set_corner_radius(s, 16)
+	_set_border(s, 1, Color(accent.r, accent.g, accent.b, 0.28))
+	s.shadow_color = Color(accent.r, accent.g, accent.b, 0.1)
+	s.shadow_size = 6
+	panel.add_theme_stylebox_override("panel", s)
 
-	var icon_style := StyleBoxFlat.new()
-	icon_style.bg_color = bg_color
-	icon_style.corner_radius_top_left = 16
-	icon_style.corner_radius_top_right = 16
-	icon_style.corner_radius_bottom_right = 16
-	icon_style.corner_radius_bottom_left = 16
-	icon_style.border_width_left = 1
-	icon_style.border_width_top = 1
-	icon_style.border_width_right = 1
-	icon_style.border_width_bottom = 1
-	icon_style.border_color = border_color
-	icon_style.shadow_color = Color(bg_color.r, bg_color.g, bg_color.b, 0.15)
-	icon_style.shadow_size = 8
-	icon_panel.add_theme_stylebox_override("panel", icon_style)
+	var icon_lbl := Label.new()
+	icon_lbl.text = letter
+	icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	icon_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	icon_lbl.add_theme_font_size_override("font_size", 20)
+	icon_lbl.add_theme_color_override("font_color", letter_color)
+	icon_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(icon_lbl)
 
-	var icon := Label.new()
-	icon.text = icon_text
-	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	icon.add_theme_font_size_override("font_size", 20)
-	icon.add_theme_color_override("font_color", icon_color)
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	icon_panel.add_child(icon)
+	if dot:
+		var d := ColorRect.new()
+		d.color = Color("#F43F5E")
+		d.custom_minimum_size = Vector2(10, 10)
+		d.size = Vector2(10, 10)
+		d.position = Vector2(38, -2)
+		d.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		panel.add_child(d)
 
-	# Notification dot
-	if show_dot:
-		var dot := ColorRect.new()
-		dot.color = Color("#F43F5E")
-		dot.custom_minimum_size = Vector2(10, 10)
-		dot.size = Vector2(10, 10)
-		dot.position = Vector2(36, -2)
-		dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		icon_panel.add_child(dot)
-
-	vbox.add_child(icon_panel)
+	vb.add_child(panel)
 
 	var lbl := Label.new()
-	lbl.text = label_text
+	lbl.text = lbl_text
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.add_theme_font_size_override("font_size", 10)
 	lbl.add_theme_color_override("font_color", Color("#8B7FC0"))
-	vbox.add_child(lbl)
+	vb.add_child(lbl)
 
-	return vbox
+	return vb
+
+
+# ─── Helpers ───
+
+func _set_corner_radius(s: StyleBoxFlat, r: int) -> void:
+	s.corner_radius_top_left = r
+	s.corner_radius_top_right = r
+	s.corner_radius_bottom_right = r
+	s.corner_radius_bottom_left = r
+
+
+func _set_border(s: StyleBoxFlat, w: int, c: Color) -> void:
+	s.border_width_left = w
+	s.border_width_top = w
+	s.border_width_right = w
+	s.border_width_bottom = w
+	s.border_color = c
 
 
 # ═══════════════════════════════════════
@@ -581,19 +526,19 @@ func _add_glow_orb(pos: Vector2, size_val: float, color: Color) -> void:
 
 func _add_grid_overlay() -> void:
 	for i in range(0, 860, 40):
-		var h_line := ColorRect.new()
-		h_line.color = Color(0.47, 0.39, 0.78, 0.04)
-		h_line.size = Vector2(393, 1)
-		h_line.position = Vector2(0, i)
-		h_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(h_line)
+		var h := ColorRect.new()
+		h.color = Color(0.47, 0.39, 0.78, 0.04)
+		h.size = Vector2(393, 1)
+		h.position = Vector2(0, i)
+		h.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(h)
 		if i < 393:
-			var v_line := ColorRect.new()
-			v_line.color = Color(0.47, 0.39, 0.78, 0.04)
-			v_line.size = Vector2(1, 852)
-			v_line.position = Vector2(i, 0)
-			v_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			add_child(v_line)
+			var v := ColorRect.new()
+			v.color = Color(0.47, 0.39, 0.78, 0.04)
+			v.size = Vector2(1, 852)
+			v.position = Vector2(i, 0)
+			v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			add_child(v)
 
 
 func _create_sparkles() -> void:
@@ -603,18 +548,18 @@ func _create_sparkles() -> void:
 		Vector2(343, 620), Vector2(100, 720), Vector2(303, 50), Vector2(273, 760),
 	]
 	for pos in positions:
-		var dot := ColorRect.new()
-		dot.color = Color.WHITE
-		dot.size = Vector2(3, 3)
-		dot.position = pos
-		dot.modulate.a = 0.1
-		dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(dot)
-		_sparkles.append(dot)
+		var d := ColorRect.new()
+		d.color = Color.WHITE
+		d.size = Vector2(3, 3)
+		d.position = pos
+		d.modulate.a = 0.1
+		d.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(d)
+		_sparkles.append(d)
 
 
 func _create_deco_blocks() -> void:
-	var configs := [
+	var cfgs := [
 		{"pos": Vector2(-6, 100), "size": Vector2(36, 36), "color": 0, "rot": 18.0},
 		{"pos": Vector2(355, 180), "size": Vector2(24, 24), "color": 4, "rot": -22.0},
 		{"pos": Vector2(8, 580), "size": Vector2(44, 18), "color": 2, "rot": 28.0},
@@ -622,20 +567,20 @@ func _create_deco_blocks() -> void:
 		{"pos": Vector2(14, 400), "size": Vector2(20, 20), "color": 5, "rot": 35.0},
 		{"pos": Vector2(355, 360), "size": Vector2(28, 28), "color": 1, "rot": -28.0},
 	]
-	for cfg in configs:
-		var color_idx: int = cfg["color"]
-		var block := ColorRect.new()
-		block.color = BLOCK_COLORS[color_idx][0]
+	for cfg in cfgs:
+		var ci: int = cfg["color"]
+		var b := ColorRect.new()
+		b.color = BLOCK_COLORS[ci][0]
 		var sz: Vector2 = cfg["size"]
-		block.size = sz
-		var pos: Vector2 = cfg["pos"]
-		block.position = pos
-		var rot: float = cfg["rot"]
-		block.rotation_degrees = rot
-		block.modulate.a = 0.15
-		block.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(block)
-		_deco_blocks.append(block)
+		b.size = sz
+		var p: Vector2 = cfg["pos"]
+		b.position = p
+		var r: float = cfg["rot"]
+		b.rotation_degrees = r
+		b.modulate.a = 0.15
+		b.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(b)
+		_deco_blocks.append(b)
 
 
 # ═══════════════════════════════════════
@@ -660,31 +605,23 @@ func _connect_signals() -> void:
 # ═══════════════════════════════════════
 
 func _play_entrance_animations() -> void:
-	# Logo fade in + slide up
 	if _logo_section:
 		var tw := create_tween()
 		tw.tween_interval(0.2)
 		tw.tween_property(_logo_section, "modulate:a", 1.0, 0.6).set_ease(Tween.EASE_OUT)
-
-	# Hero section
 	if _hero_section:
 		var tw := create_tween()
 		tw.tween_interval(0.6)
 		tw.tween_property(_hero_section, "modulate:a", 1.0, 0.5).set_ease(Tween.EASE_OUT)
-
-	# Buttons
 	if _btn_section:
 		var tw := create_tween()
 		tw.tween_interval(1.0)
 		tw.tween_property(_btn_section, "modulate:a", 1.0, 0.5).set_ease(Tween.EASE_OUT)
-
-	# Bottom icons
 	if _bottom_section:
 		var tw := create_tween()
 		tw.tween_interval(1.3)
 		tw.tween_property(_bottom_section, "modulate:a", 1.0, 0.4).set_ease(Tween.EASE_OUT)
 
-	# Start idle after entrance
 	var idle_tw := create_tween()
 	idle_tw.tween_interval(2.0)
 	idle_tw.tween_callback(_start_idle_animations)
@@ -704,8 +641,8 @@ func _play_glow_pulse() -> void:
 	if not style:
 		return
 	_play_glow_tween = create_tween().set_loops()
-	_play_glow_tween.tween_property(style, "shadow_size", 20, 1.0).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
-	_play_glow_tween.tween_property(style, "shadow_size", 8, 1.0).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	_play_glow_tween.tween_property(style, "shadow_size", 24, 1.0).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	_play_glow_tween.tween_property(style, "shadow_size", 10, 1.0).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
 
 
 func _sparkle_loop() -> void:
@@ -747,7 +684,6 @@ func refresh_stats() -> void:
 		_streak_value.text = str(DailyChallengeSystem.get_streak())
 	var has_save := SaveManager.has_active_game()
 	_continue_btn.visible = has_save
-	_continue_btn.modulate.a = 1.0 if has_save else 0.0
 	_update_daily_button()
 	_try_daily_reward()
 	_update_sound_label()
@@ -826,19 +762,12 @@ func _show_reward_popup(reward: Dictionary) -> void:
 	panel.name = "DailyRewardPanel"
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.08, 0.05, 0.18, 0.95)
-	style.corner_radius_top_left = 20
-	style.corner_radius_top_right = 20
-	style.corner_radius_bottom_right = 20
-	style.corner_radius_bottom_left = 20
+	_set_corner_radius(style, 20)
+	_set_border(style, 1, Color("#FFD536"))
 	style.content_margin_left = 20.0
 	style.content_margin_top = 12.0
 	style.content_margin_right = 20.0
 	style.content_margin_bottom = 12.0
-	style.border_width_left = 1
-	style.border_width_top = 1
-	style.border_width_right = 1
-	style.border_width_bottom = 1
-	style.border_color = Color("#FFD536")
 	style.shadow_color = Color(0, 0, 0, 0.3)
 	style.shadow_size = 8
 	panel.add_theme_stylebox_override("panel", style)
