@@ -726,23 +726,55 @@ func _double_score_after_ad() -> void:
 func _prefill_board(board: BoardState) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	var fill_rows := 3  # bottom 3 rows
-	var fill_chance := 0.65  # 65% of cells filled
+	var fill_rows := 5  # bottom 5 rows
+	var target_cells := int(board.rows * board.columns * 0.35)  # ~35% fill
+	var placed := 0
 
+	# Phase 1: Color clusters (2-4 adjacent same color) for chain potential
+	for _i in range(6):
+		var color: int = rng.randi_range(0, 5)
+		var y: int = rng.randi_range(board.rows - fill_rows, board.rows - 1)
+		var x: int = rng.randi_range(0, board.columns - 2)
+		var length: int = rng.randi_range(2, 4)
+		for dx in range(length):
+			var nx: int = x + dx
+			if nx < board.columns and not board.grid[y][nx]["occupied"]:
+				board.grid[y][nx]["occupied"] = true
+				board.grid[y][nx]["color"] = color
+				placed += 1
+
+	# Phase 2: Fill remaining randomly in bottom rows to reach target
+	var empty_cells: Array = []
 	for y in range(board.rows - fill_rows, board.rows):
-		var filled_in_row := 0
 		for x in range(board.columns):
-			if rng.randf() < fill_chance:
-				var color: int = rng.randi_range(0, 5)
-				board.grid[y][x]["occupied"] = true
-				board.grid[y][x]["color"] = color
-				filled_in_row += 1
-		# Ensure row is NOT complete (would auto-clear immediately)
-		if filled_in_row >= board.columns:
-			# Remove one random cell
-			var remove_x: int = rng.randi_range(0, board.columns - 1)
-			board.grid[y][remove_x]["occupied"] = false
-			board.grid[y][remove_x]["color"] = -1
+			if not board.grid[y][x]["occupied"]:
+				empty_cells.append(Vector2i(x, y))
+
+	# Shuffle empty cells
+	for i in range(empty_cells.size() - 1, 0, -1):
+		var j: int = rng.randi_range(0, i)
+		var tmp: Vector2i = empty_cells[i]
+		empty_cells[i] = empty_cells[j]
+		empty_cells[j] = tmp
+
+	for cell_pos in empty_cells:
+		if placed >= target_cells:
+			break
+		var x: int = cell_pos.x
+		var y: int = cell_pos.y
+		board.grid[y][x]["occupied"] = true
+		board.grid[y][x]["color"] = rng.randi_range(0, 5)
+		placed += 1
+		# Don't complete any row (would auto-clear)
+		var row_full := true
+		for cx in range(board.columns):
+			if not board.grid[y][cx]["occupied"]:
+				row_full = false
+				break
+		if row_full:
+			board.grid[y][x]["occupied"] = false
+			board.grid[y][x]["color"] = -1
+			placed -= 1
 
 
 func _notification(what: int) -> void:

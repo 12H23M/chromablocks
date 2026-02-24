@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=393, initial-scale=1">
+<title>ChromaBlocks Home - Option B v2</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111; display: flex; justify-content: center; padding: 20px; }
+
+  .phone {
+    width: 393px;
+    height: 852px;
+    border-radius: 40px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #0F0A35 0%, #1C1068 50%, #120D40 100%);
+    font-family: 'Fredoka', sans-serif;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 50px 28px 36px;
+    position: relative;
+  }
+
+  .phone::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 20%, rgba(108,92,231,0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(255,100,150,0.1) 0%, transparent 50%),
+      radial-gradient(circle at 50% 90%, rgba(80,200,255,0.08) 0%, transparent 40%);
+    pointer-events: none;
+  }
+
+  .phone > * { position: relative; z-index: 1; }
+
+  .logo-icon {
+    width: 80px; height: 80px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 4px;
+    margin-bottom: 20px;
+    transform: rotate(-5deg);
+  }
+  .logo-icon .b {
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+
+  .title {
+    font-size: 42px; font-weight: 700; letter-spacing: -1px;
+    text-shadow: 0 2px 20px rgba(108,92,231,0.5);
+    margin-bottom: 2px;
+  }
+  .subtitle {
+    font-size: 12px; color: #8070B0; letter-spacing: 6px; margin-bottom: 28px;
+  }
+
+  .hero-score {
+    display: flex; flex-direction: column; align-items: center;
+    margin-bottom: 28px; padding: 20px 40px;
+    background: rgba(108,92,231,0.12);
+    border: 1px solid rgba(108,92,231,0.2);
+    border-radius: 24px;
+  }
+  .hero-score .value {
+    font-size: 44px; font-weight: 700;
+    background: linear-gradient(135deg, #E8D5FF, #fff);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero-score .lbl {
+    font-size: 12px; color: #8070B0; letter-spacing: 3px;
+  }
+
+  .mini-stats {
+    display: flex; gap: 24px; margin-bottom: 36px;
+  }
+  .mini-stat { text-align: center; }
+  .mini-stat .v { font-size: 18px; font-weight: 600; color: #C8B8FF; }
+  .mini-stat .l { font-size: 10px; color: #6B5FA0; letter-spacing: 1px; }
+
+  .btn-play {
+    width: 100%; height: 68px; border-radius: 22px; border: none;
+    font-family: 'Fredoka', sans-serif; font-size: 24px; font-weight: 700;
+    color: white; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #7C3AED, #C084FC);
+    box-shadow: 0 6px 30px rgba(124,58,237,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+    letter-spacing: 2px;
+  }
+
+  .btn-row {
+    display: flex; gap: 10px; width: 100%; margin-bottom: 12px;
+  }
+  .btn-daily {
+    flex: 1; height: 54px; border-radius: 16px; border: none;
+    background: linear-gradient(135deg, #F59E0B, #FBBF24);
+    font-family: 'Fredoka', sans-serif; font-size: 15px; font-weight: 600;
+    color: #78350F; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    line-height: 1.2;
+    box-shadow: 0 4px 16px rgba(245,158,11,0.3);
+  }
+  .btn-daily .date { font-size: 11px; font-weight: 500; opacity: 0.7; }
+
+  .btn-continue {
+    flex: 1; height: 54px; border-radius: 16px;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05);
+    font-family: 'Fredoka', sans-serif; font-size: 15px; font-weight: 600;
+    color: #C8B8FF; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+
+  /* Bottom icons v2 */
+  .bottom-actions {
+    display: flex; gap: 14px; margin-top: auto; padding-top: 24px;
+    width: 100%; justify-content: center;
+  }
+  .bottom-btn {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 6px; font-size: 10px; font-weight: 500;
+    color: #8B7FC0; letter-spacing: 0.5px; cursor: pointer;
+  }
+  .bottom-icon {
+    width: 52px; height: 52px; border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; position: relative;
+  }
+  .bottom-icon.purple {
+    background: linear-gradient(145deg, rgba(124,58,237,0.25), rgba(108,92,231,0.1));
+    border: 1px solid rgba(124,58,237,0.3);
+    box-shadow: 0 4px 12px rgba(124,58,237,0.15), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  .bottom-icon.amber {
+    background: linear-gradient(145deg, rgba(245,158,11,0.2), rgba(251,191,36,0.08));
+    border: 1px solid rgba(245,158,11,0.25);
+    box-shadow: 0 4px 12px rgba(245,158,11,0.1), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  .bottom-icon.teal {
+    background: linear-gradient(145deg, rgba(45,212,191,0.2), rgba(20,184,166,0.08));
+    border: 1px solid rgba(45,212,191,0.25);
+    box-shadow: 0 4px 12px rgba(45,212,191,0.1), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  .bottom-icon.rose {
+    background: linear-gradient(145deg, rgba(244,114,182,0.2), rgba(236,72,153,0.08));
+    border: 1px solid rgba(244,114,182,0.25);
+    box-shadow: 0 4px 12px rgba(244,114,182,0.1), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  .bottom-icon.glass {
+    background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.03));
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+  .dot {
+    position: absolute; top: -2px; right: -2px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #F43F5E; border: 2px solid #120D40;
+  }
+
+  .c-coral { background: #FF7B8E; }
+  .c-amber { background: #FFB74D; }
+  .c-lemon { background: #FFE066; }
+  .c-mint { background: #66E0A0; }
+  .c-sky { background: #64C8FF; }
+  .c-lavender { background: #B388FF; }
+  .c-pink { background: #FF80AB; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="logo-icon">
+    <div class="b c-coral"></div>
+    <div class="b c-amber"></div>
+    <div class="b c-lemon"></div>
+    <div class="b c-mint"></div>
+    <div class="b c-sky"></div>
+    <div class="b c-lavender"></div>
+    <div class="b c-pink"></div>
+    <div class="b c-coral" style="opacity:0.3"></div>
+    <div class="b c-sky" style="opacity:0.3"></div>
+  </div>
+
+  <div class="title">ChromaBlocks</div>
+  <div class="subtitle">BLOCK PUZZLE</div>
+
+  <div class="hero-score">
+    <div class="lbl">BEST SCORE</div>
+    <div class="value">19,395</div>
+  </div>
+
+  <div class="mini-stats">
+    <div class="mini-stat"><div class="v">13</div><div class="l">GAMES</div></div>
+    <div class="mini-stat" style="color:#333">|</div>
+    <div class="mini-stat"><div class="v">3,507</div><div class="l">AVERAGE</div></div>
+    <div class="mini-stat" style="color:#333">|</div>
+    <div class="mini-stat"><div class="v">7</div><div class="l">STREAK</div></div>
+  </div>
+
+  <button class="btn-play">▶  PLAY</button>
+
+  <div class="btn-row">
+    <button class="btn-daily">
+      <span>Daily Challenge</span>
+      <span class="date">Feb 24</span>
+    </button>
+    <button class="btn-continue">↩ Continue</button>
+  </div>
+
+  <div style="flex:1"></div>
+
+  <div class="bottom-actions">
+    <div class="bottom-btn">
+      <div class="bottom-icon purple">📖</div>
+      <span>Guide</span>
+    </div>
+    <div class="bottom-btn">
+      <div class="bottom-icon amber">🎨</div>
+      <span>Themes</span>
+    </div>
+    <div class="bottom-btn">
+      <div class="bottom-icon teal">🏆<div class="dot"></div></div>
+      <span>Awards</span>
+    </div>
+    <div class="bottom-btn">
+      <div class="bottom-icon rose">🔊</div>
+      <span>Sound</span>
+    </div>
+    <div class="bottom-btn">
+      <div class="bottom-icon glass">⚙️</div>
+      <span>Settings</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>
