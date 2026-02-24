@@ -453,8 +453,9 @@ func _build_bottom_icons() -> HBoxContainer:
 	hbox.modulate.a = 0.0
 
 	# Guide (purple)
-	var guide_btn := _build_icon_button("📖", "Guide",
-		Color(0.49, 0.23, 0.93, 0.25), Color(0.49, 0.23, 0.93, 0.3))
+	var guide_btn := _build_icon_button("?", "Guide",
+		Color(0.49, 0.23, 0.93, 0.25), Color(0.49, 0.23, 0.93, 0.3),
+		false, Color("#C8A8FF"))
 	guide_btn.get_child(0).gui_input.connect(func(event: InputEvent):
 		if event is InputEventMouseButton and event.pressed:
 			SoundManager.play_sfx("button_press")
@@ -462,8 +463,9 @@ func _build_bottom_icons() -> HBoxContainer:
 	hbox.add_child(guide_btn)
 
 	# Themes (amber)
-	var themes_btn := _build_icon_button("🎨", "Themes",
-		Color(0.96, 0.62, 0.04, 0.2), Color(0.96, 0.62, 0.04, 0.25))
+	var themes_btn := _build_icon_button("T", "Themes",
+		Color(0.96, 0.62, 0.04, 0.2), Color(0.96, 0.62, 0.04, 0.25),
+		false, Color("#FFD080"))
 	themes_btn.get_child(0).gui_input.connect(func(event: InputEvent):
 		if event is InputEventMouseButton and event.pressed:
 			SoundManager.play_sfx("button_press")
@@ -471,16 +473,18 @@ func _build_bottom_icons() -> HBoxContainer:
 	hbox.add_child(themes_btn)
 
 	# Awards (teal) with notification dot
-	var awards_btn := _build_icon_button("🏆", "Awards",
-		Color(0.18, 0.83, 0.75, 0.2), Color(0.18, 0.83, 0.75, 0.25), true)
+	var awards_btn := _build_icon_button("*", "Awards",
+		Color(0.18, 0.83, 0.75, 0.2), Color(0.18, 0.83, 0.75, 0.25),
+		true, Color("#70F0E0"))
 	awards_btn.get_child(0).gui_input.connect(func(event: InputEvent):
 		if event is InputEventMouseButton and event.pressed:
 			SoundManager.play_sfx("button_press"))
 	hbox.add_child(awards_btn)
 
 	# Sound (rose)
-	var sound_vbox := _build_icon_button("🔊", "Sound",
-		Color(0.96, 0.45, 0.71, 0.2), Color(0.96, 0.45, 0.71, 0.25))
+	var sound_vbox := _build_icon_button("S", "Sound",
+		Color(0.96, 0.45, 0.71, 0.2), Color(0.96, 0.45, 0.71, 0.25),
+		false, Color("#FFA0C8"))
 	_sound_btn = Button.new()
 	_sound_btn.name = "SoundToggle"
 	_sound_btn.flat = true
@@ -495,8 +499,9 @@ func _build_bottom_icons() -> HBoxContainer:
 	hbox.add_child(sound_vbox)
 
 	# Settings (glass)
-	var settings_btn := _build_icon_button("⚙️", "Settings",
-		Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.12))
+	var settings_btn := _build_icon_button("G", "Settings",
+		Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.12),
+		false, Color("#A0A0B0"))
 	settings_btn.get_child(0).gui_input.connect(func(event: InputEvent):
 		if event is InputEventMouseButton and event.pressed:
 			SoundManager.play_sfx("button_press")
@@ -506,7 +511,7 @@ func _build_bottom_icons() -> HBoxContainer:
 	return hbox
 
 
-func _build_icon_button(icon_text: String, label_text: String, bg_color: Color, border_color: Color, show_dot: bool = false) -> VBoxContainer:
+func _build_icon_button(icon_text: String, label_text: String, bg_color: Color, border_color: Color, show_dot: bool = false, icon_color: Color = Color.WHITE) -> VBoxContainer:
 	var vbox := VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	vbox.set("theme_override_constants/separation", 6)
@@ -534,7 +539,8 @@ func _build_icon_button(icon_text: String, label_text: String, bg_color: Color, 
 	icon.text = icon_text
 	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	icon.add_theme_font_size_override("font_size", 22)
+	icon.add_theme_font_size_override("font_size", 20)
+	icon.add_theme_color_override("font_color", icon_color)
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon_panel.add_child(icon)
 
@@ -739,7 +745,9 @@ func refresh_stats() -> void:
 	_avg_value.text = FormatUtils.format_number(SaveManager.get_avg_score())
 	if _streak_value:
 		_streak_value.text = str(DailyChallengeSystem.get_streak())
-	_continue_btn.visible = SaveManager.has_active_game()
+	var has_save := SaveManager.has_active_game()
+	_continue_btn.visible = has_save
+	_continue_btn.modulate.a = 1.0 if has_save else 0.0
 	_update_daily_button()
 	_try_daily_reward()
 	_update_sound_label()
