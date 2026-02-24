@@ -109,7 +109,7 @@ func _build_ui() -> void:
 	_bottom_section = _build_bottom_icons()
 	main.add_child(_bottom_section)
 
-	_add_spacer(main, 36)
+	_add_spacer(main, 48)
 
 
 func _add_spacer(parent: Control, height: float) -> void:
@@ -473,7 +473,7 @@ func _build_bottom_icons() -> HBoxContainer:
 	hbox.add_child(themes_btn)
 
 	# Awards (teal) with notification dot
-	var awards_btn := _build_icon_button("*", "Awards",
+	var awards_btn := _build_icon_button("W", "Awards",
 		Color(0.18, 0.83, 0.75, 0.2), Color(0.18, 0.83, 0.75, 0.25),
 		true, Color("#70F0E0"))
 	awards_btn.get_child(0).gui_input.connect(func(event: InputEvent):
@@ -517,7 +517,7 @@ func _build_icon_button(icon_text: String, label_text: String, bg_color: Color, 
 	vbox.set("theme_override_constants/separation", 6)
 
 	var icon_panel := PanelContainer.new()
-	icon_panel.custom_minimum_size = Vector2(52, 52)
+	icon_panel.custom_minimum_size = Vector2(48, 48)
 	icon_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var icon_style := StyleBoxFlat.new()
@@ -550,7 +550,7 @@ func _build_icon_button(icon_text: String, label_text: String, bg_color: Color, 
 		dot.color = Color("#F43F5E")
 		dot.custom_minimum_size = Vector2(10, 10)
 		dot.size = Vector2(10, 10)
-		dot.position = Vector2(40, -2)
+		dot.position = Vector2(36, -2)
 		dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		icon_panel.add_child(dot)
 
