@@ -721,31 +721,33 @@ func _double_score_after_ad() -> void:
 	piece_tray.update_swap_state(_state.swaps_remaining)
 	game_over_screen.show_result(_state)
 
-## Pre-fill bottom rows with random blocks for an exciting start.
-## Fills 3 rows at ~65% density with gaps, ensuring no complete lines.
+## Pre-fill board with scattered blocks for an exciting start.
+## Distributes ~30% fill across ALL rows with color clusters, avoiding complete lines/columns.
 func _prefill_board(board: BoardState) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	var fill_rows := 5  # bottom 5 rows
-	var target_cells := int(board.rows * board.columns * 0.35)  # ~35% fill
+	var target_cells := int(board.rows * board.columns * 0.30)  # ~30% fill (~19 cells)
 	var placed := 0
 
-	# Phase 1: Color clusters (2-4 adjacent same color) for chain potential
+	# Phase 1: Color clusters (2-4 adjacent same color) spread across entire board
 	for _i in range(6):
 		var color: int = rng.randi_range(0, 5)
-		var y: int = rng.randi_range(board.rows - fill_rows, board.rows - 1)
+		var y: int = rng.randi_range(0, board.rows - 1)
 		var x: int = rng.randi_range(0, board.columns - 2)
 		var length: int = rng.randi_range(2, 4)
-		for dx in range(length):
-			var nx: int = x + dx
-			if nx < board.columns and not board.grid[y][nx]["occupied"]:
-				board.grid[y][nx]["occupied"] = true
-				board.grid[y][nx]["color"] = color
+		# Randomly grow horizontally or vertically
+		var grow_vertical: bool = rng.randf() < 0.4
+		for step in range(length):
+			var nx: int = x + (0 if grow_vertical else step)
+			var ny: int = y + (step if grow_vertical else 0)
+			if nx < board.columns and ny < board.rows and not board.grid[ny][nx]["occupied"]:
+				board.grid[ny][nx]["occupied"] = true
+				board.grid[ny][nx]["color"] = color
 				placed += 1
 
-	# Phase 2: Fill remaining randomly in bottom rows to reach target
+	# Phase 2: Fill remaining randomly across ALL rows to reach target
 	var empty_cells: Array = []
-	for y in range(board.rows - fill_rows, board.rows):
+	for y in range(board.rows):
 		for x in range(board.columns):
 			if not board.grid[y][x]["occupied"]:
 				empty_cells.append(Vector2i(x, y))
@@ -772,6 +774,17 @@ func _prefill_board(board: BoardState) -> void:
 				row_full = false
 				break
 		if row_full:
+			board.grid[y][x]["occupied"] = false
+			board.grid[y][x]["color"] = -1
+			placed -= 1
+			continue
+		# Don't complete any column either
+		var col_full := true
+		for cy in range(board.rows):
+			if not board.grid[cy][x]["occupied"]:
+				col_full = false
+				break
+		if col_full:
 			board.grid[y][x]["occupied"] = false
 			board.grid[y][x]["color"] = -1
 			placed -= 1

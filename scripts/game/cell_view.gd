@@ -450,7 +450,7 @@ func _draw_crack_overlay(rect: Rect2) -> void:
 
 func _draw_special_icon(rect: Rect2) -> void:
 	var center := rect.position + rect.size / 2.0
-	var icon_r := minf(rect.size.x, rect.size.y) * 0.22
+	var icon_r := minf(rect.size.x, rect.size.y) * 0.30
 	match _special_type:
 		GameConstants.SPECIAL_TILE_BOMB:
 			_draw_bomb_icon(center, icon_r)
@@ -461,43 +461,69 @@ func _draw_special_icon(rect: Rect2) -> void:
 
 
 func _draw_bomb_icon(center: Vector2, r: float) -> void:
-	# Explosion star burst
-	var icon_color := Color(1.0, 1.0, 1.0, _special_glow_alpha)
-	for i in 8:
-		var angle: float = float(i) * TAU / 8.0
-		var inner := center + Vector2(cos(angle), sin(angle)) * r * 0.3
-		var outer := center + Vector2(cos(angle), sin(angle)) * r
-		draw_line(inner, outer, icon_color, 1.5)
-	draw_circle(center, r * 0.25, icon_color)
+	# Filled bomb body (warm orange/red tones)
+	var body_color := Color(0.95, 0.45, 0.15, _special_glow_alpha)
+	var highlight_color := Color(1.0, 0.7, 0.3, _special_glow_alpha * 0.6)
+	draw_circle(center, r * 0.65, body_color)
+	# Inner highlight
+	draw_circle(center + Vector2(-r * 0.15, -r * 0.15), r * 0.3, highlight_color)
+	# Short fuse line on top
+	var fuse_base := center + Vector2(0, -r * 0.6)
+	var fuse_tip := center + Vector2(r * 0.2, -r * 1.0)
+	var fuse_color := Color(0.6, 0.4, 0.2, _special_glow_alpha)
+	draw_line(fuse_base, fuse_tip, fuse_color, 1.5)
+	# Spark dot at fuse tip
+	var spark_color := Color(1.0, 1.0, 0.4, _special_glow_alpha)
+	draw_circle(fuse_tip, r * 0.15, spark_color)
 
 
 func _draw_rainbow_icon(center: Vector2, r: float) -> void:
-	# Colored dots in a ring
+	# Subtle white ring connecting dots
+	var ring_color := Color(1.0, 1.0, 1.0, _special_glow_alpha * 0.35)
+	var ring_r := r * 0.65
+	var ring_segments := 24
+	for i in ring_segments:
+		var a0: float = float(i) * TAU / float(ring_segments)
+		var a1: float = float(i + 1) * TAU / float(ring_segments)
+		var p0 := center + Vector2(cos(a0), sin(a0)) * ring_r
+		var p1 := center + Vector2(cos(a1), sin(a1)) * ring_r
+		draw_line(p0, p1, ring_color, 1.0)
+	# Colored dots in a ring (bigger: 0.22)
 	var rainbow := [Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.CYAN, Color.PURPLE]
 	for i in 6:
 		var angle: float = float(i) * TAU / 6.0 - PI / 2.0
-		var dot_pos := center + Vector2(cos(angle), sin(angle)) * r * 0.65
+		var dot_pos := center + Vector2(cos(angle), sin(angle)) * ring_r
 		var dot_color: Color = rainbow[i]
 		dot_color.a = _special_glow_alpha
-		draw_circle(dot_pos, r * 0.18, dot_color)
+		draw_circle(dot_pos, r * 0.22, dot_color)
 	# Center white dot
 	draw_circle(center, r * 0.15, Color(1.0, 1.0, 1.0, _special_glow_alpha * 0.8))
 
 
 func _draw_freeze_icon(center: Vector2, r: float) -> void:
-	# Snowflake — 3 crossing lines
-	var ice_color := Color(0.5, 0.9, 1.0, _special_glow_alpha)
-	for i in 3:
-		var angle: float = float(i) * PI / 3.0
-		var from := center + Vector2(cos(angle), sin(angle)) * r
-		var to := center - Vector2(cos(angle), sin(angle)) * r
-		draw_line(from, to, ice_color, 1.5)
-		# Small branches
-		for side in [-1.0, 1.0]:
-			var mid := center + Vector2(cos(angle), sin(angle)) * r * 0.5
-			var branch_angle: float = angle + side * PI / 4.0
-			var branch_end := mid + Vector2(cos(branch_angle), sin(branch_angle)) * r * 0.3
-			draw_line(mid, branch_end, ice_color, 1.0)
+	# Crystal/diamond shape with translucent ice blue fill + white highlight
+	var ice_fill := Color(0.55, 0.85, 1.0, _special_glow_alpha * 0.5)
+	var ice_edge := Color(0.7, 0.95, 1.0, _special_glow_alpha)
+	var white_highlight := Color(1.0, 1.0, 1.0, _special_glow_alpha * 0.7)
+	# Diamond vertices (top, right, bottom, left)
+	var top := center + Vector2(0, -r)
+	var right := center + Vector2(r * 0.7, 0)
+	var bottom := center + Vector2(0, r * 0.8)
+	var left := center + Vector2(-r * 0.7, 0)
+	# Filled diamond
+	var diamond := PackedVector2Array([top, right, bottom, left])
+	var colors := PackedColorArray([ice_fill, ice_fill, ice_fill, ice_fill])
+	draw_polygon(diamond, colors)
+	# Edge outline
+	draw_line(top, right, ice_edge, 1.5)
+	draw_line(right, bottom, ice_edge, 1.5)
+	draw_line(bottom, left, ice_edge, 1.5)
+	draw_line(left, top, ice_edge, 1.5)
+	# White highlight facet (upper-left triangle)
+	var mid_top := (top + center) * 0.5
+	var highlight_tri := PackedVector2Array([top, mid_top + Vector2(r * 0.15, 0), left + Vector2(0, -r * 0.2)])
+	var highlight_colors := PackedColorArray([white_highlight, white_highlight, white_highlight])
+	draw_polygon(highlight_tri, highlight_colors)
 
 
 func _get_special_glow_color() -> Color:
