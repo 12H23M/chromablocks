@@ -322,6 +322,10 @@ func _build_buttons() -> VBoxContainer:
 	ds.border_color = Color("#C88A10")
 	ds.shadow_color = Color(0.96, 0.62, 0.04, 0.3)
 	ds.shadow_size = 10
+	ds.content_margin_left = 20
+	ds.content_margin_right = 20
+	ds.content_margin_top = 14
+	ds.content_margin_bottom = 14
 	_daily_btn.add_theme_stylebox_override("normal", ds)
 	_daily_btn.add_theme_stylebox_override("hover", ds)
 	var dp := ds.duplicate() as StyleBoxFlat
@@ -343,6 +347,10 @@ func _build_buttons() -> VBoxContainer:
 	cs2.bg_color = Color(1, 1, 1, 0.05)
 	_set_corner_radius(cs2, 16)
 	_set_border(cs2, 1, Color(1, 1, 1, 0.15))
+	cs2.content_margin_left = 20
+	cs2.content_margin_right = 20
+	cs2.content_margin_top = 14
+	cs2.content_margin_bottom = 14
 	_continue_btn.add_theme_stylebox_override("normal", cs2)
 	_continue_btn.add_theme_stylebox_override("hover", cs2)
 	var cp := cs2.duplicate() as StyleBoxFlat
@@ -418,7 +426,7 @@ func _build_bottom_icons() -> HBoxContainer:
 			settings_pressed.emit())
 	hbox.add_child(themes)
 
-	var awards := _make_icon_btn("W", "Awards", Color(0.18, 0.83, 0.75), Color("#70F0E0"), true)
+	var awards := _make_icon_btn("W", "Awards", Color(0.18, 0.83, 0.75), Color("#70F0E0"), false)
 	awards.get_child(0).gui_input.connect(func(e: InputEvent):
 		if e is InputEventMouseButton and e.pressed:
 			SoundManager.play_sfx("button_press"))
