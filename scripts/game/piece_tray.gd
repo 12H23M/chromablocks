@@ -29,34 +29,11 @@ func _ready() -> void:
 
 func _setup_card_style() -> void:
 	_card_style = StyleBoxFlat.new()
-	_card_style.bg_color = Color(AppColors.CARD_SURFACE, 0.7)
-	_card_style.corner_radius_top_left = 20
-	_card_style.corner_radius_top_right = 20
-	_card_style.corner_radius_bottom_left = 20
-	_card_style.corner_radius_bottom_right = 20
-	_card_style.border_width_left = 1
-	_card_style.border_width_top = 1
-	_card_style.border_width_right = 1
-	_card_style.border_width_bottom = 1
-	_card_style.border_color = Color(AppColors.CARD_BORDER, 0.5)
-	_card_style.shadow_color = Color(0, 0, 0, 0.06)
-	_card_style.shadow_size = 4
+	_card_style.bg_color = Color(0, 0, 0, 0)  # Transparent — no box behind tray
 
 func _setup_plate_style() -> void:
 	_plate_style = StyleBoxFlat.new()
-	_plate_style.bg_color = Color(0.118, 0.078, 0.314, 0.6)
-	_plate_style.corner_radius_top_left = PLATE_RADIUS
-	_plate_style.corner_radius_top_right = PLATE_RADIUS
-	_plate_style.corner_radius_bottom_left = PLATE_RADIUS
-	_plate_style.corner_radius_bottom_right = PLATE_RADIUS
-	_plate_style.border_width_left = 1
-	_plate_style.border_width_top = 1
-	_plate_style.border_width_right = 1
-	_plate_style.border_width_bottom = 1
-	_plate_style.border_color = Color(0.471, 0.392, 1.0, 0.12)
-	_plate_style.shadow_color = Color(0, 0, 0, 0.2)
-	_plate_style.shadow_size = 6
-	_plate_style.shadow_offset = Vector2(0, 2)
+	_plate_style.bg_color = Color(0, 0, 0, 0)  # Transparent — no box behind pieces
 
 func set_cell_size(board_cell_size: float) -> void:
 	_tray_cell_size = board_cell_size * 0.7
