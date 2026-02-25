@@ -443,10 +443,13 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	else:
 		# Check if remaining pieces can still be placed after board changed
 		if not _state.board.can_place_any_piece(_state.tray_pieces):
-			# Remaining pieces are all unplayable — rescue by replacing
-			_state.tray_pieces = _piece_gen.rescue_existing_tray(
+			# Remaining pieces are all unplayable — rescue only the stuck ones
+			var rescue_result: Dictionary = _piece_gen.rescue_existing_tray(
 				_state.tray_pieces, _state.board, _state.level)
-			piece_tray.populate_tray(_state.tray_pieces, false)
+			_state.tray_pieces = rescue_result["tray"]
+			var rescued: Array = rescue_result["rescued_indices"]
+			for idx in rescued:
+				piece_tray.replace_piece_at(idx, _state.tray_pieces[idx])
 			hud.update_from_state(_state)
 		_check_game_over()
 
