@@ -76,34 +76,6 @@ func _animate_tray_pieces() -> void:
 			.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK) \
 			.set_delay(0.05 * i)
 
-func replace_piece_at(index: int, new_piece: BlockPiece) -> void:
-	if index < 0 or index >= _active_pieces.size():
-		return
-	var old_node: Control = _active_pieces[index]
-	var old_pos: Vector2 = old_node.position
-
-	# Remove old
-	_pieces_container.remove_child(old_node)
-	old_node.queue_free()
-
-	# Create new at same slot
-	var piece_node := DraggablePieceScene.instantiate()
-	_pieces_container.add_child(piece_node)
-	_pieces_container.move_child(piece_node, index)
-	piece_node.setup(new_piece, index, _tray_cell_size)
-	piece_node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	piece_node.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	piece_node.drag_started.connect(_on_drag_started)
-	piece_node.drag_moved.connect(_on_drag_moved)
-	piece_node.drag_ended.connect(_on_drag_ended)
-	_active_pieces[index] = piece_node
-
-	# Flash animation to signal the swap
-	piece_node.modulate = Color(1.5, 1.5, 0.5, 1.0)  # bright yellow flash
-	var tween := create_tween()
-	tween.tween_property(piece_node, "modulate", Color.WHITE, 0.4) \
-		.set_ease(Tween.EASE_OUT)
-
 func remove_piece_at(index: int) -> void:
 	if index >= 0 and index < _active_pieces.size():
 		var piece: Control = _active_pieces[index]
