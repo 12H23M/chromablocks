@@ -250,8 +250,22 @@ func _on_drag_ended(piece_node: Control, global_pos: Vector2) -> void:
 	_last_grid_pos = Vector2i(-1, -1)
 
 func _piece_to_grid(piece_node: Control) -> Vector2i:
-	var center := piece_node.global_position + piece_node.size / 2.0
-	var local_center := board_renderer.get_global_transform().affine_inverse() * center
+	# The piece node's drawn blocks are centered within its Control rect.
+	# We need the top-left corner of the drawn piece area in global coords.
+	var piece_pixel_w: float = _dragging_piece.width * piece_node._cell_size
+	var piece_pixel_h: float = _dragging_piece.height * piece_node._cell_size
+	var draw_offset_x: float = (piece_node.size.x - piece_pixel_w) / 2.0
+	var draw_offset_y: float = (piece_node.size.y - piece_pixel_h) / 2.0
+
+	# Account for scale: global_position is the scaled node's top-left,
+	# and drawn content is offset by draw_offset * scale
+	var current_scale: float = piece_node.scale.x
+	var piece_center_global := piece_node.global_position + Vector2(
+		draw_offset_x * current_scale + piece_pixel_w * current_scale / 2.0,
+		draw_offset_y * current_scale + piece_pixel_h * current_scale / 2.0
+	)
+
+	var local_center := board_renderer.get_global_transform().affine_inverse() * piece_center_global
 	var cell_size: float = board_renderer.get_cell_size()
 	var gx := roundi(local_center.x / cell_size - _dragging_piece.width / 2.0)
 	var gy := roundi(local_center.y / cell_size - _dragging_piece.height / 2.0)
