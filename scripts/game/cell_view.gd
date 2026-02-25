@@ -44,6 +44,10 @@ func set_empty() -> void:
 	queue_redraw()
 
 func set_filled(block_color: int, age: int = 0, special_type: int = -1) -> void:
+	# Kill any running clear animation that could overwrite this state
+	if _clear_tween and _clear_tween.is_valid():
+		_clear_tween.kill()
+		_clear_tween = null
 	_occupied = true
 	_color = block_color
 	_age = age
@@ -189,14 +193,15 @@ func play_clear_flash(duration: float, delay: float = 0.0, cached_color: Color =
 	# Phase 4: Ensure fully reset — don't call set_empty (it kills tween mid-callback)
 	tween.tween_callback(func():
 		_clear_tween = null
-		_occupied = false
-		_color = -1
-		_glow_color = Color.TRANSPARENT
-		_bg_color = AppColors.EMPTY_CELL
-		_highlight_color = Color.TRANSPARENT
-		_border_color = AppColors.EMPTY_BORDER
-		_scale_factor = 1.0
-		queue_redraw()
+		# Only reset if cell wasn't re-filled during animation
+		if not _occupied:
+			_color = -1
+			_glow_color = Color.TRANSPARENT
+			_bg_color = AppColors.EMPTY_CELL
+			_highlight_color = Color.TRANSPARENT
+			_border_color = AppColors.EMPTY_BORDER
+			_scale_factor = 1.0
+			queue_redraw()
 	)
 
 func play_color_match_flash(duration: float, delay: float = 0.0) -> void:
@@ -232,14 +237,15 @@ func play_color_match_flash(duration: float, delay: float = 0.0) -> void:
 	tween.tween_method(_tween_to_empty, 1.0, 0.0, duration - 0.05)
 	tween.tween_callback(func():
 		_clear_tween = null
-		_occupied = false
-		_color = -1
-		_glow_color = Color.TRANSPARENT
-		_bg_color = AppColors.EMPTY_CELL
-		_highlight_color = Color.TRANSPARENT
-		_border_color = AppColors.EMPTY_BORDER
-		_scale_factor = 1.0
-		queue_redraw()
+		# Only reset if cell wasn't re-filled during animation
+		if not _occupied:
+			_color = -1
+			_glow_color = Color.TRANSPARENT
+			_bg_color = AppColors.EMPTY_CELL
+			_highlight_color = Color.TRANSPARENT
+			_border_color = AppColors.EMPTY_BORDER
+			_scale_factor = 1.0
+			queue_redraw()
 	)
 
 func _tween_clear_out(t: float) -> void:
