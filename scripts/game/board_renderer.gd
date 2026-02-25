@@ -230,9 +230,12 @@ func play_line_clear_effect(rows: Array, cols: Array) -> void:
 	_emit_particles_and_shockwave(particle_positions, particle_colors, intensity, _cell_size * 4.0)
 
 	# Cell flash animations — pass cached color since cells are already empty
+	# SKIP cells that were re-filled (e.g. special tile drops) after clear
 	var delay := 0.0
 	for row in rows:
 		for x in GameConstants.BOARD_COLUMNS:
+			if _cells[row][x]._occupied:
+				continue  # Don't flash cells that got a special tile drop
 			var key := Vector2i(x, row)
 			var cached: Color = _cached_cell_colors.get(key, Color.WHITE)
 			_cells[row][x].play_clear_flash(
@@ -241,6 +244,8 @@ func play_line_clear_effect(rows: Array, cols: Array) -> void:
 	for col in cols:
 		delay = 0.0
 		for y in GameConstants.BOARD_ROWS:
+			if _cells[y][col]._occupied:
+				continue  # Don't flash cells that got a special tile drop
 			var key := Vector2i(col, y)
 			var cached: Color = _cached_cell_colors.get(key, Color.WHITE)
 			_cells[y][col].play_clear_flash(
@@ -255,6 +260,8 @@ func play_color_match_effect(groups: Array) -> void:
 		for cell_pos in group:
 			if cell_pos.x >= 0 and cell_pos.x < GameConstants.BOARD_COLUMNS \
 			   and cell_pos.y >= 0 and cell_pos.y < GameConstants.BOARD_ROWS:
+				if _cells[cell_pos.y][cell_pos.x]._occupied:
+					continue  # Don't flash cells re-filled after clear
 				_cells[cell_pos.y][cell_pos.x].play_color_match_flash(
 					GameConstants.COLOR_MATCH_ANIM_DURATION, delay)
 				delay += 0.02
