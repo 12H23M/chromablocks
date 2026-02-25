@@ -441,6 +441,13 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	if _state.tray_pieces.is_empty():
 		_refill_tray()
 	else:
+		# Check if remaining pieces can still be placed after board changed
+		if not _state.board.can_place_any_piece(_state.tray_pieces):
+			# Remaining pieces are all unplayable — rescue by replacing
+			_state.tray_pieces = _piece_gen.rescue_existing_tray(
+				_state.tray_pieces, _state.board, _state.level)
+			piece_tray.populate_tray(_state.tray_pieces, false)
+			hud.update_from_state(_state)
 		_check_game_over()
 
 	state_changed.emit(_state)

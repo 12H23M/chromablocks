@@ -375,6 +375,11 @@ func _rescue_tray(tray: Array, board: BoardState, level: int) -> Array:
 	return tray  # Board is 100% full — legitimate game over
 
 
+func rescue_existing_tray(tray: Array, board: BoardState, level: int) -> Array:
+	"""Public wrapper: rescue remaining tray pieces that became unplaceable mid-tray."""
+	return _rescue_tray(tray, board, level)
+
+
 func _generate_relief_tray(board: BoardState, level: int) -> Array:
 	var tray: Array = []
 	var color_count: int = _get_color_count(level)
