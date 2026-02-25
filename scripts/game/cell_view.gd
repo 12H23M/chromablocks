@@ -50,6 +50,7 @@ func set_filled(block_color: int, age: int = 0, special_type: int = -1) -> void:
 		_clear_tween = null
 	_occupied = true
 	_color = block_color
+	_scale_factor = 1.0
 	_age = age
 	_special_type = special_type
 	var base := AppColors.get_block_color(block_color)

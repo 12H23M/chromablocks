@@ -100,24 +100,19 @@ func show_result(state: GameState) -> void:
 	blocks_value.text = "0"
 	combos_value.text = "0"
 
-	# Hide stats initially for stagger
+	# Hide stats initially for stagger (alpha only — no position changes in VBox!)
 	var lines_box: VBoxContainer = $Content/ScoreCard/CardVBox/Stats/LinesBox
 	var blocks_box: VBoxContainer = $Content/ScoreCard/CardVBox/Stats/BlocksBox
 	var combos_box: VBoxContainer = $Content/ScoreCard/CardVBox/Stats/CombosBox
 	lines_box.modulate.a = 0.0
 	blocks_box.modulate.a = 0.0
 	combos_box.modulate.a = 0.0
-	lines_box.position.y = 15.0
-	blocks_box.position.y = 15.0
-	combos_box.position.y = 15.0
 
-	# Hide buttons initially
+	# Hide buttons initially (alpha only — position in VBox causes overlap!)
 	var play_btn: Button = $Content/ButtonSection/PlayAgainButton
 	var home_btn: Button = $Content/ButtonSection/HomeButton
 	play_btn.modulate.a = 0.0
 	home_btn.modulate.a = 0.0
-	play_btn.position.y = 10.0
-	home_btn.position.y = 10.0
 
 	# Show/hide ad buttons
 	var show_ads := not _used_ad_this_game and AdManager.is_rewarded_available()
@@ -194,9 +189,8 @@ func show_result(state: GameState) -> void:
 		var st := create_tween()
 		st.set_speed_scale(speed_scale)
 		st.tween_interval(delay)
-		st.tween_property(box, "modulate:a", 1.0, 0.2)
-		st.parallel().tween_property(box, "position:y", 0.0, 0.2) \
-			.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+		st.tween_property(box, "modulate:a", 1.0, 0.25) \
+			.set_ease(Tween.EASE_OUT)
 
 		if val > 0:
 			var ct := create_tween()
@@ -205,17 +199,15 @@ func show_result(state: GameState) -> void:
 				lbl.text = str(v)
 			, 0, val, 0.4).set_ease(Tween.EASE_OUT).set_delay(delay + 0.1)
 
-	# --- Button stagger ---
+	# --- Button stagger (alpha only) ---
 	var btn_tween := create_tween()
 	btn_tween.set_speed_scale(speed_scale)
 	btn_tween.tween_interval(1.1)
-	btn_tween.tween_property(play_btn, "modulate:a", 1.0, 0.2)
-	btn_tween.parallel().tween_property(play_btn, "position:y", 0.0, 0.25) \
-		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
-	btn_tween.tween_interval(0.1)
-	btn_tween.tween_property(home_btn, "modulate:a", 1.0, 0.2)
-	btn_tween.parallel().tween_property(home_btn, "position:y", 0.0, 0.25) \
-		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	btn_tween.tween_property(play_btn, "modulate:a", 1.0, 0.25) \
+		.set_ease(Tween.EASE_OUT)
+	btn_tween.tween_interval(0.15)
+	btn_tween.tween_property(home_btn, "modulate:a", 1.0, 0.25) \
+		.set_ease(Tween.EASE_OUT)
 
 
 func _start_title_glow(speed_scale: float) -> void:
