@@ -155,6 +155,8 @@ const COLOR_MERCY_MIN_GROUP := 4        # min cluster size (chain triggers at 5)
 
 var _rng := RandomNumberGenerator.new()
 var _previous_tray_types: Array = []
+var _tight_tray_streak: int = 0
+const MAX_TIGHT_STREAK: int = 3
 
 
 func _init() -> void:
@@ -167,6 +169,7 @@ func _init() -> void:
 
 func reset() -> void:
 	_previous_tray_types = []
+	_tight_tray_streak = 0
 	_rng.randomize()
 
 
@@ -177,6 +180,11 @@ func set_seed(seed_value: int) -> void:
 func generate_tray(level: int, board: BoardState) -> Array:
 	var excluded := _get_excluded_for_level(level)
 	var fill := _board_fill_ratio(board)
+
+	# Anti-frustration: relief tray after consecutive tight trays
+	if _tight_tray_streak >= MAX_TIGHT_STREAK and fill > 0.5:
+		_tight_tray_streak = 0
+		return _generate_relief_tray(board, level)
 
 	# ── DDA: Pick template set based on board density ──
 	var templates: Array
@@ -218,6 +226,21 @@ func generate_tray(level: int, board: BoardState) -> Array:
 			first_color = piece.color
 
 	_previous_tray_types = used_types.duplicate()
+
+	# ── Playability guarantee ──
+	if not board.can_place_any_piece(tray):
+		tray = _rescue_tray(tray, board, level)
+
+	# Anti-frustration: track tight trays
+	var placeable := 0
+	for p in tray:
+		if _can_place_type_on_board(p.type, board):
+			placeable += 1
+	if placeable <= 1:
+		_tight_tray_streak += 1
+	else:
+		_tight_tray_streak = maxi(0, _tight_tray_streak - 1)
+
 	return tray
 
 
@@ -303,6 +326,93 @@ func _find_near_chain_color(board: BoardState) -> int:
 	# Return the color of that group
 	var pos: Vector2i = best_group[0]
 	return board.grid[pos.y][pos.x]["color"]
+
+
+# ═══════════════════════════════════════════
+# Playability rescue system
+# ═══════════════════════════════════════════
+
+func _rescue_tray(tray: Array, board: BoardState, level: int) -> Array:
+	# Level 1: DOWNSIZE — replace largest unplaceable piece with smaller category
+	var downsize_map: Dictionary = {
+		SizeCat.HUGE: SizeCat.LARGE,
+		SizeCat.LARGE: SizeCat.MEDIUM,
+		SizeCat.MEDIUM: SizeCat.SMALL,
+		SizeCat.SMALL: SizeCat.TINY,
+	}
+
+	for idx in tray.size():
+		var piece: BlockPiece = tray[idx]
+		var cat: int = _get_piece_category(piece.type)
+		if cat in downsize_map:
+			var smaller_cat: int = downsize_map[cat]
+			var pool: Array = CATEGORY_PIECES[smaller_cat].duplicate()
+			pool.shuffle()
+			for pt in pool:
+				if _can_place_type_on_board(pt, board):
+					var shape: Array = PieceDefinitions.SHAPES[pt]
+					var color_count: int = _get_color_count(level)
+					tray[idx] = BlockPiece.new(pt, _rng.randi_range(0, color_count - 1), shape)
+					return tray
+
+	# Level 2: FIT_SCAN — find ANY placeable piece from small categories
+	for cat in [SizeCat.TINY, SizeCat.SMALL, SizeCat.MEDIUM]:
+		var pool: Array = CATEGORY_PIECES[cat].duplicate()
+		pool.shuffle()
+		for pt in pool:
+			if _can_place_type_on_board(pt, board):
+				var shape: Array = PieceDefinitions.SHAPES[pt]
+				var color_count: int = _get_color_count(level)
+				tray[0] = BlockPiece.new(pt, _rng.randi_range(0, color_count - 1), shape)
+				return tray
+
+	# Level 3: SINGLE_FORCE — 1x1 fits if any empty cell exists
+	if _has_any_empty_cell(board):
+		var shape: Array = PieceDefinitions.SHAPES[Enums.PieceType.SINGLE]
+		var color_count: int = _get_color_count(level)
+		tray[0] = BlockPiece.new(Enums.PieceType.SINGLE, _rng.randi_range(0, color_count - 1), shape)
+
+	return tray  # Board is 100% full — legitimate game over
+
+
+func _generate_relief_tray(board: BoardState, level: int) -> Array:
+	var tray: Array = []
+	var color_count: int = _get_color_count(level)
+	for cat in [SizeCat.TINY, SizeCat.SMALL, SizeCat.SMALL]:
+		var pool: Array = CATEGORY_PIECES[cat].duplicate()
+		pool.shuffle()
+		var placed := false
+		for pt in pool:
+			if _can_place_type_on_board(pt, board):
+				var shape: Array = PieceDefinitions.SHAPES[pt]
+				tray.append(BlockPiece.new(pt, _rng.randi_range(0, color_count - 1), shape))
+				placed = true
+				break
+		if not placed:
+			var fallback_pt: int = pool[0]
+			var shape: Array = PieceDefinitions.SHAPES[fallback_pt]
+			tray.append(BlockPiece.new(fallback_pt, _rng.randi_range(0, color_count - 1), shape))
+	_previous_tray_types = []
+	for p in tray:
+		_previous_tray_types.append(p.type)
+	return tray
+
+
+func _get_piece_category(piece_type: int) -> int:
+	for cat in CATEGORY_PIECES:
+		var types: Array = CATEGORY_PIECES[cat]
+		if piece_type in types:
+			return cat
+	return SizeCat.MEDIUM
+
+
+func _has_any_empty_cell(board: BoardState) -> bool:
+	for y in board.rows:
+		for x in board.columns:
+			var cell: Dictionary = board.grid[y][x]
+			if not cell["occupied"]:
+				return true
+	return false
 
 
 # ═══════════════════════════════════════════
