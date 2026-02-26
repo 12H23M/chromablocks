@@ -47,9 +47,8 @@ var _gem_overlay: Control = null
 var _gems_enabled := false  # Hidden by default, shown when game starts
 
 func enable_gems() -> void:
-	_gems_enabled = true
-	if _gem_overlay:
-		_gem_overlay.visible = true
+	# Gems disabled for visual redesign — no-op
+	return
 
 func disable_gems() -> void:
 	_gems_enabled = false
@@ -57,15 +56,16 @@ func disable_gems() -> void:
 		_gem_overlay.visible = false
 
 func _setup_gem_overlay() -> void:
+	_gems_enabled = false  # Gems permanently disabled for visual redesign
 	if _gem_overlay:
 		_gem_overlay.queue_free()
 	_gem_overlay = Control.new()
 	_gem_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_gem_overlay.size = size
 	_gem_overlay.z_index = 10
-	_gem_overlay.visible = _gems_enabled
+	_gem_overlay.visible = false
 	add_child(_gem_overlay)
-	_gem_overlay.draw.connect(_draw_gems_on_overlay)
+	# _gem_overlay.draw.connect(_draw_gems_on_overlay)  # Gem drawing disabled
 
 func _draw_gems_on_overlay() -> void:
 	var gem_size := 5.0
@@ -522,18 +522,20 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	# Outer frame glow — 3-layer expanding glow with decreasing alpha
-	for i in range(3, 0, -1):
-		var expand := float(i) * 4.0
-		var alpha := 0.15 * (1.0 - float(i) / 4.0)
-		var glow_rect := Rect2(Vector2(-expand, -expand), size + Vector2(expand * 2, expand * 2))
-		var glow_style := StyleBoxFlat.new()
-		glow_style.bg_color = Color(0.39, 0.27, 1.0, alpha)
-		glow_style.corner_radius_top_left = CORNER_RADIUS + int(expand)
-		glow_style.corner_radius_top_right = CORNER_RADIUS + int(expand)
-		glow_style.corner_radius_bottom_left = CORNER_RADIUS + int(expand)
-		glow_style.corner_radius_bottom_right = CORNER_RADIUS + int(expand)
-		draw_style_box(glow_style, glow_rect)
+	# Single subtle outer border
+	var border_rect := Rect2(Vector2(-2, -2), size + Vector2(4, 4))
+	var border_style := StyleBoxFlat.new()
+	border_style.bg_color = Color.TRANSPARENT
+	border_style.border_width_left = 2
+	border_style.border_width_top = 2
+	border_style.border_width_right = 2
+	border_style.border_width_bottom = 2
+	border_style.border_color = Color("3A3A6E")
+	border_style.corner_radius_top_left = CORNER_RADIUS + 2
+	border_style.corner_radius_top_right = CORNER_RADIUS + 2
+	border_style.corner_radius_bottom_left = CORNER_RADIUS + 2
+	border_style.corner_radius_bottom_right = CORNER_RADIUS + 2
+	draw_style_box(border_style, border_rect)
 
 	# Draw dark rounded background with border
 	if _bg_style:

@@ -1,29 +1,29 @@
 extends Node
 
 # 기본 블록 색상 (default 테마 — Bubble Pop)
-var CORAL := Color("FF7E8E")
-var CORAL_LIGHT := Color("FFB0BA")
-var CORAL_GLOW := Color(Color("FF7E8E"), 0.40)
+var CORAL := Color("FF6B9D")
+var CORAL_LIGHT := Color("FFA8C4")
+var CORAL_GLOW := Color(Color("FF6B9D"), 0.40)
 
-var AMBER := Color("FFAA42")
-var AMBER_LIGHT := Color("FFCF8A")
-var AMBER_GLOW := Color(Color("FFAA42"), 0.40)
+var AMBER := Color("FF8C42")
+var AMBER_LIGHT := Color("FFC08A")
+var AMBER_GLOW := Color(Color("FF8C42"), 0.40)
 
-var LEMON := Color("FFD536")
-var LEMON_LIGHT := Color("FFE87A")
-var LEMON_GLOW := Color(Color("FFD536"), 0.40)
+var LEMON := Color("FFD93D")
+var LEMON_LIGHT := Color("FFEC82")
+var LEMON_GLOW := Color(Color("FFD93D"), 0.40)
 
-var MINT := Color("5EC97B")
-var MINT_LIGHT := Color("9DE8A8")
-var MINT_GLOW := Color(Color("5EC97B"), 0.40)
+var MINT := Color("6BCB77")
+var MINT_LIGHT := Color("A3E8A8")
+var MINT_GLOW := Color(Color("6BCB77"), 0.40)
 
-var SKY := Color("42B9F5")
-var SKY_LIGHT := Color("8DD6FA")
-var SKY_GLOW := Color(Color("42B9F5"), 0.40)
+var SKY := Color("4D96FF")
+var SKY_LIGHT := Color("8DBFFF")
+var SKY_GLOW := Color(Color("4D96FF"), 0.40)
 
-var LAVENDER := Color("A78BDF")
-var LAVENDER_LIGHT := Color("CFBEF0")
-var LAVENDER_GLOW := Color(Color("A78BDF"), 0.40)
+var LAVENDER := Color("9B72CF")
+var LAVENDER_LIGHT := Color("C4A8E8")
+var LAVENDER_GLOW := Color(Color("9B72CF"), 0.40)
 
 var SPECIAL := Color("FFD700")
 
@@ -48,11 +48,11 @@ var HIGHLIGHT_VALID := Color(Color("6BCB77"), 0.30)
 var HIGHLIGHT_INVALID := Color(Color("FF8A8A"), 0.30)
 
 # Empty cell (dark well)
-var EMPTY_CELL := Color(1.0, 1.0, 1.0, 0.08)
-var EMPTY_BORDER := Color(1.0, 1.0, 1.0, 0.06)
+var EMPTY_CELL := Color(1.0, 1.0, 1.0, 0.12)
+var EMPTY_BORDER := Color(1.0, 1.0, 1.0, 0.08)
 
 # Board
-var BOARD_BG := Color("221A78")
+var BOARD_BG := Color("1C1660")
 var BOARD_BORDER := Color(0.51, 0.43, 1.0, 0.3)
 
 # 테마 변경 시그널 — UI 갱신에 사용

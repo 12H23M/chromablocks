@@ -63,16 +63,11 @@ static func draw_bubble_block(canvas: CanvasItem, rect: Rect2, base_color: Color
 		Vector2(rect.size.x, bottom_h))
 	draw_rounded_rect(canvas, bottom_rect, dark_color, true, 1.0, 0.3)
 
-	# Top shine
+	# Top shine — subtle horizontal band (top 30%, full width minus 3px padding)
 	var shine_rect := Rect2(
-		rect.position + Vector2(rect.size.x * 0.15, rect.size.y * 0.08),
-		Vector2(rect.size.x * 0.7, rect.size.y * 0.35))
-	draw_rounded_rect(canvas, shine_rect, Color(1.0, 1.0, 1.0, 0.30), true, 1.0, 0.5)
-
-	# Specular dot
-	var spec_center := rect.position + Vector2(rect.size.x * 0.28, rect.size.y * 0.25)
-	var spec_radius := Vector2(rect.size.x * 0.08, rect.size.y * 0.08)
-	draw_ellipse(canvas, spec_center, spec_radius, Color(1.0, 1.0, 1.0, 0.6))
+		rect.position + Vector2(3.0, 0.0),
+		Vector2(rect.size.x - 6.0, rect.size.y * 0.30))
+	draw_rounded_rect(canvas, shine_rect, Color(1.0, 1.0, 1.0, 0.20), true, 1.0, 0.3)
 
 	# Rim light
-	draw_rounded_rect(canvas, rect, Color(1.0, 1.0, 1.0, 0.08), false)
+	draw_rounded_rect(canvas, rect, Color(1.0, 1.0, 1.0, 0.05), false)
