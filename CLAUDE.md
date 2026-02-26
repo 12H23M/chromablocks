@@ -38,6 +38,15 @@ Never create `.gd.uid` files manually. Run `Godot --headless --import` to regene
 - DO NOT modify: DrawUtils, SaveManager, SoundManager, SfxGenerator, MusicManager
 - DO NOT modify existing piece SHAPES in PieceDefinitions (add new ones only)
 
+## Android Deploy (scripts/deploy.sh)
+- ADB wireless debugging paired to Leo's Galaxy S24+
+- Device IP: 192.168.50.84 (local WiFi) / 100.70.88.124 (Tailscale)
+- `./scripts/deploy.sh` — full pipeline: build → install → launch
+- `./scripts/deploy.sh --skip-build` — install existing APK only
+- `./scripts/deploy.sh --screenshot` — capture device screen after launch
+- Godot headless export: `/Applications/Godot.app/Contents/MacOS/Godot --headless --export-debug "Android"`
+- ADB path: `~/Library/Android/sdk/platform-tools/adb`
+
 ## DDA System (piece_generator.gd)
 - fill < 30% → rush mode (big pieces 80%) — fast fill for line clear excitement
 - fill 55-70% → mild mercy (placeable pieces 50%)
