@@ -375,81 +375,43 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	AnalyticsManager.piece_placed(Enums.PieceType.keys()[piece.type], gx, gy)
 
 	# 8. Effects AFTER state update — animations start on already-empty cells
+	# Analytics and state flags fire immediately (no visual delay needed)
 	var has_clear: bool = clear_result["has_clears"]
-
-	if not has_clear:
-		board_renderer.play_place_bounce()
-
 	if has_clear:
 		var lines: int = clear_result["lines_cleared"]
-		if lines >= 3:
-			_apply_hit_stop(0.05)
-		else:
-			_apply_hit_stop(0.03)
-		board_renderer.play_line_clear_effect(clear_result["rows"], clear_result["cols"])
-		SoundManager.play_sfx("line_clear")
-		HapticManager.line_clear_burst(lines)
-		if lines >= 2:
-			_spawn_multi_clear_popup(lines)
 		AnalyticsManager.line_clear(lines, new_combo)
-		if lines >= 3:
-			board_renderer.play_screen_shake(9.0, 0.20)
-		elif lines >= 2:
-			board_renderer.play_screen_shake(6.0, 0.15)
-		else:
-			board_renderer.play_screen_shake(4.0, 0.10)
-
 	if color_result["has_matches"]:
-		_apply_hit_stop(0.03)
-		board_renderer.play_color_match_effect(color_result["groups"])
-		SoundManager.play_sfx("color_match")
-		HapticManager.color_match()
 		_color_match_count += color_result["groups"].size()
 		var total_cells := 0
 		for g in color_result["groups"]:
 			total_cells += g.size()
 		AnalyticsManager.color_match(color_result["groups"].size(), total_cells)
-
-	if new_combo >= 1:
-		if new_combo >= 2:
-			SoundManager.play_combo_sfx(new_combo)
-		HapticManager.combo(new_combo)
-		_spawn_combo_popup(new_combo)
-		if new_combo >= 3:
-			_apply_hit_stop(0.05)
-
-	if score_result["total"] > 0:
-		_spawn_score_popup(score_result["total"], gx, gy)
-
-	# Chroma Blast effects
-	if blast_executed["cells_removed"] > 0:
-		_apply_hit_stop(0.09)
-		_spawn_blast_popup(blast_result["blast_colors"][0])
-		SoundManager.play_blast_sound()
-		HapticManager.chroma_blast()
-		board_renderer.play_screen_shake(12.0, 0.30)
-
-	# Chroma Chain effects
-	if chain_result["cascades"] > 0:
-		_apply_hit_stop(0.05)
-		_spawn_chain_popup(chain_result["cascades"])
-		SoundManager.play_chain_sound(chain_result["cascades"])
-		HapticManager.chroma_chain(chain_result["cascades"])
-		var shake_strength: float = 5.0 + float(chain_result["cascades"]) * 3.0
-		board_renderer.play_screen_shake(shake_strength, 0.15 + chain_result["cascades"] * 0.05)
-
 	if clear_result.get("is_perfect", false):
-		_apply_hit_stop(0.09)
-		_spawn_score_popup(GameConstants.PERFECT_CLEAR_BONUS, 5, 5)
-		SoundManager.play_sfx("perfect_clear")
-		board_renderer.play_screen_shake(10.0, 0.25)
-		HapticManager.perfect_clear()
 		_had_perfect_clear = true
 
-	if leveled_up:
-		SoundManager.play_sfx("level_up")
-		HapticManager.level_up()
-		board_renderer.play_level_up_effect()
+	# Build effects data and play sequenced visual/audio effects
+	var blast_color: int = -1
+	if not blast_result["blast_colors"].is_empty():
+		var bc_arr: Array = blast_result["blast_colors"]
+		blast_color = bc_arr[0]
+	var effects_data: Dictionary = {
+		"has_clear": has_clear,
+		"lines_cleared": clear_result["lines_cleared"],
+		"clear_rows": clear_result.get("rows", []),
+		"clear_cols": clear_result.get("cols", []),
+		"has_color_match": color_result["has_matches"],
+		"color_groups": color_result["groups"],
+		"combo": new_combo,
+		"chain_cascades": chain_result["cascades"],
+		"blast_cells": blast_executed["cells_removed"],
+		"blast_color": blast_color,
+		"score": score_result["total"],
+		"gx": gx,
+		"gy": gy,
+		"is_perfect": clear_result.get("is_perfect", false),
+		"leveled_up": leveled_up,
+	}
+	_play_effects_sequence(effects_data)
 
 	# 10. Tray refill or game over
 	if _state.tray_pieces.is_empty():
@@ -461,6 +423,108 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 		_check_game_over()
 
 	state_changed.emit(_state)
+
+## Plays visual/audio effects in a staggered sequence so the player can
+## see each event individually instead of everything firing at once.
+## All timers use ignore_time_scale=true so hit-stops don't freeze the sequence.
+func _play_effects_sequence(ed: Dictionary) -> void:
+	var delay: float = 0.0
+
+	# Phase 1 (immediate): Place bounce if no line clear
+	if not ed["has_clear"]:
+		board_renderer.play_place_bounce()
+
+	# Phase 2 (100ms): Line clear + color match
+	if ed["has_clear"] or ed["has_color_match"]:
+		get_tree().create_timer(0.1, true, false, true).timeout.connect(func():
+			if ed["has_clear"]:
+				var lines: int = ed["lines_cleared"]
+				if lines >= 3:
+					_apply_hit_stop(0.05)
+				else:
+					_apply_hit_stop(0.03)
+				board_renderer.play_line_clear_effect(ed["clear_rows"], ed["clear_cols"])
+				SoundManager.play_sfx("line_clear")
+				HapticManager.line_clear_burst(lines)
+				if lines >= 2:
+					_spawn_multi_clear_popup(lines)
+				if lines >= 3:
+					board_renderer.play_screen_shake(9.0, 0.20)
+				elif lines >= 2:
+					board_renderer.play_screen_shake(6.0, 0.15)
+				else:
+					board_renderer.play_screen_shake(4.0, 0.10)
+			if ed["has_color_match"]:
+				_apply_hit_stop(0.03)
+				board_renderer.play_color_match_effect(ed["color_groups"])
+				SoundManager.play_sfx("color_match")
+				HapticManager.color_match()
+		)
+		if ed["has_clear"]:
+			delay = 0.35
+		else:
+			delay = 0.20
+
+	# Phase 3: Combo
+	if ed["combo"] >= 1:
+		get_tree().create_timer(delay + 0.05, true, false, true).timeout.connect(func():
+			var combo: int = ed["combo"]
+			if combo >= 2:
+				SoundManager.play_combo_sfx(combo)
+			HapticManager.combo(combo)
+			_spawn_combo_popup(combo)
+			if combo >= 3:
+				_apply_hit_stop(0.05)
+		)
+		delay += 0.25
+
+	# Phase 4: Chroma Chain
+	if ed["chain_cascades"] > 0:
+		get_tree().create_timer(delay + 0.05, true, false, true).timeout.connect(func():
+			var cascades: int = ed["chain_cascades"]
+			_apply_hit_stop(0.05)
+			_spawn_chain_popup(cascades)
+			SoundManager.play_chain_sound(cascades)
+			HapticManager.chroma_chain(cascades)
+			var shake_str: float = 5.0 + float(cascades) * 3.0
+			board_renderer.play_screen_shake(shake_str, 0.15 + cascades * 0.05)
+		)
+		delay += 0.25
+
+	# Phase 5: Chroma Blast
+	if ed["blast_cells"] > 0:
+		get_tree().create_timer(delay + 0.05, true, false, true).timeout.connect(func():
+			_apply_hit_stop(0.09)
+			_spawn_blast_popup(ed["blast_color"])
+			SoundManager.play_blast_sound()
+			HapticManager.chroma_blast()
+			board_renderer.play_screen_shake(12.0, 0.30)
+		)
+		delay += 0.3
+
+	# Phase 6: Score popup (after all effects)
+	if ed["score"] > 0:
+		get_tree().create_timer(delay + 0.1, true, false, true).timeout.connect(func():
+			_spawn_score_popup(ed["score"], ed["gx"], ed["gy"])
+		)
+
+	# Perfect clear
+	if ed["is_perfect"]:
+		get_tree().create_timer(delay + 0.15, true, false, true).timeout.connect(func():
+			_apply_hit_stop(0.09)
+			_spawn_score_popup(GameConstants.PERFECT_CLEAR_BONUS, 5, 5)
+			SoundManager.play_sfx("perfect_clear")
+			board_renderer.play_screen_shake(10.0, 0.25)
+			HapticManager.perfect_clear()
+		)
+
+	# Level up
+	if ed["leveled_up"]:
+		get_tree().create_timer(delay + 0.2, true, false, true).timeout.connect(func():
+			SoundManager.play_sfx("level_up")
+			HapticManager.level_up()
+			board_renderer.play_level_up_effect()
+		)
 
 func _on_cell_tapped(gx: int, gy: int) -> void:
 	if _state.status != Enums.GameStatus.PLAYING:
