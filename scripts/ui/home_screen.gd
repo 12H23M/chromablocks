@@ -96,26 +96,30 @@ func _build_ui() -> void:
 	# 1. Logo
 	_logo_section = _build_logo()
 	main.add_child(_logo_section)
-	_add_spacer(main, 20)
+	_add_spacer(main, 16)
 
 	# 2. Hero score + stats
 	_hero_section = _build_hero()
 	main.add_child(_hero_section)
-	_add_spacer(main, 24)
+	_add_spacer(main, 20)
 
 	# 3. Buttons
 	_btn_section = _build_buttons()
 	main.add_child(_btn_section)
 
-	# Flex
+	# Flex — limited max so bottom doesn't float too far
 	var flex := Control.new()
 	flex.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	flex.custom_minimum_size = Vector2(0, 16)
 	main.add_child(flex)
 
 	# 4. Bottom icons
 	_bottom_section = _build_bottom()
 	main.add_child(_bottom_section)
-	_add_spacer(main, 28)
+	_add_spacer(main, 20)
+
+	# Floating decorative blocks
+	_create_deco_blocks()
 
 
 func _add_spacer(p: Control, h: float) -> void:
@@ -340,15 +344,15 @@ func _build_buttons() -> VBoxContainer:
 	_continue_btn.name = "ContinueButton"
 	if _fredoka_bold:
 		_continue_btn.add_theme_font_override("font", _fredoka_bold)
-	_continue_btn.add_theme_font_size_override("font_size", 14)
-	_continue_btn.add_theme_color_override("font_color", Color("#C8B8FF"))
+	_continue_btn.add_theme_font_size_override("font_size", 20)
+	_continue_btn.add_theme_color_override("font_color", Color("#C4B5FD"))
 	_continue_btn.custom_minimum_size = Vector2(0, 48)
 	_continue_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_continue_btn.size_flags_stretch_ratio = 1.0
 	var cs2 := StyleBoxFlat.new()
-	cs2.bg_color = Color(1, 1, 1, 0.05)
-	_r(cs2, 14)
-	_b(cs2, 1, Color(1, 1, 1, 0.12))
+	cs2.bg_color = Color("#2A2A5C")
+	_r(cs2, 28)
+	_b(cs2, 2, Color("#7C3AED"))
 	cs2.content_margin_left = 12
 	cs2.content_margin_right = 12
 	cs2.content_margin_top = 10
@@ -356,7 +360,7 @@ func _build_buttons() -> VBoxContainer:
 	_continue_btn.add_theme_stylebox_override("normal", cs2)
 	_continue_btn.add_theme_stylebox_override("hover", cs2)
 	var cp := cs2.duplicate() as StyleBoxFlat
-	cp.bg_color = Color(1, 1, 1, 0.1)
+	cp.bg_color = Color("#3A3A6C")
 	_continue_btn.add_theme_stylebox_override("pressed", cp)
 	_continue_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	row.add_child(_continue_btn)
@@ -492,6 +496,42 @@ func _b(s: StyleBoxFlat, w: int, c: Color) -> void:
 
 func _create_sparkles() -> void:
 	pass  # Removed for cleaner background
+
+
+func _create_deco_blocks() -> void:
+	var colors := [Color("#FF6E80"), Color("#FFE060"), Color("#62CCF8"), Color("#BFA4E8")]
+	var positions := [
+		Vector2(0.15, 0.65), Vector2(0.80, 0.58),
+		Vector2(0.30, 0.78), Vector2(0.70, 0.72),
+	]
+	for i in range(4):
+		var block := ColorRect.new()
+		var block_size: float = 8.0 + float(i % 3) * 2.0
+		block.custom_minimum_size = Vector2(block_size, block_size)
+		block.size = Vector2(block_size, block_size)
+		block.color = colors[i]
+		block.color.a = 0.08 + float(i) * 0.01
+		block.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		block.set_meta("base_y", positions[i].y)
+		block.set_meta("phase", float(i) * 1.5)
+		block.set_meta("frac_x", positions[i].x)
+		add_child(block)
+		_deco_blocks.append(block)
+
+
+func _process(_delta: float) -> void:
+	if _deco_blocks.is_empty():
+		return
+	var t: float = float(Time.get_ticks_msec()) / 1000.0
+	for block in _deco_blocks:
+		if not is_instance_valid(block):
+			continue
+		var frac_x: float = block.get_meta("frac_x")
+		var base_y: float = block.get_meta("base_y")
+		var phase: float = block.get_meta("phase")
+		var offset_y: float = sin(t * 0.5 + phase) * 8.0
+		block.position.x = size.x * frac_x
+		block.position.y = size.y * base_y + offset_y
 
 
 # ═══════════════════════════════════════
