@@ -14,6 +14,7 @@ const POP_DURATION := 0.15
 const HOLD_DURATION := 0.6
 const FADE_DURATION := 0.3
 const TOTAL_DURATION := POP_DURATION + HOLD_DURATION + FADE_DURATION
+const SHOW_DELAY_MS := 100
 
 
 func show_multi_clear(lines: int, center_pos: Vector2) -> void:
@@ -25,22 +26,22 @@ func show_multi_clear(lines: int, center_pos: Vector2) -> void:
 	position = Vector2.ZERO
 	size = viewport_size
 
-	# Text, color, font size by line count
+	# Text, color, font size by line count (reduced sizes)
 	var main_text: String
 	var main_color: Color
 	var font_size: int
 	if lines >= 4:
 		main_text = "QUAD!"
 		main_color = Color("FFD700")
-		font_size = 64
+		font_size = 48
 	elif lines >= 3:
 		main_text = "TRIPLE!"
 		main_color = Color("FF00FF")
-		font_size = 52
+		font_size = 40
 	else:
 		main_text = "DOUBLE!"
 		main_color = Color("00E5FF")
-		font_size = 40
+		font_size = 32
 
 	# Score bonus from GameConstants
 	var bonus: int = GameConstants.line_clear_score(lines)
@@ -55,18 +56,20 @@ func show_multi_clear(lines: int, center_pos: Vector2) -> void:
 	_main_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_main_label.anchors_preset = Control.PRESET_FULL_RECT
 	_main_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_main_label.modulate.a = 0.0
 	add_child(_main_label)
 
-	# Bonus score label
+	# Bonus score label (smaller: 18px)
 	_bonus_label = Label.new()
 	_bonus_label.text = "+%d" % bonus
-	_bonus_label.add_theme_font_size_override("font_size", 24)
+	_bonus_label.add_theme_font_size_override("font_size", 18)
 	_bonus_label.add_theme_color_override("font_color", Color(main_color.r, main_color.g, main_color.b, 0.8))
 	_bonus_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.7))
 	_bonus_label.add_theme_constant_override("outline_size", 4)
 	_bonus_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_bonus_label.anchors_preset = Control.PRESET_FULL_RECT
 	_bonus_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_bonus_label.modulate.a = 0.0
 	add_child(_bonus_label)
 
 	_update_label_positions()
@@ -74,13 +77,15 @@ func show_multi_clear(lines: int, center_pos: Vector2) -> void:
 	_elapsed = 0.0
 	_scale_val = 0.0
 	_alpha = 1.0
-	_start_msec = Time.get_ticks_msec()
+	# Offset start by 100ms delay to let line clear flash happen first
+	_start_msec = Time.get_ticks_msec() + SHOW_DELAY_MS
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process(true)
 
 
 func _update_label_positions() -> void:
-	var cy := _center.y - 100.0
+	# Position ABOVE the board center (cy - 140)
+	var cy := _center.y - 140.0
 	_main_label.position = Vector2(0, cy - 30)
 	_main_label.size = Vector2(size.x, 60)
 	_bonus_label.position = Vector2(0, cy + 25)
@@ -88,7 +93,12 @@ func _update_label_positions() -> void:
 
 
 func _process(_delta: float) -> void:
-	_elapsed = float(Time.get_ticks_msec() - _start_msec) / 1000.0
+	var now := Time.get_ticks_msec()
+	# During delay period, stay hidden
+	if now < _start_msec:
+		return
+
+	_elapsed = float(now - _start_msec) / 1000.0
 
 	if _elapsed >= TOTAL_DURATION:
 		queue_free()

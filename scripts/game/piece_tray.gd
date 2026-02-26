@@ -36,7 +36,7 @@ func _setup_plate_style() -> void:
 	_plate_style.bg_color = Color(0, 0, 0, 0)  # Transparent — no box behind pieces
 
 func set_cell_size(board_cell_size: float) -> void:
-	_tray_cell_size = board_cell_size * 0.7
+	_tray_cell_size = board_cell_size * 0.55
 	if _pieces_container:
 		_pieces_container.custom_minimum_size.y = _tray_cell_size * 3 + 24
 

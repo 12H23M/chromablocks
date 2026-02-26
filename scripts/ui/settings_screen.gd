@@ -29,6 +29,10 @@ func _ready() -> void:
 		SoundManager.play_sfx("button_press")
 		closed.emit())
 
+	$XCloseButton.pressed.connect(func():
+		SoundManager.play_sfx("button_press")
+		closed.emit())
+
 
 func _toggle_sound() -> void:
 	SoundManager.play_sfx("button_press")

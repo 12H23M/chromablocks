@@ -8,10 +8,9 @@ var _alpha: float = 1.0
 var _start_msec: int = 0
 var _burst_lines: Array = []
 
-# Child labels
+# Single merged label + dark overlay
 var _combo_label: Label
-var _mult_label: Label
-var _sub_label: Label
+var _overlay: ColorRect
 
 const POP_DURATION := 0.15
 const HOLD_DURATION := 0.5
@@ -70,35 +69,28 @@ func show_combo(combo: int, center_pos: Vector2) -> void:
 		_burst_width = 1.5
 		_burst_count = 12
 
-	# Colors and sub-text
+	# Colors per combo level
 	var combo_color: Color
-	var sub_text: String
-	var sub_color: Color
 	if combo >= 5:
 		combo_color = Color("FF3366")
-		sub_text = "LEGENDARY!"
-		sub_color = Color("FF3366")
 	elif combo >= 4:
 		combo_color = Color("FF6B35")
-		sub_text = "INCREDIBLE!"
-		sub_color = Color("FF6B35")
 	elif combo >= 3:
 		combo_color = Color("FFD700")
-		sub_text = "AMAZING!"
-		sub_color = Color("FFD700")
-	elif combo >= 2:
-		combo_color = Color("60A5FA")
-		sub_text = "NICE!"
-		sub_color = Color("60A5FA")
 	else:
 		combo_color = Color("60A5FA")
-		sub_text = "CLEAR!"
-		sub_color = Color("60A5FA")
 
-	# Create text labels as children (guaranteed to render with theme font)
+	# Semi-transparent dark overlay behind combo text
+	_overlay = ColorRect.new()
+	_overlay.color = Color(0, 0, 0, 0.25)
+	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_overlay)
+
+	# Single merged label: "COMBO x2"
 	_combo_label = Label.new()
-	_combo_label.text = "COMBO"
-	_combo_label.add_theme_font_size_override("font_size", int(52 * _size_scale))
+	_combo_label.text = "COMBO x%d" % combo
+	_combo_label.add_theme_font_size_override("font_size", int(44 * _size_scale))
 	_combo_label.add_theme_color_override("font_color", Color.WHITE)
 	_combo_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
 	_combo_label.add_theme_constant_override("outline_size", _outline_size)
@@ -110,32 +102,7 @@ func show_combo(combo: int, center_pos: Vector2) -> void:
 	_combo_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_combo_label)
 
-	_mult_label = Label.new()
-	_mult_label.text = "x%d" % combo
-	_mult_label.add_theme_font_size_override("font_size", int(44 * _size_scale))
-	_mult_label.add_theme_color_override("font_color", Color("FFD700"))
-	_mult_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
-	_mult_label.add_theme_constant_override("outline_size", _outline_size)
-	_mult_label.add_theme_color_override("font_shadow_color", Color(1.0, 0.84, 0.0, 0.4))
-	_mult_label.add_theme_constant_override("shadow_offset_x", 0)
-	_mult_label.add_theme_constant_override("shadow_offset_y", 2)
-	_mult_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_mult_label.anchors_preset = Control.PRESET_FULL_RECT
-	_mult_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_mult_label)
-
-	_sub_label = Label.new()
-	_sub_label.text = sub_text
-	_sub_label.add_theme_font_size_override("font_size", int(24 * _size_scale))
-	_sub_label.add_theme_color_override("font_color", sub_color)
-	_sub_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
-	_sub_label.add_theme_constant_override("outline_size", _outline_size)
-	_sub_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_sub_label.anchors_preset = Control.PRESET_FULL_RECT
-	_sub_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_sub_label)
-
-	# Position labels around center
+	# Position label at center
 	_update_label_positions()
 
 	# Burst lines
@@ -154,15 +121,9 @@ func show_combo(combo: int, center_pos: Vector2) -> void:
 func _update_label_positions() -> void:
 	var cy := _center.y
 	var s := _size_scale
-	# COMBO text centered above board center
-	_combo_label.position = Vector2(0, cy - 60 * s)
+	# Single combo label centered at board center
+	_combo_label.position = Vector2(0, cy - 30 * s)
 	_combo_label.size = Vector2(size.x, 60 * s)
-	# x2 below COMBO
-	_mult_label.position = Vector2(0, cy - 5 * s)
-	_mult_label.size = Vector2(size.x, 50 * s)
-	# Sub-text below multiplier
-	_sub_label.position = Vector2(0, cy + 40 * s)
-	_sub_label.size = Vector2(size.x, 35 * s)
 
 
 func _process(_delta: float) -> void:
@@ -190,19 +151,14 @@ func _process(_delta: float) -> void:
 		var fade_t := (_elapsed - POP_DURATION - HOLD_DURATION) / FADE_DURATION
 		_alpha = clampf(1.0 - fade_t, 0.0, 1.0)
 
-	# Update labels
+	# Update label
 	var s := maxf(_scale_val, 0.01)
 	_combo_label.pivot_offset = _combo_label.size / 2.0
 	_combo_label.scale = Vector2(s, s)
 	_combo_label.modulate.a = _alpha
 
-	_mult_label.pivot_offset = _mult_label.size / 2.0
-	_mult_label.scale = Vector2(s, s)
-	_mult_label.modulate.a = _alpha
-
-	_sub_label.pivot_offset = _sub_label.size / 2.0
-	_sub_label.scale = Vector2(s * 0.9, s * 0.9)
-	_sub_label.modulate.a = _alpha
+	# Overlay fades with the combo
+	_overlay.modulate.a = _alpha
 
 	queue_redraw()
 

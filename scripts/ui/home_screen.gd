@@ -150,14 +150,36 @@ func _build_logo() -> VBoxContainer:
 
 	_add_spacer(v, 12)
 
-	var t := Label.new()
-	t.text = "ChromaBlocks"
-	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	# Two-part title: "Chroma" (white) + "Blocks" (gold)
+	var title_row := HBoxContainer.new()
+	title_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	title_row.set("theme_override_constants/separation", 0)
+
+	var t1 := Label.new()
+	t1.text = "Chroma"
+	t1.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	if _fredoka_bold:
-		t.add_theme_font_override("font", _fredoka_bold)
-	t.add_theme_font_size_override("font_size", 38)
-	t.add_theme_color_override("font_color", Color.WHITE)
-	v.add_child(t)
+		t1.add_theme_font_override("font", _fredoka_bold)
+	t1.add_theme_font_size_override("font_size", 38)
+	t1.add_theme_color_override("font_color", Color.WHITE)
+	t1.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.4))
+	t1.add_theme_constant_override("shadow_offset_x", 0)
+	t1.add_theme_constant_override("shadow_offset_y", 3)
+	title_row.add_child(t1)
+
+	var t2 := Label.new()
+	t2.text = "Blocks"
+	t2.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	if _fredoka_bold:
+		t2.add_theme_font_override("font", _fredoka_bold)
+	t2.add_theme_font_size_override("font_size", 38)
+	t2.add_theme_color_override("font_color", Color("#FFD93D"))
+	t2.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.4))
+	t2.add_theme_constant_override("shadow_offset_x", 0)
+	t2.add_theme_constant_override("shadow_offset_y", 3)
+	title_row.add_child(t2)
+
+	v.add_child(title_row)
 
 	var s := Label.new()
 	s.text = "BLOCK PUZZLE"
