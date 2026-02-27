@@ -127,19 +127,39 @@ func play_place_pulse(delay: float = 0.0) -> void:
 	var tween := create_tween()
 	if delay > 0.0:
 		tween.tween_interval(delay)
+	# Flash color
 	tween.tween_callback(func():
 		_bg_color = light
-		_scale_factor = 0.85
+		_scale_factor = 1.05
 		queue_redraw()
 	)
-	tween.tween_property(self, "_scale_factor", 1.12, 0.08) \
+	# 1. Squash (1.05→0.94)
+	tween.tween_property(self, "_scale_factor", 0.94, 0.06) \
+		 .set_ease(Tween.EASE_OUT)
+	# 2. Stretch (0.94→1.06)
+	tween.tween_property(self, "_scale_factor", 1.06, 0.05) \
 		 .set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
-	tween.tween_property(self, "_scale_factor", 1.0, 0.07) \
+	# 3. Settle (1.06→1.0)
+	tween.tween_property(self, "_scale_factor", 1.0, 0.04) \
 		 .set_ease(Tween.EASE_IN_OUT)
+	# Color flash fade back
 	tween.parallel().tween_method(func(t: float):
 		_bg_color = light.lerp(original_bg, 1.0 - t)
 		queue_redraw()
 	, 1.0, 0.0, 0.15)
+
+
+## Adjacent ripple: micro-bounce for nearby occupied cells
+func play_adjacent_ripple(delay: float = 0.0) -> void:
+	if not _occupied:
+		return
+	var tween := create_tween()
+	if delay > 0.0:
+		tween.tween_interval(delay)
+	tween.tween_property(self, "_scale_factor", 1.02, 0.05) \
+		 .set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "_scale_factor", 1.0, 0.05) \
+		 .set_ease(Tween.EASE_IN_OUT)
 
 
 func play_clear_flash(duration: float, delay: float = 0.0, cached_color: Color = Color.TRANSPARENT) -> void:

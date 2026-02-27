@@ -181,11 +181,32 @@ func clear_highlights() -> void:
 
 func play_place_effect(cells: Array) -> void:
 	var delay := 0.0
+	var placed_set: Dictionary = {}
 	for cell_pos in cells:
 		if cell_pos.x >= 0 and cell_pos.x < GameConstants.BOARD_COLUMNS \
 		   and cell_pos.y >= 0 and cell_pos.y < GameConstants.BOARD_ROWS:
 			_cells[cell_pos.y][cell_pos.x].play_place_pulse(delay)
+			placed_set[Vector2i(cell_pos.x, cell_pos.y)] = true
 			delay += 0.015
+
+	# Adjacent block ripple: micro-bounce occupied cells within distance 2
+	var rippled: Dictionary = {}
+	for cell_pos in cells:
+		for dy in range(-2, 3):
+			for dx in range(-2, 3):
+				var nx: int = cell_pos.x + dx
+				var ny: int = cell_pos.y + dy
+				if nx < 0 or nx >= GameConstants.BOARD_COLUMNS or ny < 0 or ny >= GameConstants.BOARD_ROWS:
+					continue
+				var npos := Vector2i(nx, ny)
+				if npos in placed_set or npos in rippled:
+					continue
+				var dist: int = absi(dx) + absi(dy)
+				if dist < 1 or dist > 2:
+					continue
+				var ripple_delay: float = 0.0 if dist == 1 else 0.03
+				_cells[ny][nx].play_adjacent_ripple(ripple_delay)
+				rippled[npos] = true
 
 
 # Cache cell colors before board state update for clear animations
