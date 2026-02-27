@@ -746,9 +746,11 @@ func _show_home() -> void:
 	ScreenTransition.fade_out(pause_screen)
 
 func _show_settings() -> void:
+	home_screen.set_settings_active(true)
 	ScreenTransition.fade_in(settings_screen)
 
 func _hide_settings() -> void:
+	home_screen.set_settings_active(false)
 	ScreenTransition.fade_out(settings_screen)
 
 func _show_tutorial() -> void:

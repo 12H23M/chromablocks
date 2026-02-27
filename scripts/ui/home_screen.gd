@@ -24,6 +24,7 @@ var _sound_icon_label: Label
 # ─── Animation ───
 var _sparkles: Array = []
 var _deco_blocks: Array = []
+var _orbs: Array = []
 var _play_glow_tween: Tween
 var _logo_section: Control
 var _hero_section: Control
@@ -31,6 +32,10 @@ var _btn_section: Control
 var _bottom_section: Control
 
 var _fredoka_bold: Font = null
+
+# ─── Nav state ───
+var _nav_items: Array = []  # Array of VBoxContainer nav items
+var _active_nav_index: int = -1  # -1 = none active
 
 const BG_COLOR := Color("#0F0A35")
 const BLOCK_COLORS := [
@@ -433,23 +438,28 @@ func _build_bottom() -> HBoxContainer:
 	h.alignment = BoxContainer.ALIGNMENT_CENTER
 	h.set("theme_override_constants/separation", 16)
 	h.modulate.a = 0.0
+	_nav_items.clear()
 
-	# Guide
+	# Guide (index 0)
 	var guide := _nav_item("guide", "Guide")
 	guide.get_child(0).gui_input.connect(func(e: InputEvent):
 		if e is InputEventMouseButton and e.pressed:
 			SoundManager.play_sfx("button_press")
+			_bounce_nav(0)
 			how_to_play_pressed.emit())
 	h.add_child(guide)
+	_nav_items.append(guide)
 
-	# Awards
+	# Awards (index 1)
 	var awards := _nav_item("awards", "Awards")
 	awards.get_child(0).gui_input.connect(func(e: InputEvent):
 		if e is InputEventMouseButton and e.pressed:
-			SoundManager.play_sfx("button_press"))
+			SoundManager.play_sfx("button_press")
+			_bounce_nav(1))
 	h.add_child(awards)
+	_nav_items.append(awards)
 
-	# Sound
+	# Sound (index 2)
 	var snd_type := "sound_on" if SaveManager.is_sound_enabled() else "sound_off"
 	var sound := _nav_item(snd_type, "Sound")
 	_sound_btn = Button.new()
@@ -461,14 +471,20 @@ func _build_bottom() -> HBoxContainer:
 	sound.get_child(0).add_child(_sound_btn)
 	_sound_icon_label = sound.get_child(1) as Label
 	h.add_child(sound)
+	_nav_items.append(sound)
 
-	# Settings
+	# Settings (index 3)
 	var settings := _nav_item("settings", "Settings")
 	settings.get_child(0).gui_input.connect(func(e: InputEvent):
 		if e is InputEventMouseButton and e.pressed:
 			SoundManager.play_sfx("button_press")
+			_bounce_nav(3)
 			settings_pressed.emit())
 	h.add_child(settings)
+	_nav_items.append(settings)
+
+	# Start all inactive
+	_set_all_nav_inactive()
 
 	return h
 
@@ -485,13 +501,59 @@ func _nav_item(icon_type: String, lbl: String) -> VBoxContainer:
 	v.add_child(icon)
 
 	var ll := Label.new()
+	ll.name = "NavLabel"
 	ll.text = lbl
 	ll.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	ll.add_theme_font_size_override("font_size", 9)
 	ll.add_theme_color_override("font_color", Color("#8888AA"))
 	v.add_child(ll)
 
+	# Active dot indicator (hidden by default)
+	var dot := NavDot.new()
+	dot.name = "NavDot"
+	dot.visible = false
+	v.add_child(dot)
+
 	return v
+
+
+func _set_nav_active(index: int) -> void:
+	if index == _active_nav_index:
+		return
+	_set_all_nav_inactive()
+	_active_nav_index = index
+	if index < 0 or index >= _nav_items.size():
+		return
+	var item: VBoxContainer = _nav_items[index]
+	var icon: NavIcon = item.get_child(0) as NavIcon
+	var label: Label = item.get_node("NavLabel") as Label
+	var dot: Control = item.get_node("NavDot")
+	icon.modulate.a = 1.0
+	label.modulate.a = 1.0
+	dot.visible = true
+
+
+func _set_all_nav_inactive() -> void:
+	_active_nav_index = -1
+	for item in _nav_items:
+		if not is_instance_valid(item):
+			continue
+		var icon: NavIcon = item.get_child(0) as NavIcon
+		var label: Label = item.get_node("NavLabel") as Label
+		var dot: Control = item.get_node("NavDot")
+		icon.modulate.a = 0.35
+		label.modulate.a = 0.35
+		dot.visible = false
+
+
+func _bounce_nav(index: int) -> void:
+	if index < 0 or index >= _nav_items.size():
+		return
+	var item: VBoxContainer = _nav_items[index]
+	item.pivot_offset = item.size / 2.0
+	var tw := create_tween()
+	tw.tween_property(item, "scale", Vector2(0.9, 0.9), 0.05)
+	tw.tween_property(item, "scale", Vector2.ONE, 0.05)
 
 
 # ─── Helpers ───
@@ -614,6 +676,13 @@ func _start_idle() -> void:
 #  GAME LOGIC
 # ═══════════════════════════════════════
 
+func set_settings_active(active: bool) -> void:
+	if active:
+		_set_nav_active(3)
+	else:
+		_set_all_nav_inactive()
+
+
 func refresh_stats() -> void:
 	_best_value.text = FormatUtils.format_number(SaveManager.get_high_score())
 	_games_value.text = str(SaveManager.get_games_played())
@@ -634,6 +703,7 @@ func refresh_stats() -> void:
 
 func _toggle_sound() -> void:
 	SoundManager.play_sfx("button_press")
+	_bounce_nav(2)
 	var enabled := not SaveManager.is_sound_enabled()
 	SaveManager.set_sound_enabled(enabled)
 	_update_sound_label()
@@ -866,3 +936,21 @@ class NavIcon extends Control:
 					var rad := deg_to_rad(float(ang_i) * 45.0)
 					var tp := Vector2(c.x + cos(rad) * 10.0, c.y + sin(rad) * 10.0)
 					draw_circle(tp, 2.5, IC_COL)
+
+
+# ═══════════════════════════════════════
+#  INNER CLASS: NavDot — active indicator dot below nav label
+# ═══════════════════════════════════════
+
+class NavDot extends Control:
+	const DOT_RADIUS := 2.0
+	const DOT_COLOR := Color("#7C3AED")
+
+	func _ready() -> void:
+		custom_minimum_size = Vector2(4, 4)
+		size = Vector2(4, 4)
+		size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		draw_circle(Vector2(DOT_RADIUS, DOT_RADIUS), DOT_RADIUS, DOT_COLOR)
