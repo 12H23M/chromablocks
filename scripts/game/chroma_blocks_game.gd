@@ -640,7 +640,7 @@ func _refill_tray() -> void:
 	_check_game_over()
 
 func _check_game_over() -> void:
-	if GameOverSystem.is_game_over(_state.board, _state.tray_pieces):
+	if GameOverSystem.is_game_over(_state.board, _state.tray_pieces, _state.held_piece, _state.hold_used_this_tray):
 		# Ensure time_scale is restored if game over triggers during hit stop
 		Engine.time_scale = 1.0
 		_hit_stop_duration = 0.0
