@@ -3,13 +3,13 @@ extends Control
 ## into a total.  Uses wall-clock timing (Time.get_ticks_msec) so hit-stop
 ## (Engine.time_scale = 0) doesn't freeze the animation.
 
-const ENTRY_INTERVAL := 0.3     # seconds between each entry appearing
-const COUNT_UP_DURATION := 0.15 # typewriter count-up per entry
-const MERGE_DELAY := 0.3        # pause after last entry before merge
-const MERGE_DURATION := 0.35    # entries slide to center and merge
-const BOUNCE_DURATION := 0.25   # total bounces 1.0 → 1.3 → 1.0
-const FLOAT_DURATION := 0.6     # float up + fade out after bounce
-const ENTRY_SPACING := 30.0     # vertical px between stacked entries
+const ENTRY_INTERVAL := 0.25    # seconds between each entry appearing
+const COUNT_UP_DURATION := 0.12 # typewriter count-up per entry
+const MERGE_DELAY := 0.25       # pause after last entry before merge
+const MERGE_DURATION := 0.3     # entries fade and merge
+const BOUNCE_DURATION := 0.2    # total bounces 1.0 → 1.2 → 1.0
+const FLOAT_DURATION := 0.5     # float up + fade out after bounce
+const ENTRY_SPACING := 28.0     # vertical px between stacked entries
 
 # Font
 var _font: Font = null
@@ -171,7 +171,7 @@ func _layout_entries() -> void:
 	for i in count:
 		var entry: Dictionary = _entries[i]
 		var lbl: Label = entry["label"]
-		lbl.position = Vector2(-200, start_y + i * ENTRY_SPACING)  # start off-screen left
+		lbl.position = Vector2(0, start_y + i * ENTRY_SPACING)  # centered, hidden via alpha
 
 
 func _process(_delta: float) -> void:
@@ -240,22 +240,16 @@ func _process_entries_phase(now: int) -> void:
 
 func _slide_in_entry(entry: Dictionary, index: int) -> void:
 	var lbl: Label = entry["label"]
-	var count: int = _entries.size()
-	var total_height: float = count * ENTRY_SPACING
-	var target_y: float = _center.y - total_height / 2.0 + index * ENTRY_SPACING
-
-	# Start off-screen left, slide to center
-	lbl.position = Vector2(-200, target_y)
 	lbl.pivot_offset = lbl.size / 2.0
-	lbl.scale = Vector2(0.7, 0.7)
+	lbl.scale = Vector2(0.6, 0.6)
 
+	# Simple center pop-in (no horizontal slide)
 	var tween: Tween = lbl.create_tween()
 	tween.set_process_mode(Tween.TWEEN_PROCESS_IDLE)
-	tween.set_parallel(true)
-	tween.tween_property(lbl, "position:x", 0.0, 0.2) \
+	tween.tween_property(lbl, "scale", Vector2(1.1, 1.1), 0.1) \
 		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
-	tween.tween_property(lbl, "scale", Vector2.ONE, 0.2) \
-		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(lbl, "scale", Vector2.ONE, 0.06) \
+		.set_ease(Tween.EASE_IN_OUT)
 
 
 func _process_merge_phase(now: int) -> void:
