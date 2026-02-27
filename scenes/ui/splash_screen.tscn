@@ -1,6 +1,7 @@
-[gd_scene format=3 uid="uid://splash001"]
+[gd_scene load_steps=3 format=3 uid="uid://splash001"]
 
 [ext_resource type="Script" path="res://scripts/ui/splash_screen.gd" id="1_splash"]
+[ext_resource type="FontFile" uid="uid://cva76j6o780xp" path="res://assets/fonts/Fredoka-Bold.ttf" id="2_font"]
 
 [node name="SplashScreen" type="Control"]
 layout_mode = 1
@@ -11,15 +12,6 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_splash")
 
-[node name="Background" type="ColorRect" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.051, 0.043, 0.18, 1)
-
 [node name="BlockContainer" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 15
@@ -29,7 +21,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="TitleLabel" type="Label" parent="."]
+[node name="TitleContainer" type="HBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -37,15 +29,29 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -160.0
-offset_top = 20.0
+offset_top = 39.0
 offset_right = 160.0
-offset_bottom = 70.0
+offset_bottom = 89.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 36
+alignment = 1
+
+[node name="ChromaLabel" type="Label" parent="TitleContainer"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 40
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-text = "ChromaBlocks"
-horizontal_alignment = 1
+theme_override_constants/letter_spacing = 2
+text = "Chroma"
+vertical_alignment = 1
+
+[node name="BlocksLabel" type="Label" parent="TitleContainer"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 40
+theme_override_colors/font_color = Color(1, 0.851, 0.239, 1)
+theme_override_constants/letter_spacing = 2
+text = "Blocks"
 vertical_alignment = 1
 
 [node name="SubtitleLabel" type="Label" parent="."]
@@ -56,13 +62,14 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -120.0
-offset_top = 70.0
+offset_top = 95.0
 offset_right = 120.0
-offset_bottom = 100.0
+offset_bottom = 120.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.545, 0.478, 0.722, 1)
-text = "Color. Place. Clear."
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.722, 0.663, 0.91, 1)
+theme_override_constants/letter_spacing = 6
+text = "BLOCK PUZZLE"
 horizontal_alignment = 1
 vertical_alignment = 1
