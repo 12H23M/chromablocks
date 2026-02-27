@@ -2,7 +2,12 @@
 
 [ext_resource type="Script" path="res://scripts/ui/toggle_switch.gd" id="1_script"]
 
-[node name="ToggleSwitch" type="Control"]
+[sub_resource type="StyleBoxEmpty" id="empty_style"]
+
+[node name="ToggleSwitch" type="Button"]
 custom_minimum_size = Vector2(52, 28)
-mouse_filter = 0
+theme_override_styles/normal = SubResource("empty_style")
+theme_override_styles/hover = SubResource("empty_style")
+theme_override_styles/pressed = SubResource("empty_style")
+theme_override_styles/focus = SubResource("empty_style")
 script = ExtResource("1_script")

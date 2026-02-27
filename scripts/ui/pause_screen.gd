@@ -3,8 +3,8 @@ extends Control
 signal resume_pressed()
 signal quit_pressed()
 
-@onready var sound_toggle: Control = $Card/VBox/SoundRow/SoundToggle
-@onready var haptic_toggle: Control = $Card/VBox/HapticRow/HapticToggle
+@onready var sound_toggle: Button = $Card/VBox/SoundRow/SoundToggle
+@onready var haptic_toggle: Button = $Card/VBox/HapticRow/HapticToggle
 
 func _ready() -> void:
 	$Card/VBox/ResumeButton.pressed.connect(func():
@@ -13,8 +13,8 @@ func _ready() -> void:
 	$Card/VBox/QuitButton.pressed.connect(func():
 		SoundManager.play_sfx("button_press")
 		quit_pressed.emit())
-	sound_toggle.toggled.connect(_on_sound_toggled)
-	haptic_toggle.toggled.connect(_on_haptic_toggled)
+	sound_toggle.toggled_value.connect(_on_sound_toggled)
+	haptic_toggle.toggled_value.connect(_on_haptic_toggled)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_VISIBILITY_CHANGED and visible:

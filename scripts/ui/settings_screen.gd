@@ -2,20 +2,20 @@ extends Control
 
 signal closed()
 
-var _sound_toggle: Control
-var _music_toggle: Control
+var _sound_toggle: Button
+var _music_toggle: Button
 var _track_button: Button
-var _haptic_toggle: Control
+var _haptic_toggle: Button
 
 
 func _ready() -> void:
 	_sound_toggle = $Card/VBox/SoundRow/SoundToggle
 	_sound_toggle.set_on(SaveManager.is_sound_enabled(), false)
-	_sound_toggle.toggled.connect(_on_sound_toggled)
+	_sound_toggle.toggled_value.connect(_on_sound_toggled)
 
 	_music_toggle = $Card/VBox/MusicRow/MusicToggle
 	_music_toggle.set_on(SaveManager.is_music_enabled(), false)
-	_music_toggle.toggled.connect(_on_music_toggled)
+	_music_toggle.toggled_value.connect(_on_music_toggled)
 
 	_track_button = $Card/VBox/TrackRow/TrackButton
 	_track_button.pressed.connect(_cycle_track)
@@ -23,7 +23,7 @@ func _ready() -> void:
 
 	_haptic_toggle = $Card/VBox/HapticRow/HapticToggle
 	_haptic_toggle.set_on(SaveManager.is_haptic_enabled(), false)
-	_haptic_toggle.toggled.connect(_on_haptic_toggled)
+	_haptic_toggle.toggled_value.connect(_on_haptic_toggled)
 
 	$Card/VBox/CloseButton.pressed.connect(func():
 		SoundManager.play_sfx("button_press")
