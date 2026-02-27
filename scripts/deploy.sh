@@ -25,14 +25,26 @@ for arg in "$@"; do
   esac
 done
 
+# Retry ADB connection helper
+adb_ensure() {
+  for i in 1 2 3; do
+    $ADB connect "$DEVICE" 2>/dev/null || true
+    sleep 1
+    if $ADB devices | grep -q "$DEVICE_IP"; then
+      return 0
+    fi
+    echo "  ⏳ Retry $i..."
+    sleep 2
+  done
+  return 1
+}
+
 echo "🎮 ChromaBlocks Deploy Pipeline"
 echo "================================"
 
 # 1. Check device connection
 echo "📱 Checking device..."
-$ADB connect "$DEVICE" 2>/dev/null || true
-sleep 1
-if ! $ADB devices | grep -q "$DEVICE_IP"; then
+if ! adb_ensure; then
   echo "❌ Cannot connect to device. Check VPN/wireless debugging."
   exit 1
 fi
@@ -48,11 +60,21 @@ else
   echo "⏭️  Skipping build (--skip-build)"
 fi
 
-# 3. Install APK
+# 3. Install APK (with auto-reconnect)
 echo ""
 echo "📦 Installing APK..."
-$ADB -s "$DEVICE" install -r "$APK" 2>&1
-echo "✅ Installed"
+for attempt in 1 2 3; do
+  if $ADB -s "$DEVICE" install -r "$APK" 2>&1; then
+    echo "✅ Installed"
+    break
+  fi
+  echo "  ⚠️ Install failed, reconnecting... (attempt $attempt/3)"
+  adb_ensure
+  if [ "$attempt" -eq 3 ]; then
+    echo "❌ Install failed after 3 attempts"
+    exit 1
+  fi
+done
 
 # 4. Launch app
 if [ "$NO_LAUNCH" = false ]; then
