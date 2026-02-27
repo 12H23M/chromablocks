@@ -139,11 +139,11 @@ const EXCLUDED_LV5: Array = [
 # ── DDA thresholds ──
 const DDA_RUSH_THRESHOLD := 0.30       # fill < 30% → rush mode (big pieces)
 const DDA_RUSH_CHANCE := 0.80           # 80% chance to use rush templates
-const DDA_MERCY_MILD := 0.55            # fill 55-70% → mild mercy
-const DDA_MERCY_STRONG := 0.70          # fill 70-80% → strong mercy
-const DDA_MERCY_CRITICAL := 0.80        # fill 80%+ → critical mercy
-const DDA_FIT_CHECK_CHANCE := 0.50      # placeable-only filter chance (55%+)
-const DDA_FIT_CRITICAL_CHANCE := 0.70   # placeable-only filter (80%+)
+const DDA_MERCY_MILD := 0.65            # fill 65-80% → mild mercy
+const DDA_MERCY_STRONG := 0.80          # fill 80-90% → strong mercy
+const DDA_MERCY_CRITICAL := 0.90        # fill 90%+ → critical mercy
+const DDA_FIT_CHECK_CHANCE := 0.30      # placeable-only filter chance (65%+)
+const DDA_FIT_CRITICAL_CHANCE := 0.40   # placeable-only filter (90%+)
 
 # ── Color mercy ──
 const COLOR_CLUSTER_CHANCE := 0.25      # basic tray color clustering
@@ -156,7 +156,7 @@ const COLOR_MERCY_MIN_GROUP := 4        # min cluster size (chain triggers at 5)
 var _rng := RandomNumberGenerator.new()
 var _previous_tray_types: Array = []
 var _tight_tray_streak: int = 0
-const MAX_TIGHT_STREAK: int = 3
+const MAX_TIGHT_STREAK: int = 4
 
 
 func _init() -> void:
@@ -197,15 +197,15 @@ func generate_tray(level: int, board: BoardState) -> Array:
 
 	var template: Array = _pick_template(templates)
 
-	# Critical mercy: guarantee TINY piece
+	# Critical mercy: guarantee SMALL piece (2-3 cells)
 	if fill >= DDA_MERCY_CRITICAL:
-		var has_tiny := false
+		var has_small := false
 		for cat in template:
-			if cat == SizeCat.TINY:
-				has_tiny = true
+			if cat == SizeCat.TINY or cat == SizeCat.SMALL:
+				has_small = true
 				break
-		if not has_tiny:
-			template[0] = SizeCat.TINY
+		if not has_small:
+			template[0] = SizeCat.SMALL
 
 	# ── Color mercy: find largest near-chain cluster ──
 	var mercy_color := -1
@@ -381,7 +381,7 @@ func _rescue_tray(tray: Array, board: BoardState, level: int) -> Array:
 func _generate_relief_tray(board: BoardState, level: int) -> Array:
 	var tray: Array = []
 	var color_count: int = _get_color_count(level)
-	for cat in [SizeCat.TINY, SizeCat.SMALL, SizeCat.SMALL]:
+	for cat in [SizeCat.SMALL, SizeCat.SMALL, SizeCat.MEDIUM]:
 		var pool: Array = CATEGORY_PIECES[cat].duplicate()
 		pool.shuffle()
 		var placed := false
