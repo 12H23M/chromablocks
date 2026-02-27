@@ -23,53 +23,30 @@ static func generate_block_place() -> AudioStreamWAV:
 
 
 static func generate_line_clear(line_count: int = 1) -> AudioStreamWAV:
-	# Swoosh (noise sweep high→low) + ding (pure tone) — pitch shifts up per line
+	# Clean "ting!" — bright bell tone, pitch up per line count
 	var samples := PackedByteArray()
-	var duration := 0.30
+	var duration := 0.25
 	var total := int(SAMPLE_RATE * duration)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 123 + line_count
 
-	# Pitch multiplier: shift up per additional line
-	var pitch_mult := 1.0 + float(line_count - 1) * 0.12
-	var ding_freq := 800.0 * pitch_mult
+	var pitch_mult := 1.0 + float(line_count - 1) * 0.15
+	var base_freq := 1200.0 * pitch_mult  # bright bell frequency
 
 	for i in total:
 		var t := float(i) / SAMPLE_RATE
 		var sample := 0.0
 
-		# Layer 1: Swoosh — filtered noise sweep high→low (0.15s)
-		if t < 0.15:
-			var swoosh_ratio := t / 0.15
-			# Sweep frequency for noise filter center
-			var sweep_center := lerpf(4000.0, 400.0, swoosh_ratio) * pitch_mult
-			var swoosh_env := _attack(t, 0.005) * (1.0 - swoosh_ratio) * 0.28
-			# Shaped noise with sine approximation of bandpass
-			var noise := rng.randf_range(-1.0, 1.0)
-			sample += noise * swoosh_env * sin(t * sweep_center * TAU) * 0.5
-			# Add a sine sweep for tonal whoosh
-			sample += sin(t * sweep_center * TAU) * swoosh_env * 0.5
-
-		# Layer 2: Ding — pure tone at 800Hz * pitch_mult (starts at 0.08s, 0.15s duration)
-		var ding_t := t - 0.08
-		if ding_t > 0.0:
-			var ding_env := _exp_decay(ding_t, 6.0) * _attack(ding_t, 0.005) * 0.38
-			sample += sin(ding_t * ding_freq * TAU) * ding_env
-			# Bell harmonic
-			sample += sin(ding_t * ding_freq * 2.0 * TAU) * ding_env * 0.15
-			sample += sin(ding_t * ding_freq * 3.0 * TAU) * ding_env * 0.04
-
-		# Layer 3: Impact transient (first 15ms)
-		var impact_env := _exp_decay(t, 60.0) * _attack(t, 0.001) * 0.20
-		sample += sin(t * 1200.0 * pitch_mult * TAU) * impact_env
-
-		# Layer 4: Sub-bass thump
-		sample += sin(t * 90.0 * TAU) * _exp_decay(t, 6.0) * _attack(t, 0.004) * 0.15
+		# Bell tone with quick attack, smooth decay
+		var env := _attack(t, 0.003) * _exp_decay(t, 5.0) * 0.35
+		sample += sin(t * base_freq * TAU) * env
+		# Octave harmonic for brightness
+		sample += sin(t * base_freq * 2.0 * TAU) * env * 0.2
+		# Fifth harmonic for richness
+		sample += sin(t * base_freq * 1.5 * TAU) * env * 0.1
 
 		# Fade out
 		var remaining := duration - t
-		if remaining < 0.04:
-			sample *= remaining / 0.04
+		if remaining < 0.03:
+			sample *= remaining / 0.03
 
 		_write_sample(samples, sample)
 
