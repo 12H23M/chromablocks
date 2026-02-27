@@ -66,21 +66,16 @@ func _get_thumb_x(on: bool) -> float:
 
 
 func _draw() -> void:
-	var rect := Rect2(Vector2.ZERO, size)
-	var radius: float = size.y * 0.5
+	var radius: int = int(size.y * 0.5)
 
-	# Track
-	draw_rect(Rect2(Vector2.ZERO, size), _track_color, true)
-	# Round corners via 4 circles at corners + center rects
-	# Simpler: use draw_rect with no rounding, then overlay circles
-	# Actually let's just use StyleBoxFlat approach
+	# Track (rounded pill shape)
 	var style := StyleBoxFlat.new()
 	style.bg_color = _track_color
-	style.corner_radius_top_left = int(radius)
-	style.corner_radius_top_right = int(radius)
-	style.corner_radius_bottom_left = int(radius)
-	style.corner_radius_bottom_right = int(radius)
-	draw_style_box(style, rect)
+	style.corner_radius_top_left = radius
+	style.corner_radius_top_right = radius
+	style.corner_radius_bottom_left = radius
+	style.corner_radius_bottom_right = radius
+	draw_style_box(style, Rect2(Vector2.ZERO, size))
 
 	# Thumb (circle)
 	var thumb_size: float = size.y - THUMB_PADDING * 2.0
