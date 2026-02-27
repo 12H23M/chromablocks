@@ -2,6 +2,34 @@ extends Node
 
 const MASTER_VOLUME_DB := -6.0
 
+# Per-sound volume levels — frequent sounds quieter, reward sounds louder
+const SFX_VOLUMES: Dictionary = {
+	"block_place": -14.0,
+	"button_press": -16.0,
+	"place_fail": -10.0,
+	"color_match": -9.0,
+	"level_up": -4.0,
+	"game_over": -8.0,
+	"perfect_clear": -3.0,
+}
+const COMBO_VOLUMES: Array = [
+	-8.0,   # x1
+	-8.0,   # x2
+	-6.0,   # x3
+	-4.0,   # x4
+	-3.0,   # x5
+	-3.0,   # x6
+	-3.0,   # x7
+]
+const LINE_CLEAR_VOLUMES: Array = [
+	-8.0,   # 1 line
+	-6.0,   # 2 lines
+	-4.0,   # 3 lines
+	-3.0,   # 4 lines
+]
+const CHAIN_VOLUME := -7.0
+const BLAST_VOLUME := -3.0
+
 # Dedicated player per sound — stream is set once and never changed,
 # eliminating the audio-thread race condition that occurred when rotating
 # a shared pool and swapping the stream property mid-playback.
@@ -64,14 +92,22 @@ func _generate_all_sfx() -> void:
 func _apply_sfx_streams(sfx_streams: Dictionary, combo_streams: Dictionary, chain_streams: Dictionary = {}, line_clear_streams: Dictionary = {}, blast_stream: AudioStreamWAV = null) -> void:
 	for sfx_name in sfx_streams:
 		_sfx_players[sfx_name].stream = sfx_streams[sfx_name]
+		if SFX_VOLUMES.has(sfx_name):
+			_sfx_players[sfx_name].volume_db = SFX_VOLUMES[sfx_name]
 	for level in combo_streams:
 		_combo_players[level].stream = combo_streams[level]
+		var idx: int = clampi(level - 1, 0, COMBO_VOLUMES.size() - 1)
+		_combo_players[level].volume_db = COMBO_VOLUMES[idx]
 	for level in chain_streams:
 		_chain_players[level].stream = chain_streams[level]
+		_chain_players[level].volume_db = CHAIN_VOLUME
 	for lines in line_clear_streams:
 		_line_clear_players[lines].stream = line_clear_streams[lines]
+		var idx: int = clampi(lines - 1, 0, LINE_CLEAR_VOLUMES.size() - 1)
+		_line_clear_players[lines].volume_db = LINE_CLEAR_VOLUMES[idx]
 	if blast_stream:
 		_blast_player.stream = blast_stream
+		_blast_player.volume_db = BLAST_VOLUME
 	_sfx_ready = true
 
 
