@@ -146,6 +146,7 @@ text = "Sound"
 [node name="SoundToggle" parent="Card/VBox/SoundRow" instance=ExtResource("3_toggle")]
 layout_mode = 2
 custom_minimum_size = Vector2(52, 28)
+size_flags_vertical = 4
 
 [node name="MusicRow" type="HBoxContainer" parent="Card/VBox"]
 layout_mode = 2
@@ -160,6 +161,7 @@ text = "Music"
 [node name="MusicToggle" parent="Card/VBox/MusicRow" instance=ExtResource("3_toggle")]
 layout_mode = 2
 custom_minimum_size = Vector2(52, 28)
+size_flags_vertical = 4
 
 [node name="TrackRow" type="HBoxContainer" parent="Card/VBox"]
 layout_mode = 2
@@ -195,6 +197,7 @@ text = "Vibration"
 [node name="HapticToggle" parent="Card/VBox/HapticRow" instance=ExtResource("3_toggle")]
 layout_mode = 2
 custom_minimum_size = Vector2(52, 28)
+size_flags_vertical = 4
 
 [node name="CloseButton" type="Button" parent="Card/VBox"]
 layout_mode = 2
