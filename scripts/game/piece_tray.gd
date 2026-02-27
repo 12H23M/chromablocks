@@ -25,6 +25,9 @@ func _ready() -> void:
 	_setup_plate_style()
 	_create_hold_slot()
 	_create_next_preview()
+	# Hide hold and next for now
+	_hold_slot.visible = false
+	_next_preview.visible = false
 
 func _setup_card_style() -> void:
 	_card_style = StyleBoxFlat.new()
