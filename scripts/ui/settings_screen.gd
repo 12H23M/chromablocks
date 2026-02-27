@@ -2,28 +2,28 @@ extends Control
 
 signal closed()
 
-var _sound_toggle: Button
-var _music_toggle: Button
+var _sound_toggle: Control
+var _music_toggle: Control
 var _track_button: Button
-var _haptic_toggle: Button
+var _haptic_toggle: Control
 
 
 func _ready() -> void:
 	_sound_toggle = $Card/VBox/SoundRow/SoundToggle
-	_sound_toggle.pressed.connect(_toggle_sound)
-	_update_sound_label()
+	_sound_toggle.set_on(SaveManager.is_sound_enabled(), false)
+	_sound_toggle.toggled.connect(_on_sound_toggled)
 
 	_music_toggle = $Card/VBox/MusicRow/MusicToggle
-	_music_toggle.pressed.connect(_toggle_music)
-	_update_music_label()
+	_music_toggle.set_on(SaveManager.is_music_enabled(), false)
+	_music_toggle.toggled.connect(_on_music_toggled)
 
 	_track_button = $Card/VBox/TrackRow/TrackButton
 	_track_button.pressed.connect(_cycle_track)
 	_update_track_label()
 
 	_haptic_toggle = $Card/VBox/HapticRow/HapticToggle
-	_haptic_toggle.pressed.connect(_toggle_haptic)
-	_update_haptic_label()
+	_haptic_toggle.set_on(SaveManager.is_haptic_enabled(), false)
+	_haptic_toggle.toggled.connect(_on_haptic_toggled)
 
 	$Card/VBox/CloseButton.pressed.connect(func():
 		SoundManager.play_sfx("button_press")
@@ -34,33 +34,21 @@ func _ready() -> void:
 		closed.emit())
 
 
-func _toggle_sound() -> void:
+func _on_sound_toggled(_is_on: bool) -> void:
 	SoundManager.play_sfx("button_press")
-	SaveManager.set_sound_enabled(not SaveManager.is_sound_enabled())
-	_update_sound_label()
+	SaveManager.set_sound_enabled(_is_on)
 
 
-func _toggle_music() -> void:
+func _on_music_toggled(_is_on: bool) -> void:
 	SoundManager.play_sfx("button_press")
-	MusicManager.set_enabled(not SaveManager.is_music_enabled())
-	_update_music_label()
+	MusicManager.set_enabled(_is_on)
 
 
-func _toggle_haptic() -> void:
+func _on_haptic_toggled(_is_on: bool) -> void:
 	SoundManager.play_sfx("button_press")
-	var new_state := not SaveManager.is_haptic_enabled()
-	SaveManager.set_haptic_enabled(new_state)
-	_update_haptic_label()
-	if new_state:
+	SaveManager.set_haptic_enabled(_is_on)
+	if _is_on:
 		Input.vibrate_handheld(30)
-
-
-func _update_sound_label() -> void:
-	_sound_toggle.text = "ON" if SaveManager.is_sound_enabled() else "OFF"
-
-
-func _update_music_label() -> void:
-	_music_toggle.text = "ON" if SaveManager.is_music_enabled() else "OFF"
 
 
 func _cycle_track() -> void:
@@ -86,7 +74,3 @@ func _update_track_label() -> void:
 			_track_button.text = track["name"]
 			return
 	_track_button.text = "Chroma Dream"
-
-
-func _update_haptic_label() -> void:
-	_haptic_toggle.text = "ON" if SaveManager.is_haptic_enabled() else "OFF"

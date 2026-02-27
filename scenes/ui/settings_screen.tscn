@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/ui/settings_screen.gd" id="1_settings"]
 [ext_resource type="FontFile" path="res://assets/fonts/Fredoka-Bold.ttf" id="2_font"]
+[ext_resource type="PackedScene" path="res://scenes/ui/toggle_switch.tscn" id="3_toggle"]
 
 [sub_resource type="StyleBoxFlat" id="card_style"]
 bg_color = Color(0.13, 0.10, 0.28, 0.97)
@@ -20,22 +21,6 @@ border_width_bottom = 1
 border_color = Color(0.42, 0.36, 0.91, 0.15)
 shadow_color = Color(0, 0, 0, 0.5)
 shadow_size = 20
-
-[sub_resource type="StyleBoxFlat" id="toggle_normal"]
-bg_color = Color(0.42, 0.36, 0.91, 0.15)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-content_margin_left = 14.0
-content_margin_top = 6.0
-content_margin_right = 14.0
-content_margin_bottom = 6.0
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.42, 0.36, 0.91, 0.25)
 
 [sub_resource type="StyleBoxFlat" id="toggle_pressed"]
 bg_color = Color(0.42, 0.36, 0.91, 0.3)
@@ -158,16 +143,9 @@ theme_override_font_sizes/font_size = 15
 theme_override_colors/font_color = Color(0.78, 0.72, 1.0, 1)
 text = "Sound"
 
-[node name="SoundToggle" type="Button" parent="Card/VBox/SoundRow"]
+[node name="SoundToggle" parent="Card/VBox/SoundRow" instance=ExtResource("3_toggle")]
 layout_mode = 2
-custom_minimum_size = Vector2(64, 34)
-theme_override_styles/normal = SubResource("toggle_normal")
-theme_override_styles/hover = SubResource("toggle_normal")
-theme_override_styles/pressed = SubResource("toggle_pressed")
-theme_override_styles/focus = SubResource("focus_empty")
-theme_override_font_sizes/font_size = 13
-theme_override_colors/font_color = Color(0.78, 0.72, 1.0, 1)
-text = "ON"
+custom_minimum_size = Vector2(52, 28)
 
 [node name="MusicRow" type="HBoxContainer" parent="Card/VBox"]
 layout_mode = 2
@@ -179,16 +157,9 @@ theme_override_font_sizes/font_size = 15
 theme_override_colors/font_color = Color(0.78, 0.72, 1.0, 1)
 text = "Music"
 
-[node name="MusicToggle" type="Button" parent="Card/VBox/MusicRow"]
+[node name="MusicToggle" parent="Card/VBox/MusicRow" instance=ExtResource("3_toggle")]
 layout_mode = 2
-custom_minimum_size = Vector2(64, 34)
-theme_override_styles/normal = SubResource("toggle_normal")
-theme_override_styles/hover = SubResource("toggle_normal")
-theme_override_styles/pressed = SubResource("toggle_pressed")
-theme_override_styles/focus = SubResource("focus_empty")
-theme_override_font_sizes/font_size = 13
-theme_override_colors/font_color = Color(0.78, 0.72, 1.0, 1)
-text = "ON"
+custom_minimum_size = Vector2(52, 28)
 
 [node name="TrackRow" type="HBoxContainer" parent="Card/VBox"]
 layout_mode = 2
@@ -221,16 +192,9 @@ theme_override_font_sizes/font_size = 15
 theme_override_colors/font_color = Color(0.78, 0.72, 1.0, 1)
 text = "Vibration"
 
-[node name="HapticToggle" type="Button" parent="Card/VBox/HapticRow"]
+[node name="HapticToggle" parent="Card/VBox/HapticRow" instance=ExtResource("3_toggle")]
 layout_mode = 2
-custom_minimum_size = Vector2(64, 34)
-theme_override_styles/normal = SubResource("toggle_normal")
-theme_override_styles/hover = SubResource("toggle_normal")
-theme_override_styles/pressed = SubResource("toggle_pressed")
-theme_override_styles/focus = SubResource("focus_empty")
-theme_override_font_sizes/font_size = 13
-theme_override_colors/font_color = Color(0.78, 0.72, 1.0, 1)
-text = "ON"
+custom_minimum_size = Vector2(52, 28)
 
 [node name="CloseButton" type="Button" parent="Card/VBox"]
 layout_mode = 2

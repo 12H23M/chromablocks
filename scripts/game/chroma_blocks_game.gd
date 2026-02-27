@@ -275,7 +275,6 @@ func _piece_to_grid(piece_node: Control) -> Vector2i:
 
 func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	SoundManager.play_sfx("block_place")
-	HapticManager.light()
 
 	# 1. Place on board
 	var board := _state.board.place_piece(piece, gx, gy)
@@ -284,6 +283,10 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	var completed_rows := board.get_completed_rows()
 	var completed_cols := board.get_completed_columns()
 	var has_line_clear := completed_rows.size() > 0 or completed_cols.size() > 0
+
+	# Only vibrate on place if no line clear coming (avoid double-vibration feel)
+	if not has_line_clear:
+		HapticManager.light()
 
 	# 3. Check Chroma Blast conditions (needs cell colors before clear)
 	var blast_result := {"blast_colors": [], "trigger_lines": []}
