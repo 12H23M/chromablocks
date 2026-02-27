@@ -21,11 +21,13 @@ var _color_match_count := 0  # 누적 컬러 매치 횟수 (업적용)
 var _had_perfect_clear := false  # 퍼펙트 클리어 발생 여부 (업적용)
 var _hit_stop_duration := 0.0  # 현재 진행 중인 히트 스톱 잔여 시간
 var _hit_stop_id := 0  # Monotonic counter to track the active hit stop
+var _game_orbs: Array = []
 
 func _ready() -> void:
 	_state = GameState.new()
 	_state.high_score = SaveManager.get_high_score()
 	board_renderer.initialize()
+	_create_game_orbs()
 
 	# Set tray cell size based on board cell size
 	piece_tray.set_cell_size(board_renderer.get_cell_size())
@@ -876,9 +878,78 @@ func _prefill_board(board: BoardState) -> void:
 			placed -= 1
 
 
+func _create_game_orbs() -> void:
+	var bg := get_node_or_null("UILayer/Background")
+	if bg == null:
+		return
+	var orb_data := [
+		{"color": Color(0.486, 0.227, 0.929, 0.05), "radius": 140.0, "cx": 0.25, "cy": 0.3, "period": 10.0, "amp_x": 35.0, "amp_y": 30.0, "phase": 1.0},
+		{"color": Color(0.302, 0.588, 1.0, 0.04), "radius": 120.0, "cx": 0.75, "cy": 0.55, "period": 9.0, "amp_x": 30.0, "amp_y": 40.0, "phase": 3.0},
+		{"color": Color(1.0, 0.42, 0.616, 0.03), "radius": 130.0, "cx": 0.5, "cy": 0.8, "period": 11.0, "amp_x": 45.0, "amp_y": 25.0, "phase": 5.0},
+	]
+	for data in orb_data:
+		var orb := GameOrb.new()
+		orb.orb_color = data["color"]
+		orb.orb_radius = data["radius"]
+		orb.set_meta("cx", data["cx"])
+		orb.set_meta("cy", data["cy"])
+		orb.set_meta("period", data["period"])
+		orb.set_meta("amp_x", data["amp_x"])
+		orb.set_meta("amp_y", data["amp_y"])
+		orb.set_meta("phase", data["phase"])
+		orb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# Insert after Background but before GameUI
+		var ui_layer: CanvasLayer = get_node("UILayer")
+		ui_layer.add_child(orb)
+		ui_layer.move_child(orb, 1)  # After Background (index 0)
+		_game_orbs.append(orb)
+
+
+func _process(_delta: float) -> void:
+	if _game_orbs.is_empty():
+		return
+	var t: float = float(Time.get_ticks_msec()) / 1000.0
+	var viewport_size := get_viewport().get_visible_rect().size
+	for orb in _game_orbs:
+		if not is_instance_valid(orb):
+			continue
+		var cx: float = orb.get_meta("cx")
+		var cy: float = orb.get_meta("cy")
+		var period: float = orb.get_meta("period")
+		var amp_x: float = orb.get_meta("amp_x")
+		var amp_y: float = orb.get_meta("amp_y")
+		var phase: float = orb.get_meta("phase")
+		var freq: float = TAU / period
+		var ox: float = sin(t * freq + phase) * amp_x
+		var oy: float = cos(t * freq * 0.7 + phase) * amp_y
+		orb.position.x = viewport_size.x * cx + ox - orb.orb_radius
+		orb.position.y = viewport_size.y * cy + oy - orb.orb_radius
+
+
 func _notification(what: int) -> void:
 	if what == MainLoop.NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
 		if _state.status == Enums.GameStatus.PLAYING:
 			# 일일 챌린지 모드에서는 중간 저장하지 않음 (시드 기반이므로)
 			if not _is_daily_mode:
 				SaveManager.save_active_game(_state)
+
+
+class GameOrb extends Control:
+	var orb_color := Color(0.5, 0.2, 0.9, 0.05)
+	var orb_radius := 140.0
+
+	func _ready() -> void:
+		custom_minimum_size = Vector2(orb_radius * 2, orb_radius * 2)
+		size = Vector2(orb_radius * 2, orb_radius * 2)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var center := Vector2(orb_radius, orb_radius)
+		var steps := 20
+		for i in range(steps, 0, -1):
+			var frac: float = float(i) / float(steps)
+			var r: float = orb_radius * frac
+			var alpha: float = orb_color.a * (1.0 - frac) * 2.0
+			alpha = clampf(alpha, 0.0, orb_color.a)
+			var col := Color(orb_color.r, orb_color.g, orb_color.b, alpha)
+			draw_circle(center, r, col)

@@ -86,6 +86,9 @@ func _build_ui() -> void:
 	bg_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bg_rect)
 
+	# Animated background orbs (behind all content)
+	_create_orbs()
+
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", 28)
@@ -582,6 +585,27 @@ func _create_sparkles() -> void:
 	pass  # Removed for cleaner background
 
 
+func _create_orbs() -> void:
+	var orb_data := [
+		{"color": Color("#7C3AED", 0.06), "radius": 160.0, "cx": 0.3, "cy": 0.25, "period": 10.0, "amp_x": 40.0, "amp_y": 35.0, "phase": 0.0},
+		{"color": Color("#4D96FF", 0.05), "radius": 140.0, "cx": 0.7, "cy": 0.50, "period": 8.0, "amp_x": 35.0, "amp_y": 45.0, "phase": 2.0},
+		{"color": Color("#FF6B9D", 0.04), "radius": 120.0, "cx": 0.4, "cy": 0.75, "period": 12.0, "amp_x": 50.0, "amp_y": 30.0, "phase": 4.0},
+	]
+	for data in orb_data:
+		var orb := BackgroundOrb.new()
+		orb.orb_color = data["color"]
+		orb.orb_radius = data["radius"]
+		orb.set_meta("cx", data["cx"])
+		orb.set_meta("cy", data["cy"])
+		orb.set_meta("period", data["period"])
+		orb.set_meta("amp_x", data["amp_x"])
+		orb.set_meta("amp_y", data["amp_y"])
+		orb.set_meta("phase", data["phase"])
+		orb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(orb)
+		_orbs.append(orb)
+
+
 func _create_deco_blocks() -> void:
 	var colors := [Color("#FF6E80"), Color("#FFE060"), Color("#62CCF8"), Color("#BFA4E8")]
 	var positions := [
@@ -604,9 +628,27 @@ func _create_deco_blocks() -> void:
 
 
 func _process(_delta: float) -> void:
+	var t: float = float(Time.get_ticks_msec()) / 1000.0
+
+	# Animate orbs
+	for orb in _orbs:
+		if not is_instance_valid(orb):
+			continue
+		var cx: float = orb.get_meta("cx")
+		var cy: float = orb.get_meta("cy")
+		var period: float = orb.get_meta("period")
+		var amp_x: float = orb.get_meta("amp_x")
+		var amp_y: float = orb.get_meta("amp_y")
+		var phase: float = orb.get_meta("phase")
+		var freq: float = TAU / period
+		var ox: float = sin(t * freq + phase) * amp_x
+		var oy: float = cos(t * freq * 0.7 + phase) * amp_y
+		orb.position.x = size.x * cx + ox - orb.orb_radius
+		orb.position.y = size.y * cy + oy - orb.orb_radius
+
+	# Animate deco blocks
 	if _deco_blocks.is_empty():
 		return
-	var t: float = float(Time.get_ticks_msec()) / 1000.0
 	for block in _deco_blocks:
 		if not is_instance_valid(block):
 			continue
@@ -954,3 +996,29 @@ class NavDot extends Control:
 
 	func _draw() -> void:
 		draw_circle(Vector2(DOT_RADIUS, DOT_RADIUS), DOT_RADIUS, DOT_COLOR)
+
+
+# ═══════════════════════════════════════
+#  INNER CLASS: BackgroundOrb — soft gradient circle for living background
+# ═══════════════════════════════════════
+
+class BackgroundOrb extends Control:
+	var orb_color := Color(0.5, 0.2, 0.9, 0.06)
+	var orb_radius := 150.0
+
+	func _ready() -> void:
+		custom_minimum_size = Vector2(orb_radius * 2, orb_radius * 2)
+		size = Vector2(orb_radius * 2, orb_radius * 2)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var center := Vector2(orb_radius, orb_radius)
+		# Draw radial gradient as concentric circles (soft falloff)
+		var steps := 20
+		for i in range(steps, 0, -1):
+			var frac: float = float(i) / float(steps)
+			var r: float = orb_radius * frac
+			var alpha: float = orb_color.a * (1.0 - frac) * 2.0
+			alpha = clampf(alpha, 0.0, orb_color.a)
+			var col := Color(orb_color.r, orb_color.g, orb_color.b, alpha)
+			draw_circle(center, r, col)
