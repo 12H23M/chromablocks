@@ -15,6 +15,7 @@ var _active_pieces: Array = []
 var _card_style: StyleBoxFlat
 var _plate_style: StyleBoxFlat
 var _hold_slot: HoldSlot
+var _next_preview: NextPreview
 
 @onready var _main_row: HBoxContainer = $MainRow
 @onready var _pieces_container: HBoxContainer = $MainRow/PieceSlots
@@ -23,6 +24,7 @@ func _ready() -> void:
 	_setup_card_style()
 	_setup_plate_style()
 	_create_hold_slot()
+	_create_next_preview()
 
 func _setup_card_style() -> void:
 	_card_style = StyleBoxFlat.new()
@@ -41,6 +43,19 @@ func _create_hold_slot() -> void:
 	_main_row.add_child(_hold_slot)
 	_main_row.move_child(_hold_slot, 0)
 
+func _create_next_preview() -> void:
+	_next_preview = NextPreview.new()
+	_next_preview.custom_minimum_size = Vector2(0, 40)
+	_next_preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_next_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_next_preview)
+
+func update_next_preview(pieces: Array) -> void:
+	if _next_preview:
+		_next_preview.preview_pieces = pieces
+		_next_preview.cell_size = _tray_cell_size
+		_next_preview.queue_redraw()
+
 func _on_hold_slot_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		SoundManager.play_sfx("button_press")
@@ -54,6 +69,9 @@ func set_cell_size(board_cell_size: float) -> void:
 		_hold_slot.cell_size = _tray_cell_size
 		_hold_slot.custom_minimum_size = Vector2(70, _tray_cell_size * 3 + 24)
 		_hold_slot.queue_redraw()
+	if _next_preview:
+		_next_preview.cell_size = _tray_cell_size
+		_next_preview.queue_redraw()
 
 func update_hold_display(piece: BlockPiece, enabled: bool) -> void:
 	if _hold_slot:
@@ -295,3 +313,58 @@ class HoldSlot extends Control:
 				draw_line(from + dir * drawn, from + dir * (drawn + seg), color, width)
 			drawn += seg
 			drawing = not drawing
+
+
+# ── Next Tray Preview inner class ──
+
+class NextPreview extends Control:
+	var preview_pieces: Array = []
+	var cell_size: float = 28.0
+
+	const PREVIEW_SCALE := 0.35
+	const LABEL_COLOR := Color(0.533, 0.533, 0.667)  # #8888AA
+	const PREVIEW_OPACITY := 0.5
+
+	func _draw() -> void:
+		if preview_pieces.is_empty():
+			return
+
+		# Subtle divider line at top
+		draw_line(Vector2(0, 0), Vector2(size.x, 0), Color(1, 1, 1, 0.05), 1.0)
+
+		# "NEXT" label
+		var font := ThemeDB.fallback_font
+		var font_size := 9
+		var label_text := "NEXT"
+		var label_y := 16.0
+		draw_string(font, Vector2(4, label_y), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LABEL_COLOR)
+
+		# Draw mini pieces in a row
+		var draw_cell: float = cell_size * PREVIEW_SCALE
+		var inset := 1.0
+		var label_width := font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x + 12.0
+		var piece_start_x := label_width
+		var piece_y := 4.0
+
+		for piece_idx in preview_pieces.size():
+			var piece: BlockPiece = preview_pieces[piece_idx]
+			if piece == null:
+				continue
+			var piece_w: float = piece.width * draw_cell
+			var piece_h: float = piece.height * draw_cell
+			var offset_y := piece_y + (size.y - piece_y - piece_h) / 2.0
+
+			var base_color := AppColors.get_block_color(piece.color)
+			base_color.a = PREVIEW_OPACITY
+
+			for row_idx in piece.shape.size():
+				for col_idx in piece.shape[row_idx].size():
+					if piece.shape[row_idx][col_idx] == 1:
+						var cx: float = piece_start_x + col_idx * draw_cell
+						var cy: float = offset_y + row_idx * draw_cell
+						var bg_rect := Rect2(
+							Vector2(cx + inset, cy + inset),
+							Vector2(draw_cell - inset * 2, draw_cell - inset * 2))
+						DrawUtils.draw_bubble_block(self, bg_rect, base_color, 0.08, 1.0)
+
+			piece_start_x += piece_w + 12.0

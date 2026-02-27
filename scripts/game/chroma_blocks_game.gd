@@ -22,6 +22,7 @@ var _had_perfect_clear := false  # 퍼펙트 클리어 발생 여부 (업적용)
 var _hit_stop_duration := 0.0  # 현재 진행 중인 히트 스톱 잔여 시간
 var _hit_stop_id := 0  # Monotonic counter to track the active hit stop
 var _game_orbs: Array = []
+var _next_tray_pieces: Array = []
 
 func _ready() -> void:
 	_state = GameState.new()
@@ -103,12 +104,14 @@ func _start_new_game(daily: bool) -> void:
 
 		var tray := _piece_gen.generate_tray(_state.level, _state.board)
 		_state.tray_pieces = tray
+		_next_tray_pieces = _piece_gen.generate_tray(_state.level, _state.board)
 
 		board_renderer.enable_gems()
 		board_renderer.update_from_state(_state.board)
 		board_renderer.update_crisis_state(_state.board)
 		piece_tray.populate_tray(tray)
 		piece_tray.update_hold_display(_state.held_piece, not _state.hold_used_this_tray)
+		piece_tray.update_next_preview(_next_tray_pieces)
 		hud.update_from_state(_state)
 
 		home_screen.visible = false
@@ -143,6 +146,8 @@ func continue_game() -> void:
 		board_renderer.update_from_state(_state.board)
 		piece_tray.populate_tray(_state.tray_pieces)
 		piece_tray.update_hold_display(_state.held_piece, not _state.hold_used_this_tray)
+		_next_tray_pieces = _piece_gen.generate_tray(_state.level, _state.board)
+		piece_tray.update_next_preview(_next_tray_pieces)
 		hud.update_from_state(_state)
 
 		home_screen.visible = false
@@ -624,10 +629,13 @@ func _on_hold_pressed() -> void:
 
 func _refill_tray() -> void:
 	_state.hold_used_this_tray = false
-	var new_tray := _piece_gen.generate_tray(_state.level, _state.board)
+	# Use pre-generated next tray, then generate a new preview
+	var new_tray: Array = _next_tray_pieces if not _next_tray_pieces.is_empty() else _piece_gen.generate_tray(_state.level, _state.board)
 	_state.tray_pieces = new_tray
+	_next_tray_pieces = _piece_gen.generate_tray(_state.level, _state.board)
 	piece_tray.populate_tray(new_tray, true)
 	piece_tray.update_hold_display(_state.held_piece, true)
+	piece_tray.update_next_preview(_next_tray_pieces)
 	hud.update_from_state(_state)
 	_check_game_over()
 
@@ -833,11 +841,13 @@ func _continue_after_ad() -> void:
 	_state.hold_used_this_tray = false
 	var new_tray := _piece_gen.generate_tray(_state.level, _state.board)
 	_state.tray_pieces = new_tray
+	_next_tray_pieces = _piece_gen.generate_tray(_state.level, _state.board)
 
 	board_renderer.update_from_state(_state.board)
 	board_renderer.update_crisis_state(_state.board)
 	piece_tray.populate_tray(new_tray, true)
 	piece_tray.update_hold_display(_state.held_piece, true)
+	piece_tray.update_next_preview(_next_tray_pieces)
 	hud.update_from_state(_state)
 
 
