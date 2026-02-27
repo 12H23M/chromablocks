@@ -10,6 +10,8 @@ var status: int = Enums.GameStatus.READY
 var high_score: int = 0
 var blocks_placed: int = 0
 var max_combo: int = 0
+var held_piece: BlockPiece = null
+var hold_used_this_tray: bool = false
 
 
 func _init() -> void:
@@ -27,6 +29,8 @@ func reset() -> void:
 	status = Enums.GameStatus.READY
 	blocks_placed = 0
 	max_combo = 0
+	held_piece = null
+	hold_used_this_tray = false
 
 
 func apply_turn_result(board_new: BoardState, score_total: int, lines_cleared_delta: int,

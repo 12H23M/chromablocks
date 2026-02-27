@@ -51,7 +51,7 @@ func _ready() -> void:
 	home_screen.settings_pressed.connect(_show_settings)
 	home_screen.how_to_play_pressed.connect(_show_tutorial)
 	settings_screen.closed.connect(_hide_settings)
-
+	piece_tray.hold_pressed.connect(_on_hold_pressed)
 
 	var pause_btn := hud.get_node_or_null("TopBar/PauseButton")
 	if pause_btn:
@@ -108,8 +108,8 @@ func _start_new_game(daily: bool) -> void:
 		board_renderer.update_from_state(_state.board)
 		board_renderer.update_crisis_state(_state.board)
 		piece_tray.populate_tray(tray)
+		piece_tray.update_hold_display(_state.held_piece, not _state.hold_used_this_tray)
 		hud.update_from_state(_state)
-	
 
 		home_screen.visible = false
 		home_screen.modulate.a = 1.0
@@ -142,8 +142,8 @@ func continue_game() -> void:
 		hud.reset_new_best()
 		board_renderer.update_from_state(_state.board)
 		piece_tray.populate_tray(_state.tray_pieces)
+		piece_tray.update_hold_display(_state.held_piece, not _state.hold_used_this_tray)
 		hud.update_from_state(_state)
-	
 
 		home_screen.visible = false
 		home_screen.modulate.a = 1.0
@@ -596,10 +596,38 @@ func _on_cell_tapped(gx: int, gy: int) -> void:
 	state_changed.emit(_state)
 
 
+func _on_hold_pressed() -> void:
+	if _state.status != Enums.GameStatus.PLAYING:
+		return
+	if _state.hold_used_this_tray:
+		return
+	if _state.tray_pieces.is_empty():
+		return
+	# Pick first available piece from tray
+	var tray_piece: BlockPiece = _state.tray_pieces[0]
+	if _state.held_piece == null:
+		# Empty hold: piece goes to hold, tray loses one piece
+		_state.held_piece = tray_piece
+		_state.tray_pieces.erase(tray_piece)
+	else:
+		# Swap: held ↔ tray piece
+		var old_held: BlockPiece = _state.held_piece
+		_state.held_piece = tray_piece
+		_state.tray_pieces[0] = old_held
+	_state.hold_used_this_tray = true
+	piece_tray.populate_tray(_state.tray_pieces)
+	piece_tray.update_hold_display(_state.held_piece, false)
+	SoundManager.play_sfx("block_place")
+	HapticManager.light()
+	_check_game_over()
+	state_changed.emit(_state)
+
 func _refill_tray() -> void:
+	_state.hold_used_this_tray = false
 	var new_tray := _piece_gen.generate_tray(_state.level, _state.board)
 	_state.tray_pieces = new_tray
 	piece_tray.populate_tray(new_tray, true)
+	piece_tray.update_hold_display(_state.held_piece, true)
 	hud.update_from_state(_state)
 	_check_game_over()
 
@@ -802,12 +830,14 @@ func _continue_after_ad() -> void:
 	_state.status = Enums.GameStatus.PLAYING
 
 	# Refill tray
+	_state.hold_used_this_tray = false
 	var new_tray := _piece_gen.generate_tray(_state.level, _state.board)
 	_state.tray_pieces = new_tray
 
 	board_renderer.update_from_state(_state.board)
 	board_renderer.update_crisis_state(_state.board)
 	piece_tray.populate_tray(new_tray, true)
+	piece_tray.update_hold_display(_state.held_piece, true)
 	hud.update_from_state(_state)
 
 
