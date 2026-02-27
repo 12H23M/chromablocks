@@ -8,6 +8,7 @@ signal double_score_ad_pressed()
 @onready var final_score: Label = $Content/ScoreCard/CardVBox/FinalScoreValue
 @onready var best_score_label: Label = $Content/ScoreCard/CardVBox/BestScoreLabel
 @onready var new_best_badge: PanelContainer = $Content/ScoreCard/CardVBox/NewBestBadge
+@onready var near_miss_label: Label = $Content/ScoreCard/CardVBox/NearMissLabel
 @onready var lines_value: Label = $Content/ScoreCard/CardVBox/Stats/LinesBox/LinesValue
 @onready var blocks_value: Label = $Content/ScoreCard/CardVBox/Stats/BlocksBox/BlocksValue
 @onready var combos_value: Label = $Content/ScoreCard/CardVBox/Stats/CombosBox/CombosValue
@@ -87,6 +88,15 @@ func show_result(state: GameState) -> void:
 	best_score_label.text = "BEST: " + FormatUtils.format_number(best)
 	best_score_label.visible = true
 	new_best_badge.visible = is_new_best
+
+	# Near-miss feedback: within 20% of high score but didn't beat it
+	near_miss_label.visible = false
+	if not is_new_best and state.high_score > 0:
+		var threshold: float = state.high_score * 0.8
+		if state.score >= int(threshold) and state.score > 0:
+			var difference: int = state.high_score - state.score
+			near_miss_label.text = "최고 기록까지 %d점!" % difference
+			near_miss_label.visible = true
 
 	# Grade setup (hidden initially)
 	var grade_str: String = _get_grade(state.score)

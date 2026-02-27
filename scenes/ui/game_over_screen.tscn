@@ -22,32 +22,30 @@ shadow_color = Color(0, 0, 0, 0.3)
 shadow_size = 12
 
 [sub_resource type="StyleBoxFlat" id="play_again_style"]
-bg_color = Color(0.42, 0.77, 0.54, 1)
-corner_radius_top_left = 20
-corner_radius_top_right = 20
-corner_radius_bottom_right = 20
-corner_radius_bottom_left = 20
+bg_color = Color(0.486, 0.227, 0.929, 1)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
 content_margin_left = 28.0
 content_margin_top = 18.0
 content_margin_right = 28.0
 content_margin_bottom = 18.0
 border_width_bottom = 6
-border_color = Color(0.1, 0.48, 0.22, 1)
-shadow_color = Color(0.42, 0.77, 0.54, 0.4)
+border_color = Color(0.38, 0.15, 0.78, 1)
+shadow_color = Color(0.659, 0.333, 0.969, 0.4)
 shadow_size = 10
 
 [sub_resource type="StyleBoxFlat" id="home_btn_style"]
-bg_color = Color(1, 1, 1, 0.08)
-corner_radius_top_left = 16
-corner_radius_top_right = 16
-corner_radius_bottom_right = 16
-corner_radius_bottom_left = 16
+bg_color = Color(0, 0, 0, 0)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 content_margin_left = 24.0
-content_margin_top = 12.0
+content_margin_top = 8.0
 content_margin_right = 24.0
-content_margin_bottom = 12.0
-border_width_bottom = 3
-border_color = Color(0, 0, 0, 0.2)
+content_margin_bottom = 8.0
 
 [sub_resource type="StyleBoxFlat" id="ad_btn_style"]
 bg_color = Color(1, 0.78, 0.32, 0.15)
@@ -185,6 +183,13 @@ theme_override_font_sizes/font_size = 12
 theme_override_colors/font_color = Color(1, 0.84, 0, 1)
 text = "★ NEW BEST!"
 
+[node name="NearMissLabel" type="Label" parent="Content/ScoreCard/CardVBox"]
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(1, 0.84, 0, 1)
+horizontal_alignment = 1
+
 [node name="Divider" type="ColorRect" parent="Content/ScoreCard/CardVBox"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 1)
@@ -281,7 +286,7 @@ theme_override_constants/separation = 10
 
 [node name="PlayAgainButton" type="Button" parent="Content/ButtonSection"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(280, 56)
 theme_override_styles/normal = SubResource("play_again_style")
 theme_override_styles/hover = SubResource("play_again_style")
 theme_override_styles/pressed = SubResource("play_again_style")
@@ -292,11 +297,11 @@ text = "PLAY AGAIN"
 
 [node name="HomeButton" type="Button" parent="Content/ButtonSection"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 44)
+custom_minimum_size = Vector2(0, 32)
 theme_override_styles/normal = SubResource("home_btn_style")
 theme_override_styles/hover = SubResource("home_btn_style")
 theme_override_styles/pressed = SubResource("home_btn_style")
 theme_override_styles/focus = SubResource("home_btn_style")
-theme_override_colors/font_color = Color(0.61, 0.54, 0.77, 1)
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
 theme_override_font_sizes/font_size = 14
 text = "HOME"
