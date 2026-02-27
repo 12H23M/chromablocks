@@ -36,32 +36,37 @@ func show_chain(cascade: int, center_pos: Vector2) -> void:
 		main_color = Color("FFA500")  # amber
 		sub_text = "CHAIN!"
 
-	var scale_f := 0.9 + cascade * 0.2
+	var scale_f := 0.9 + cascade * 0.15
+	var font: Font = load("res://assets/fonts/Fredoka-Bold.ttf") as Font
 
 	_label = Label.new()
 	_label.text = "CHAIN x%d" % cascade
-	_label.add_theme_font_size_override("font_size", int(46 * scale_f))
+	_label.add_theme_font_size_override("font_size", int(38 * scale_f))
 	_label.add_theme_color_override("font_color", main_color)
 	_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
-	_label.add_theme_constant_override("outline_size", 8)
+	_label.add_theme_constant_override("outline_size", 7)
 	_label.add_theme_color_override("font_shadow_color", Color(main_color.r, main_color.g, main_color.b, 0.4))
 	_label.add_theme_constant_override("shadow_offset_x", 0)
-	_label.add_theme_constant_override("shadow_offset_y", 3)
+	_label.add_theme_constant_override("shadow_offset_y", 2)
+	if font:
+		_label.add_theme_font_override("font", font)
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_label.position = Vector2(0, _center.y - 30 * scale_f)
-	_label.size = Vector2(size.x, 55 * scale_f)
+	_label.position = Vector2(0, _center.y - 25 * scale_f)
+	_label.size = Vector2(size.x, 50 * scale_f)
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_label)
 
 	_sub_label = Label.new()
 	_sub_label.text = sub_text
-	_sub_label.add_theme_font_size_override("font_size", int(22 * scale_f))
-	_sub_label.add_theme_color_override("font_color", Color(main_color, 0.8))
-	_sub_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.7))
-	_sub_label.add_theme_constant_override("outline_size", 5)
+	_sub_label.add_theme_font_size_override("font_size", int(18 * scale_f))
+	_sub_label.add_theme_color_override("font_color", Color(main_color, 0.7))
+	_sub_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.6))
+	_sub_label.add_theme_constant_override("outline_size", 4)
+	if font:
+		_sub_label.add_theme_font_override("font", font)
 	_sub_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_sub_label.position = Vector2(0, _center.y + 25 * scale_f)
-	_sub_label.size = Vector2(size.x, 30 * scale_f)
+	_sub_label.position = Vector2(0, _center.y + 20 * scale_f)
+	_sub_label.size = Vector2(size.x, 26 * scale_f)
 	_sub_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_sub_label)
 

@@ -44,30 +44,44 @@ static func draw_ellipse(canvas: CanvasItem, center: Vector2, radius: Vector2, c
 
 
 ## Draw a complete bubble-style block
-static func draw_bubble_block(canvas: CanvasItem, rect: Rect2, base_color: Color, shadow_strength: float = 0.12, shadow_offset_y: float = 2.0) -> void:
+static func draw_bubble_block(canvas: CanvasItem, rect: Rect2, base_color: Color, shadow_strength: float = 0.15, shadow_offset_y: float = 2.0) -> void:
 	if rect.size.x < 1.0 or rect.size.y < 1.0:
 		return
 
-	# Shadow
+	var cx: float = rect.position.x + rect.size.x / 2.0
+	var cy: float = rect.position.y + rect.size.y / 2.0
+	var w: float = rect.size.x
+	var h: float = rect.size.y
+
+	# Shadow (soft, slightly larger)
 	var shadow_rect := Rect2(rect.position + Vector2(0, shadow_offset_y), rect.size)
 	draw_rounded_rect(canvas, shadow_rect, Color(0.0, 0.0, 0.0, shadow_strength))
 
-	# Base
+	# Base — slightly brighter center for depth
 	draw_rounded_rect(canvas, rect, base_color)
 
-	# Bottom darkening (3D depth)
-	var dark_color := Color(base_color.r * 0.75, base_color.g * 0.75, base_color.b * 0.75, 0.3)
-	var bottom_h := rect.size.y * 0.4
+	# Bottom darkening (3D depth) — darker, rounder feel
+	var dark_color := Color(base_color.r * 0.6, base_color.g * 0.6, base_color.b * 0.6, 0.35)
+	var bottom_h := h * 0.45
 	var bottom_rect := Rect2(
-		Vector2(rect.position.x, rect.position.y + rect.size.y - bottom_h),
-		Vector2(rect.size.x, bottom_h))
-	draw_rounded_rect(canvas, bottom_rect, dark_color, true, 1.0, 0.3)
+		Vector2(rect.position.x, rect.position.y + h - bottom_h),
+		Vector2(w, bottom_h))
+	draw_rounded_rect(canvas, bottom_rect, dark_color, true, 1.0, 0.35)
 
-	# Top shine — subtle horizontal band (top 30%, full width minus 3px padding)
+	# Water drop highlight — circular white glow in upper-left
+	var highlight_cx: float = rect.position.x + w * 0.35
+	var highlight_cy: float = rect.position.y + h * 0.30
+	var highlight_r: float = w * 0.22
+	# Radial gradient simulation (3 circles)
+	canvas.draw_circle(Vector2(highlight_cx, highlight_cy), highlight_r, Color(1.0, 1.0, 1.0, 0.35))
+	canvas.draw_circle(Vector2(highlight_cx, highlight_cy), highlight_r * 0.6, Color(1.0, 1.0, 1.0, 0.25))
+	canvas.draw_circle(Vector2(highlight_cx, highlight_cy), highlight_r * 0.25, Color(1.0, 1.0, 1.0, 0.4))
+
+	# Top shine band — curved feel
 	var shine_rect := Rect2(
-		rect.position + Vector2(3.0, 0.0),
-		Vector2(rect.size.x - 6.0, rect.size.y * 0.30))
-	draw_rounded_rect(canvas, shine_rect, Color(1.0, 1.0, 1.0, 0.20), true, 1.0, 0.3)
+		rect.position + Vector2(4.0, 2.0),
+		Vector2(w - 8.0, h * 0.22))
+	draw_rounded_rect(canvas, shine_rect, Color(1.0, 1.0, 1.0, 0.15), true, 1.0, 0.3)
 
-	# Rim light
-	draw_rounded_rect(canvas, rect, Color(1.0, 1.0, 1.0, 0.05), false)
+	# Rim light (subtle border glow)
+	draw_rounded_rect(canvas, rect, Color(1.0, 1.0, 1.0, 0.08), false)
