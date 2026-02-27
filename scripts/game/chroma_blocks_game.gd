@@ -51,7 +51,7 @@ func _ready() -> void:
 	home_screen.settings_pressed.connect(_show_settings)
 	home_screen.how_to_play_pressed.connect(_show_tutorial)
 	settings_screen.closed.connect(_hide_settings)
-	piece_tray.swap_pressed.connect(_on_swap_pressed)
+
 
 	var pause_btn := hud.get_node_or_null("TopBar/PauseButton")
 	if pause_btn:
@@ -109,7 +109,7 @@ func _start_new_game(daily: bool) -> void:
 		board_renderer.update_crisis_state(_state.board)
 		piece_tray.populate_tray(tray)
 		hud.update_from_state(_state)
-		piece_tray.update_swap_state(_state.swaps_remaining)
+	
 
 		home_screen.visible = false
 		home_screen.modulate.a = 1.0
@@ -143,7 +143,7 @@ func continue_game() -> void:
 		board_renderer.update_from_state(_state.board)
 		piece_tray.populate_tray(_state.tray_pieces)
 		hud.update_from_state(_state)
-		piece_tray.update_swap_state(_state.swaps_remaining)
+	
 
 		home_screen.visible = false
 		home_screen.modulate.a = 1.0
@@ -596,32 +596,11 @@ func _on_cell_tapped(gx: int, gy: int) -> void:
 	state_changed.emit(_state)
 
 
-func _on_swap_pressed() -> void:
-	if _state.status != Enums.GameStatus.PLAYING:
-		return
-	if _state.swaps_remaining <= 0 or _state.tray_pieces.is_empty():
-		return
-	# Replace the first remaining piece with a new random one
-	var old_piece: BlockPiece = _state.tray_pieces[0]
-	var new_tray_single := _piece_gen.generate_tray(_state.level, _state.board)
-	var new_piece: BlockPiece = new_tray_single[0]
-	_state.tray_pieces[0] = new_piece
-	_state.swaps_remaining -= 1
-	piece_tray.populate_tray(_state.tray_pieces, true)
-	hud.update_from_state(_state)
-	piece_tray.update_swap_state(_state.swaps_remaining)
-	SoundManager.play_sfx("block_place")
-	HapticManager.light()
-	AnalyticsManager.swap_used()
-	_check_game_over()
-
 func _refill_tray() -> void:
 	var new_tray := _piece_gen.generate_tray(_state.level, _state.board)
 	_state.tray_pieces = new_tray
-	_state.swaps_remaining = 1
 	piece_tray.populate_tray(new_tray, true)
 	hud.update_from_state(_state)
-	piece_tray.update_swap_state(_state.swaps_remaining)
 	_check_game_over()
 
 func _check_game_over() -> void:
@@ -830,7 +809,7 @@ func _continue_after_ad() -> void:
 	board_renderer.update_crisis_state(_state.board)
 	piece_tray.populate_tray(new_tray, true)
 	hud.update_from_state(_state)
-	piece_tray.update_swap_state(_state.swaps_remaining)
+
 
 	ScreenTransition.fade_out(game_over_screen)
 	state_changed.emit(_state)
@@ -840,7 +819,7 @@ func _double_score_after_ad() -> void:
 	_state.score += bonus
 	SaveManager.save_end_of_game(bonus)  # Save additional score
 	hud.update_from_state(_state)
-	piece_tray.update_swap_state(_state.swaps_remaining)
+
 	game_over_screen.show_result(_state)
 
 ## Pre-fill board with scattered blocks for an exciting start.

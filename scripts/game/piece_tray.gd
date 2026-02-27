@@ -3,7 +3,6 @@ extends VBoxContainer
 signal piece_drag_started(piece_node: Control)
 signal piece_drag_moved(piece_node: Control, global_pos: Vector2)
 signal piece_drag_ended(piece_node: Control, global_pos: Vector2)
-signal swap_pressed()
 
 const DraggablePieceScene := preload("res://scenes/game/draggable_piece.tscn")
 const CARD_RADIUS := 16
@@ -16,16 +15,10 @@ var _card_style: StyleBoxFlat
 var _plate_style: StyleBoxFlat
 
 @onready var _pieces_container: HBoxContainer = $PieceSlots
-@onready var _swap_button: Button = $SwapRow/SwapButton
 
 func _ready() -> void:
 	_setup_card_style()
 	_setup_plate_style()
-	# Hide swap feature for now
-	$SwapRow.visible = false
-	_swap_button.pressed.connect(func():
-		SoundManager.play_sfx("button_press")
-		swap_pressed.emit())
 
 func _setup_card_style() -> void:
 	_card_style = StyleBoxFlat.new()
@@ -39,11 +32,6 @@ func set_cell_size(board_cell_size: float) -> void:
 	_tray_cell_size = board_cell_size * 0.70
 	if _pieces_container:
 		_pieces_container.custom_minimum_size.y = _tray_cell_size * 3 + 24
-
-func update_swap_state(swaps: int) -> void:
-	_swap_button.text = "Swap (%d)" % swaps
-	_swap_button.disabled = swaps <= 0
-	_swap_button.modulate.a = 1.0 if swaps > 0 else 0.4
 
 func populate_tray(pieces: Array, animate: bool = false) -> void:
 	clear_tray()

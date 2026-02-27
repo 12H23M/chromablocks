@@ -1,24 +1,6 @@
-[gd_scene load_steps=4 format=3 uid="uid://tray001"]
+[gd_scene load_steps=2 format=3 uid="uid://tray001"]
 
 [ext_resource type="Script" path="res://scripts/game/piece_tray.gd" id="1_tray"]
-
-[sub_resource type="StyleBoxFlat" id="swap_btn_style"]
-bg_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-content_margin_left = 12.0
-content_margin_top = 6.0
-content_margin_right = 12.0
-content_margin_bottom = 6.0
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.957, 0.62, 0.043, 0.5)
-
-[sub_resource type="StyleBoxEmpty" id="spacer_style"]
 
 [node name="PieceTray" type="VBoxContainer"]
 layout_mode = 2
@@ -26,26 +8,6 @@ size_flags_horizontal = 3
 size_flags_vertical = 4
 theme_override_constants/separation = 8
 script = ExtResource("1_tray")
-
-[node name="SwapRow" type="HBoxContainer" parent="."]
-layout_mode = 2
-theme_override_constants/separation = 0
-
-[node name="SwapButton" type="Button" parent="SwapRow"]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 32)
-size_flags_vertical = 4
-theme_override_styles/normal = SubResource("swap_btn_style")
-theme_override_styles/hover = SubResource("swap_btn_style")
-theme_override_styles/pressed = SubResource("swap_btn_style")
-theme_override_styles/focus = SubResource("swap_btn_style")
-theme_override_colors/font_color = Color(0.957, 0.62, 0.043, 1)
-theme_override_font_sizes/font_size = 12
-text = "Swap (1)"
-
-[node name="Spacer" type="Control" parent="SwapRow"]
-layout_mode = 2
-size_flags_horizontal = 3
 
 [node name="PieceSlots" type="HBoxContainer" parent="."]
 layout_mode = 2

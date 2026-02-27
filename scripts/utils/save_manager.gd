@@ -124,7 +124,6 @@ func save_active_game(state: GameState) -> void:
 	_config.set_value(ACTIVE_SECTION, "combo", state.combo)
 	_config.set_value(ACTIVE_SECTION, "blocks_placed", state.blocks_placed)
 	_config.set_value(ACTIVE_SECTION, "max_combo", state.max_combo)
-	_config.set_value(ACTIVE_SECTION, "swaps_remaining", state.swaps_remaining)
 
 	# Board grid — Array of Array of Dictionary
 	var grid_data: Array = []
@@ -170,7 +169,6 @@ func load_active_game() -> GameState:
 	state.combo = _config.get_value(ACTIVE_SECTION, "combo", 0)
 	state.blocks_placed = _config.get_value(ACTIVE_SECTION, "blocks_placed", 0)
 	state.max_combo = _config.get_value(ACTIVE_SECTION, "max_combo", 0)
-	state.swaps_remaining = _config.get_value(ACTIVE_SECTION, "swaps_remaining", 1)
 
 	# Board grid — reject saves with mismatched dimensions
 	var cols: int = _config.get_value(ACTIVE_SECTION, "board_columns", GameConstants.BOARD_COLUMNS)

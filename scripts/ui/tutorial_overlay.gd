@@ -33,9 +33,9 @@ func _ready() -> void:
 			"hint": "High combos = massive score multipliers.",
 		},
 		{
-			"title": "Swap",
-			"body": "Use the Swap button below the board\nto replace the first piece with a new one.",
-			"hint": "You get 1 swap per tray refill — use it wisely!",
+			"title": "Hold",
+			"body": "Tap the Hold slot to save a piece for later.\nSwap it back when you need it!",
+			"hint": "You get 1 hold per tray — use it strategically!",
 		},
 		{
 			"title": "Game Over",
