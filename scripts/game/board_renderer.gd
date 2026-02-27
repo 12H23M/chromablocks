@@ -212,6 +212,12 @@ func play_place_effect(cells: Array) -> void:
 # Cache cell colors before board state update for clear animations
 var _cached_cell_colors: Dictionary = {}
 
+func cache_extra_cell_color(pos: Vector2i) -> void:
+	if pos not in _cached_cell_colors:
+		if pos.x >= 0 and pos.x < GameConstants.BOARD_COLUMNS and pos.y >= 0 and pos.y < GameConstants.BOARD_ROWS:
+			_cached_cell_colors[pos] = _get_cell_light_color(pos.x, pos.y)
+
+
 func cache_cell_colors_for_clear(rows: Array, cols: Array) -> void:
 	_cached_cell_colors.clear()
 	for row in rows:
@@ -661,6 +667,138 @@ func clear_near_miss_hints() -> void:
 	for pos in _cluster_hint_cells:
 		_cells[pos.y][pos.x].clear_cluster_hint()
 	_cluster_hint_cells.clear()
+
+
+# --- Anticipation Phase (dim + pulse before clear) ---
+
+var _anticipation_tween: Tween = null
+
+func play_clear_anticipation(rows: Array, cols: Array) -> void:
+	# Dim board modulate over 0.1s
+	if _anticipation_tween and _anticipation_tween.is_valid():
+		_anticipation_tween.kill()
+	_anticipation_tween = create_tween()
+	_anticipation_tween.set_process_mode(Tween.TWEEN_PROCESS_IDLE)
+	_anticipation_tween.tween_property(self, "modulate:a", 0.85, 0.1)
+	# Pulse white overlay on affected cells
+	var affected: Dictionary = {}
+	for row in rows:
+		for x in GameConstants.BOARD_COLUMNS:
+			affected[Vector2i(x, row)] = true
+	for col in cols:
+		for y in GameConstants.BOARD_ROWS:
+			affected[Vector2i(col, y)] = true
+	for pos in affected:
+		var p: Vector2i = pos
+		if p.x >= 0 and p.x < GameConstants.BOARD_COLUMNS and p.y >= 0 and p.y < GameConstants.BOARD_ROWS:
+			_cells[p.y][p.x].play_anticipation_pulse()
+
+
+func end_clear_anticipation() -> void:
+	if _anticipation_tween and _anticipation_tween.is_valid():
+		_anticipation_tween.kill()
+	_anticipation_tween = create_tween()
+	_anticipation_tween.set_process_mode(Tween.TWEEN_PROCESS_IDLE)
+	_anticipation_tween.tween_property(self, "modulate:a", 1.0, 0.15)
+
+
+# --- Camera Zoom Pulse ---
+
+var _zoom_tween: Tween = null
+
+func play_camera_zoom(zoom_in: float, duration: float) -> void:
+	if _zoom_tween and _zoom_tween.is_valid():
+		_zoom_tween.kill()
+	# Set pivot to board center
+	pivot_offset = size / 2.0
+	_zoom_tween = create_tween()
+	_zoom_tween.set_process_mode(Tween.TWEEN_PROCESS_IDLE)
+	var half_dur: float = duration / 2.0
+	_zoom_tween.tween_property(self, "scale", Vector2(zoom_in, zoom_in), half_dur) \
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	_zoom_tween.tween_property(self, "scale", Vector2.ONE, half_dur) \
+		.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+
+
+# --- Blast Screen Flash ---
+
+func play_blast_flash(color_idx: int) -> void:
+	# Create a full-screen flash overlay via a temporary Control in parent
+	var flash_overlay := Control.new()
+	flash_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	flash_overlay.top_level = true
+	flash_overlay.z_index = 50
+	var vp_size := get_viewport_rect().size
+	flash_overlay.size = vp_size
+	flash_overlay.position = Vector2.ZERO
+	var effect_parent: Node = get_parent() if get_parent() != null else self
+	effect_parent.add_child(flash_overlay)
+
+	# White flash phase
+	var white_panel := ColorRect.new()
+	white_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	white_panel.size = vp_size
+	white_panel.color = Color(1.0, 1.0, 1.0, 0.0)
+	flash_overlay.add_child(white_panel)
+
+	# Colored flash phase
+	var blast_color: Color = AppColors.get_block_light_color(color_idx) if color_idx >= 0 else Color.WHITE
+	var color_panel := ColorRect.new()
+	color_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	color_panel.size = vp_size
+	color_panel.color = Color(blast_color.r, blast_color.g, blast_color.b, 0.0)
+	flash_overlay.add_child(color_panel)
+
+	var tween := flash_overlay.create_tween()
+	tween.set_process_mode(Tween.TWEEN_PROCESS_IDLE)
+	# White flash: 0→0.15→0 over 0.15s
+	tween.tween_property(white_panel, "color:a", 0.15, 0.05)
+	tween.tween_property(white_panel, "color:a", 0.0, 0.10)
+	# Colored flash: 0→0.1→0 over 0.2s
+	tween.tween_property(color_panel, "color:a", 0.1, 0.07)
+	tween.tween_property(color_panel, "color:a", 0.0, 0.13)
+	# Cleanup
+	tween.tween_callback(flash_overlay.queue_free)
+
+
+# --- Chain Visual Cascade ---
+
+func play_chain_cascade_group(group: Array, stagger_delay: float) -> void:
+	# Highlight cells in this group with their color glow, then pop them
+	var delay: float = 0.0
+	for cell_pos in group:
+		var p: Vector2i = cell_pos
+		if p.x >= 0 and p.x < GameConstants.BOARD_COLUMNS and p.y >= 0 and p.y < GameConstants.BOARD_ROWS:
+			var cached_color: Color = _cached_cell_colors.get(p, Color.WHITE)
+			_cells[p.y][p.x].play_chain_pop(delay, cached_color)
+			delay += 0.02
+
+	# Particles for this group
+	var positions: Array = []
+	var colors: Array = []
+	for cell_pos in group:
+		var p: Vector2i = cell_pos
+		positions.append(Vector2(p.x * _cell_size, p.y * _cell_size))
+		colors.append(_cached_cell_colors.get(p, Color.WHITE))
+	if not positions.is_empty():
+		_emit_particles_and_shockwave(positions, colors, 1.0, _cell_size * 3.0)
+
+
+# --- Blast Cell Explosion ---
+
+func play_blast_cell_explosion(removed_positions: Array, blast_color_idx: int) -> void:
+	var positions: Array = []
+	var colors: Array = []
+	var blast_color: Color = AppColors.get_block_light_color(blast_color_idx) if blast_color_idx >= 0 else Color.WHITE
+	for pos in removed_positions:
+		var p: Vector2i = pos
+		if p.x >= 0 and p.x < GameConstants.BOARD_COLUMNS and p.y >= 0 and p.y < GameConstants.BOARD_ROWS:
+			positions.append(Vector2(p.x * _cell_size, p.y * _cell_size))
+			colors.append(blast_color)
+			# Scale up + fade on the cell
+			_cells[p.y][p.x].play_blast_explode()
+	if not positions.is_empty():
+		_emit_particles_and_shockwave(positions, colors, 2.0, _cell_size * 5.0)
 
 
 ## Perfect clear: wave of cell flashes radiating from center outward

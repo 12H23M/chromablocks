@@ -664,6 +664,117 @@ func _draw_freeze_icon(center: Vector2, r: float) -> void:
 	draw_polygon(highlight_tri, highlight_colors)
 
 
+# --- Anticipation pulse (white flash before clear) ---
+
+func play_anticipation_pulse() -> void:
+	var tween := create_tween()
+	tween.set_process_mode(Tween.TWEEN_PROCESS_IDLE)
+	var original_highlight := _highlight_color
+	# Pulse white overlay alpha 0→0.3→0 over 0.2s
+	tween.tween_method(func(t: float):
+		_highlight_color = Color(1.0, 1.0, 1.0, t * 0.3)
+		queue_redraw()
+	, 0.0, 1.0, 0.1).set_ease(Tween.EASE_OUT)
+	tween.tween_method(func(t: float):
+		_highlight_color = Color(1.0, 1.0, 1.0, t * 0.3)
+		queue_redraw()
+	, 1.0, 0.0, 0.1).set_ease(Tween.EASE_IN)
+	tween.tween_callback(func():
+		_highlight_color = original_highlight
+		queue_redraw()
+	)
+
+
+# --- Chain pop (glow color → scale up → shrink to 0) ---
+
+func play_chain_pop(delay: float, cached_color: Color) -> void:
+	_clear_color = cached_color
+	if _clear_tween and _clear_tween.is_valid():
+		_clear_tween.kill()
+	_occupied = false
+	_color = -1
+
+	var tween := create_tween()
+	_clear_tween = tween
+	tween.set_process_mode(Tween.TWEEN_PROCESS_IDLE)
+
+	if delay > 0.0:
+		tween.tween_interval(delay)
+
+	# Glow with cached color
+	tween.tween_callback(func():
+		_bg_color = cached_color
+		_glow_color = Color(cached_color.r, cached_color.g, cached_color.b, 0.5)
+		_border_color = cached_color
+		_scale_factor = 1.0
+		queue_redraw()
+	)
+	# Scale 1→1.3
+	tween.tween_property(self, "_scale_factor", 1.3, 0.06) \
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	# Scale 1.3→0 with fade
+	tween.tween_method(func(t: float):
+		_scale_factor = lerpf(0.0, 1.3, t)
+		_bg_color = cached_color.lerp(AppColors.EMPTY_CELL, 1.0 - t)
+		_glow_color.a = 0.5 * t
+		_border_color = cached_color.lerp(AppColors.EMPTY_BORDER, 1.0 - t)
+		queue_redraw()
+	, 1.0, 0.0, 0.12).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+
+	# Reset
+	tween.tween_callback(func():
+		_clear_tween = null
+		if not _occupied:
+			_glow_color = Color.TRANSPARENT
+			_bg_color = AppColors.EMPTY_CELL
+			_highlight_color = Color.TRANSPARENT
+			_border_color = AppColors.EMPTY_BORDER
+			_scale_factor = 1.0
+			queue_redraw()
+	)
+
+
+# --- Blast explode (scale up 1→1.5 while fading) ---
+
+func play_blast_explode() -> void:
+	if _clear_tween and _clear_tween.is_valid():
+		_clear_tween.kill()
+	_occupied = false
+	_color = -1
+
+	var tween := create_tween()
+	_clear_tween = tween
+	tween.set_process_mode(Tween.TWEEN_PROCESS_IDLE)
+
+	tween.tween_callback(func():
+		_bg_color = Color.WHITE
+		_glow_color = Color(1.0, 1.0, 1.0, 0.8)
+		_border_color = Color.WHITE
+		_scale_factor = 1.0
+		queue_redraw()
+	)
+	# Scale up + fade out simultaneously
+	tween.tween_method(func(t: float):
+		_scale_factor = lerpf(1.0, 1.5, t)
+		var alpha: float = 1.0 - t
+		_bg_color = Color(1.0, 1.0, 1.0, alpha)
+		_glow_color = Color(1.0, 1.0, 1.0, alpha * 0.8)
+		_border_color = Color(1.0, 1.0, 1.0, alpha)
+		queue_redraw()
+	, 0.0, 1.0, 0.15).set_ease(Tween.EASE_OUT)
+
+	tween.tween_callback(func():
+		_clear_tween = null
+		if not _occupied:
+			_glow_color = Color.TRANSPARENT
+			_bg_color = AppColors.EMPTY_CELL
+			_highlight_color = Color.TRANSPARENT
+			_border_color = AppColors.EMPTY_BORDER
+			_scale_factor = 1.0
+			queue_redraw()
+	)
+
+
 func _get_special_glow_color() -> Color:
 	match _special_type:
 		GameConstants.SPECIAL_TILE_BOMB:

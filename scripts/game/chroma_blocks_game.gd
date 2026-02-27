@@ -390,6 +390,20 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	if clear_result["has_clears"]:
 		board_renderer.cache_cell_colors_for_clear(clear_result["rows"], clear_result["cols"])
 
+	# Also cache chain cell colors (cells are already empty in board, but cell_view still shows them)
+	var chain_groups: Array = chain_result["groups_per_cascade"]
+	for cascade_groups in chain_groups:
+		for group in cascade_groups:
+			for cell_pos in group:
+				var p: Vector2i = cell_pos
+				board_renderer.cache_extra_cell_color(p)
+
+	# Cache blast cell colors
+	var blast_positions: Array = blast_executed["removed_positions"]
+	for pos in blast_positions:
+		var p: Vector2i = pos
+		board_renderer.cache_extra_cell_color(p)
+
 	# Update board state (set_empty kills any running tweens)
 	board_renderer.update_from_state(board)
 	hud.update_from_state(_state)
@@ -433,8 +447,10 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 		"color_groups": color_result["groups"],
 		"combo": new_combo,
 		"chain_cascades": chain_result["cascades"],
+		"chain_groups_per_cascade": chain_result["groups_per_cascade"],
 		"blast_cells": blast_executed["cells_removed"],
 		"blast_color": blast_color,
+		"blast_positions": blast_executed["removed_positions"],
 		"score": score_result["total"],
 		"gx": gx,
 		"gy": gy,
@@ -463,16 +479,32 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 ## Plays visual/audio effects in a staggered sequence so the player can
 ## see each event individually instead of everything firing at once.
 ## All timers use ignore_time_scale=true so hit-stops don't freeze the sequence.
+##
+## Timeline:
+##   0ms   — Place bounce (if no clear)
+##  150ms  — Anticipation: board dims, affected cells pulse white
+##  400ms  — Line clear: staggered cell flash + shrink, sound, haptic, shake, zoom
+##  700ms  — Un-dim board, zoom out
+##  800ms  — Combo popup
+## 1100ms  — Chroma Chain: cascade groups pop in sequence
+## 1500ms  — Chroma Blast: screen flash, cells explode, popup
+## 2000ms  — Score cascade
 func _play_effects_sequence(ed: Dictionary) -> void:
 	var delay: float = 0.0
 
-	# Phase 1 (immediate): Place bounce if no line clear
+	# Phase 1 (0ms): Place bounce if no line clear
 	if not ed["has_clear"]:
 		board_renderer.play_place_bounce()
 
-	# Phase 2 (100ms): Line clear + color match
+	# Phase 2 (150ms): Anticipation — dim board + pulse affected cells
+	if ed["has_clear"]:
+		get_tree().create_timer(0.15, true, false, true).timeout.connect(func():
+			board_renderer.play_clear_anticipation(ed["clear_rows"], ed["clear_cols"])
+		)
+
+	# Phase 3 (400ms): Line clear + color match
 	if ed["has_clear"] or ed["has_color_match"]:
-		get_tree().create_timer(0.1, true, false, true).timeout.connect(func():
+		get_tree().create_timer(0.4, true, false, true).timeout.connect(func():
 			if ed["has_clear"]:
 				var lines: int = ed["lines_cleared"]
 				if lines >= 3:
@@ -484,12 +516,20 @@ func _play_effects_sequence(ed: Dictionary) -> void:
 				HapticManager.line_clear_burst(lines)
 				if lines >= 2:
 					_spawn_multi_clear_popup(lines)
+				# Screen shake based on line count
 				if lines >= 3:
 					board_renderer.play_screen_shake(9.0, 0.20)
 				elif lines >= 2:
 					board_renderer.play_screen_shake(6.0, 0.15)
 				else:
 					board_renderer.play_screen_shake(4.0, 0.10)
+				# Camera zoom pulse based on line count
+				var zoom_amount: float = 1.02
+				if lines >= 3:
+					zoom_amount = 1.06
+				elif lines >= 2:
+					zoom_amount = 1.04
+				board_renderer.play_camera_zoom(zoom_amount, 0.2)
 			if ed["has_color_match"]:
 				_apply_hit_stop(0.03)
 				board_renderer.play_color_match_effect(ed["color_groups"])
@@ -497,13 +537,20 @@ func _play_effects_sequence(ed: Dictionary) -> void:
 				HapticManager.color_match()
 		)
 		if ed["has_clear"]:
-			delay = 0.35
+			delay = 0.7
 		else:
-			delay = 0.20
+			delay = 0.55
 
-	# Phase 3: Combo
+	# Phase 4 (700ms): Un-dim board after line clear
+	if ed["has_clear"]:
+		get_tree().create_timer(0.7, true, false, true).timeout.connect(func():
+			board_renderer.end_clear_anticipation()
+		)
+
+	# Phase 5 (800ms): Combo popup
 	if ed["combo"] >= 1:
-		get_tree().create_timer(delay + 0.05, true, false, true).timeout.connect(func():
+		var combo_time: float = maxf(delay, 0.8)
+		get_tree().create_timer(combo_time, true, false, true).timeout.connect(func():
 			var combo: int = ed["combo"]
 			if combo >= 2:
 				SoundManager.play_combo_sfx(combo)
@@ -512,36 +559,60 @@ func _play_effects_sequence(ed: Dictionary) -> void:
 			if combo >= 3:
 				_apply_hit_stop(0.05)
 		)
-		delay += 0.25
+		delay = combo_time + 0.25
 
-	# Phase 4: Chroma Chain
+	# Phase 6 (1100ms): Chroma Chain — cascade groups pop in sequence
 	if ed["chain_cascades"] > 0:
-		get_tree().create_timer(delay + 0.05, true, false, true).timeout.connect(func():
-			var cascades: int = ed["chain_cascades"]
-			_apply_hit_stop(0.05)
-			_spawn_chain_popup(cascades)
-			SoundManager.play_chain_sound(cascades)
-			HapticManager.chroma_chain(cascades)
-			var shake_str: float = 5.0 + float(cascades) * 3.0
-			board_renderer.play_screen_shake(shake_str, 0.15 + cascades * 0.05)
-		)
-		delay += 0.25
+		var chain_start: float = maxf(delay, 1.1)
+		var groups_per_cascade: Array = ed["chain_groups_per_cascade"]
+		var group_delay: float = 0.0
+		for cascade_idx in ed["chain_cascades"]:
+			var groups: Array = groups_per_cascade[cascade_idx]
+			for group in groups:
+				var this_delay: float = chain_start + group_delay
+				var captured_group: Array = group
+				get_tree().create_timer(this_delay, true, false, true).timeout.connect(func():
+					board_renderer.play_chain_cascade_group(captured_group, 0.02)
+				)
+				group_delay += 0.2  # 0.2s between groups
 
-	# Phase 5: Chroma Blast
+		# Chain popup + sound after all groups
+		var chain_popup_time: float = chain_start + group_delay
+		var cascades_count: int = ed["chain_cascades"]
+		get_tree().create_timer(chain_popup_time, true, false, true).timeout.connect(func():
+			_apply_hit_stop(0.05)
+			_spawn_chain_popup(cascades_count)
+			SoundManager.play_chain_sound(cascades_count)
+			HapticManager.chroma_chain(cascades_count)
+			var shake_str: float = 5.0 + float(cascades_count) * 3.0
+			board_renderer.play_screen_shake(shake_str, 0.15 + cascades_count * 0.05)
+		)
+		delay = chain_popup_time + 0.2
+
+	# Phase 7 (1500ms): Chroma Blast — screen flash + cell explosion + popup
 	if ed["blast_cells"] > 0:
-		get_tree().create_timer(delay + 0.05, true, false, true).timeout.connect(func():
+		var blast_start: float = maxf(delay, 1.5)
+		var blast_color: int = ed["blast_color"]
+		var blast_positions: Array = ed["blast_positions"]
+		# Screen flash first
+		get_tree().create_timer(blast_start, true, false, true).timeout.connect(func():
+			board_renderer.play_blast_flash(blast_color)
+		)
+		# Cell explosion + popup slightly after flash
+		get_tree().create_timer(blast_start + 0.1, true, false, true).timeout.connect(func():
 			_apply_hit_stop(0.09)
-			_spawn_blast_popup(ed["blast_color"])
+			board_renderer.play_blast_cell_explosion(blast_positions, blast_color)
+			_spawn_blast_popup(blast_color)
 			SoundManager.play_blast_sound()
 			HapticManager.chroma_blast()
 			board_renderer.play_screen_shake(12.0, 0.30)
 		)
-		delay += 0.3
+		delay = blast_start + 0.4
 
-	# Phase 6: Score cascade (replaces single score popup)
+	# Phase 8 (2000ms): Score cascade
 	if ed["score"] > 0:
-		var cascade_delay: float = delay + 0.1
-		get_tree().create_timer(cascade_delay, true, false, true).timeout.connect(func():
+		var score_time: float = maxf(delay, 2.0)
+		get_tree().create_timer(score_time, true, false, true).timeout.connect(func():
 			_spawn_score_cascade(ed)
 		)
 
@@ -654,9 +725,11 @@ func _refill_tray() -> void:
 
 func _check_game_over() -> void:
 	if GameOverSystem.is_game_over(_state.board, _state.tray_pieces, _state.held_piece, _state.hold_used_this_tray):
-		# Ensure time_scale is restored if game over triggers during hit stop
+		# Ensure time_scale and board visuals are restored
 		Engine.time_scale = 1.0
 		_hit_stop_duration = 0.0
+		board_renderer.modulate.a = 1.0
+		board_renderer.scale = Vector2.ONE
 		_state.status = Enums.GameStatus.GAME_OVER
 		SaveManager.clear_active_game()
 		SaveManager.save_end_of_game(_state.score)
@@ -786,6 +859,7 @@ func _on_quit_to_home() -> void:
 	Engine.time_scale = 1.0
 	_hit_stop_duration = 0.0
 	board_renderer.modulate.a = 1.0
+	board_renderer.scale = Vector2.ONE
 	piece_tray.modulate.a = 1.0
 	ScreenTransition.fade_through_black(get_tree(), func() -> void:
 		board_renderer.disable_gems()
