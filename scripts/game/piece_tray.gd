@@ -25,6 +25,8 @@ func _ready() -> void:
 	_setup_plate_style()
 	_create_hold_slot()
 	_create_next_preview()
+	_hold_slot.visible = false
+	_next_preview.visible = false
 	# Hold and next preview are now active
 
 func _setup_card_style() -> void:
