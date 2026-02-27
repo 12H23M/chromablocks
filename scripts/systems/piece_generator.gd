@@ -139,11 +139,11 @@ const EXCLUDED_LV5: Array = [
 # ── DDA thresholds ──
 const DDA_RUSH_THRESHOLD := 0.30       # fill < 30% → rush mode (big pieces)
 const DDA_RUSH_CHANCE := 0.80           # 80% chance to use rush templates
-const DDA_MERCY_MILD := 0.65            # fill 65-80% → mild mercy
-const DDA_MERCY_STRONG := 0.80          # fill 80-90% → strong mercy
-const DDA_MERCY_CRITICAL := 0.90        # fill 90%+ → critical mercy
-const DDA_FIT_CHECK_CHANCE := 0.30      # placeable-only filter chance (65%+)
-const DDA_FIT_CRITICAL_CHANCE := 0.40   # placeable-only filter (90%+)
+const DDA_MERCY_MILD := 0.50            # fill 50-70% → mild mercy (was 65%)
+const DDA_MERCY_STRONG := 0.70          # fill 70-85% → strong mercy (was 80%)
+const DDA_MERCY_CRITICAL := 0.85        # fill 85%+ → critical mercy (was 90%)
+const DDA_FIT_CHECK_CHANCE := 0.60      # placeable-only filter chance (50%+) (was 30%)
+const DDA_FIT_CRITICAL_CHANCE := 0.80   # placeable-only filter (85%+) (was 40%)
 
 # ── Color mercy ──
 const COLOR_CLUSTER_CHANCE := 0.25      # basic tray color clustering
@@ -156,7 +156,7 @@ const COLOR_MERCY_MIN_GROUP := 4        # min cluster size (chain triggers at 5)
 var _rng := RandomNumberGenerator.new()
 var _previous_tray_types: Array = []
 var _tight_tray_streak: int = 0
-const MAX_TIGHT_STREAK: int = 4
+const MAX_TIGHT_STREAK: int = 2  # relief tray after 2 tight trays (was 4)
 
 
 func _init() -> void:
