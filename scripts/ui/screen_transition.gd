@@ -64,3 +64,36 @@ static func slide_down_out(node: Control, duration: float = 0.2, offset: float =
 		node.position.y = original_y
 	)
 	return tween
+
+
+## Full-screen fade through black transition.
+## Phase 1: fade to black. Phase 2: call on_mid callback. Phase 3: fade from black.
+static func fade_through_black(tree: SceneTree, on_mid: Callable, duration: float = 0.8) -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 100
+	tree.root.add_child(layer)
+
+	var overlay := ColorRect.new()
+	overlay.color = Color.BLACK
+	overlay.modulate.a = 0.0
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	layer.add_child(overlay)
+
+	var fade_in_dur: float = duration * 0.4
+	var hold_dur: float = duration * 0.1
+	var fade_out_dur: float = duration * 0.5
+
+	var tween := overlay.create_tween()
+	tween.set_speed_scale(1.0 / maxf(Engine.time_scale, 0.001))
+	# Phase 1: fade to black
+	tween.tween_property(overlay, "modulate:a", 1.0, fade_in_dur) \
+		.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	# Phase 2: hold + callback
+	tween.tween_interval(hold_dur)
+	tween.tween_callback(on_mid)
+	# Phase 3: fade from black
+	tween.tween_property(overlay, "modulate:a", 0.0, fade_out_dur) \
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	# Cleanup
+	tween.tween_callback(layer.queue_free)

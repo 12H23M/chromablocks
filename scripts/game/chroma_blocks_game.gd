@@ -67,10 +67,10 @@ func _ready() -> void:
 			%Board.visible = true
 			hud.visible = true
 			piece_tray.visible = true
-			_show_home()
+			_show_home_initial()
 		)
 	else:
-		_show_home()
+		_show_home_initial()
 
 # ── Public API ──
 
@@ -85,63 +85,75 @@ func start_daily_challenge() -> void:
 	_start_new_game(true)
 
 func _start_new_game(daily: bool) -> void:
-	Engine.time_scale = 1.0
-	_hit_stop_duration = 0.0
-	_is_daily_mode = daily
-	SaveManager.clear_active_game()
-	_state.reset()
-	_piece_gen.reset()
-	if daily:
-		_piece_gen.set_seed(DailyChallengeSystem.get_today_seed())
-	_state.high_score = SaveManager.get_high_score()
-	_state.status = Enums.GameStatus.PLAYING
-	_prefill_board(_state.board)
-	SaveManager.increment_games_played()
-	game_over_screen.reset_ad_state()
-	hud.reset_new_best()
+	ScreenTransition.fade_through_black(get_tree(), func() -> void:
+		Engine.time_scale = 1.0
+		_hit_stop_duration = 0.0
+		_is_daily_mode = daily
+		SaveManager.clear_active_game()
+		_state.reset()
+		_piece_gen.reset()
+		if daily:
+			_piece_gen.set_seed(DailyChallengeSystem.get_today_seed())
+		_state.high_score = SaveManager.get_high_score()
+		_state.status = Enums.GameStatus.PLAYING
+		_prefill_board(_state.board)
+		SaveManager.increment_games_played()
+		game_over_screen.reset_ad_state()
+		hud.reset_new_best()
 
-	var tray := _piece_gen.generate_tray(_state.level, _state.board)
-	_state.tray_pieces = tray
+		var tray := _piece_gen.generate_tray(_state.level, _state.board)
+		_state.tray_pieces = tray
 
-	board_renderer.enable_gems()
-	board_renderer.update_from_state(_state.board)
-	board_renderer.update_crisis_state(_state.board)
-	piece_tray.populate_tray(tray)
-	hud.update_from_state(_state)
-	piece_tray.update_swap_state(_state.swaps_remaining)
+		board_renderer.enable_gems()
+		board_renderer.update_from_state(_state.board)
+		board_renderer.update_crisis_state(_state.board)
+		piece_tray.populate_tray(tray)
+		hud.update_from_state(_state)
+		piece_tray.update_swap_state(_state.swaps_remaining)
 
-	ScreenTransition.fade_out(home_screen)
-	ScreenTransition.fade_out(game_over_screen)
-	ScreenTransition.fade_out(pause_screen)
+		home_screen.visible = false
+		home_screen.modulate.a = 1.0
+		game_over_screen.visible = false
+		game_over_screen.modulate.a = 1.0
+		pause_screen.visible = false
+		pause_screen.modulate.a = 1.0
 
-	_color_match_count = 0
-	_had_perfect_clear = false
-	var mode := "daily" if daily else "normal"
-	AnalyticsManager.game_start(mode)
-	if daily:
-		AnalyticsManager.daily_challenge_start()
-	state_changed.emit(_state)
+		_color_match_count = 0
+		_had_perfect_clear = false
+		var mode := "daily" if daily else "normal"
+		AnalyticsManager.game_start(mode)
+		if daily:
+			AnalyticsManager.daily_challenge_start()
+		state_changed.emit(_state)
+	)
 
 
 func continue_game() -> void:
-	Engine.time_scale = 1.0
-	_hit_stop_duration = 0.0
 	var saved_state := SaveManager.load_active_game()
 	if saved_state == null:
 		start_game()
 		return
-	_state = saved_state
-	_state.high_score = SaveManager.get_high_score()
-	_state.status = Enums.GameStatus.PLAYING
-	hud.reset_new_best()
-	board_renderer.update_from_state(_state.board)
-	piece_tray.populate_tray(_state.tray_pieces)
-	hud.update_from_state(_state)
-	piece_tray.update_swap_state(_state.swaps_remaining)
-	ScreenTransition.fade_out(home_screen)
-	ScreenTransition.fade_out(game_over_screen)
-	ScreenTransition.fade_out(pause_screen)
-	SaveManager.clear_active_game()
+	ScreenTransition.fade_through_black(get_tree(), func() -> void:
+		Engine.time_scale = 1.0
+		_hit_stop_duration = 0.0
+		_state = saved_state
+		_state.high_score = SaveManager.get_high_score()
+		_state.status = Enums.GameStatus.PLAYING
+		hud.reset_new_best()
+		board_renderer.update_from_state(_state.board)
+		piece_tray.populate_tray(_state.tray_pieces)
+		hud.update_from_state(_state)
+		piece_tray.update_swap_state(_state.swaps_remaining)
+
+		home_screen.visible = false
+		home_screen.modulate.a = 1.0
+		game_over_screen.visible = false
+		game_over_screen.modulate.a = 1.0
+		pause_screen.visible = false
+		pause_screen.modulate.a = 1.0
+
+		SaveManager.clear_active_game()
+	)
 	state_changed.emit(_state)
 
 func pause_game() -> void:
@@ -727,7 +739,16 @@ func _on_quit_to_home() -> void:
 	_hit_stop_duration = 0.0
 	board_renderer.modulate.a = 1.0
 	piece_tray.modulate.a = 1.0
-	_show_home()
+	ScreenTransition.fade_through_black(get_tree(), func() -> void:
+		board_renderer.disable_gems()
+		home_screen.refresh_stats()
+		home_screen.visible = true
+		home_screen.modulate.a = 1.0
+		game_over_screen.visible = false
+		game_over_screen.modulate.a = 1.0
+		pause_screen.visible = false
+		pause_screen.modulate.a = 1.0
+	)
 
 func _on_go_home() -> void:
 	if AdManager.should_show_interstitial():
@@ -742,12 +763,23 @@ func _on_interstitial_closed() -> void:
 		_show_home()
 	_pending_action = ""
 
-func _show_home() -> void:
+func _show_home_initial() -> void:
 	board_renderer.disable_gems()
 	home_screen.refresh_stats()
 	ScreenTransition.fade_in(home_screen)
-	ScreenTransition.fade_out(game_over_screen)
-	ScreenTransition.fade_out(pause_screen)
+
+
+func _show_home() -> void:
+	ScreenTransition.fade_through_black(get_tree(), func() -> void:
+		board_renderer.disable_gems()
+		home_screen.refresh_stats()
+		home_screen.visible = true
+		home_screen.modulate.a = 1.0
+		game_over_screen.visible = false
+		game_over_screen.modulate.a = 1.0
+		pause_screen.visible = false
+		pause_screen.modulate.a = 1.0
+	)
 
 func _show_settings() -> void:
 	home_screen.set_settings_active(true)
