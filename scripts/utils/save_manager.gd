@@ -147,6 +147,17 @@ func save_active_game(state: GameState) -> void:
 		})
 	_config.set_value(ACTIVE_SECTION, "tray_pieces", tray_data)
 
+	# Hold state
+	if state.held_piece != null:
+		_config.set_value(ACTIVE_SECTION, "held_piece", {
+			"type": state.held_piece.type,
+			"color": state.held_piece.color,
+			"shape": state.held_piece.shape,
+		})
+	else:
+		_config.set_value(ACTIVE_SECTION, "held_piece", null)
+	_config.set_value(ACTIVE_SECTION, "hold_used_this_tray", state.hold_used_this_tray)
+
 	_config.set_value(ACTIVE_SECTION, "has_active", true)
 	_dirty = true
 	flush()
@@ -199,6 +210,18 @@ func load_active_game() -> GameState:
 			piece_dict["shape"],
 		)
 		state.tray_pieces.append(piece)
+
+	# Hold state
+	var held_data = _config.get_value(ACTIVE_SECTION, "held_piece", null)
+	if held_data != null and held_data is Dictionary:
+		state.held_piece = BlockPiece.new(
+			held_data["type"],
+			held_data["color"],
+			held_data["shape"],
+		)
+	else:
+		state.held_piece = null
+	state.hold_used_this_tray = _config.get_value(ACTIVE_SECTION, "hold_used_this_tray", false)
 
 	return state
 
