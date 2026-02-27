@@ -25,9 +25,7 @@ func _ready() -> void:
 	_setup_plate_style()
 	_create_hold_slot()
 	_create_next_preview()
-	# Hide hold and next for now
-	_hold_slot.visible = false
-	_next_preview.visible = false
+	# Hold and next preview are now active
 
 func _setup_card_style() -> void:
 	_card_style = StyleBoxFlat.new()
@@ -39,7 +37,7 @@ func _setup_plate_style() -> void:
 
 func _create_hold_slot() -> void:
 	_hold_slot = HoldSlot.new()
-	_hold_slot.custom_minimum_size = Vector2(70, 0)
+	_hold_slot.custom_minimum_size = Vector2(70, 80)
 	_hold_slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_hold_slot.mouse_filter = Control.MOUSE_FILTER_STOP
 	_hold_slot.gui_input.connect(_on_hold_slot_input)
@@ -61,7 +59,7 @@ func update_next_preview(pieces: Array) -> void:
 
 func _on_hold_slot_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		SoundManager.play_sfx("button_press")
+		_hold_slot.play_tap_bounce()
 		hold_pressed.emit()
 
 func set_cell_size(board_cell_size: float) -> void:
@@ -70,17 +68,21 @@ func set_cell_size(board_cell_size: float) -> void:
 		_pieces_container.custom_minimum_size.y = _tray_cell_size * 3 + 24
 	if _hold_slot:
 		_hold_slot.cell_size = _tray_cell_size
-		_hold_slot.custom_minimum_size = Vector2(70, _tray_cell_size * 3 + 24)
+		_hold_slot.custom_minimum_size = Vector2(70, maxf(80, _tray_cell_size * 3 + 24))
 		_hold_slot.queue_redraw()
 	if _next_preview:
 		_next_preview.cell_size = _tray_cell_size
 		_next_preview.queue_redraw()
 
-func update_hold_display(piece: BlockPiece, enabled: bool) -> void:
+func update_hold_display(piece: BlockPiece, enabled: bool, animate: bool = false) -> void:
 	if _hold_slot:
 		_hold_slot.held_piece = piece
 		_hold_slot.enabled = enabled
 		_hold_slot.queue_redraw()
+		if animate:
+			_hold_slot.play_swap_animation(enabled)
+		else:
+			_hold_slot.modulate.a = 1.0 if enabled else 0.4
 
 func populate_tray(pieces: Array, animate: bool = false) -> void:
 	clear_tray()
@@ -194,21 +196,51 @@ class HoldSlot extends Control:
 	const PIECE_SCALE := 0.40
 	const BG_COLOR := Color(0.118, 0.118, 0.290, 0.6)  # #1E1E4A alpha 0.6
 	const BORDER_COLOR := Color(0.227, 0.227, 0.431)  # #3A3A6E
-	const LABEL_COLOR := Color(0.533, 0.533, 0.667)  # #8888AA
+	const LABEL_COLOR := Color(0.533, 0.533, 0.667, 0.6)  # #8888AA alpha 0.6
 	const CORNER_RADIUS := 12.0
 	const BORDER_WIDTH := 1.5
 	const DASH_LENGTH := 5.0
 	const GAP_LENGTH := 3.0
+	const EMPTY_BORDER_COLOR := Color(0.227, 0.227, 0.431, 0.3)  # #3A3A6E alpha 0.3
+	const EMPTY_BORDER_WIDTH := 2.0
+
+	static var _fredoka_font: Font = null
+
+	static func _get_font() -> Font:
+		if _fredoka_font == null:
+			_fredoka_font = load("res://assets/fonts/Fredoka-Bold.ttf")
+		return _fredoka_font
+
+	func play_tap_bounce() -> void:
+		var tween := create_tween()
+		tween.set_speed_scale(1.0 / Engine.time_scale if Engine.time_scale > 0.0 else 1.0)
+		tween.tween_property(self, "scale", Vector2(0.9, 0.9), 0.0)
+		tween.tween_property(self, "scale", Vector2(1.0, 1.0), 0.1) \
+			.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+
+	func play_swap_animation(is_enabled: bool) -> void:
+		var end_alpha: float = 1.0 if is_enabled else 0.4
+		var tween := create_tween()
+		tween.set_speed_scale(1.0 / Engine.time_scale if Engine.time_scale > 0.0 else 1.0)
+		tween.set_parallel(true)
+		tween.tween_property(self, "scale", Vector2(0.85, 0.85), 0.075) \
+			.set_ease(Tween.EASE_IN)
+		tween.tween_property(self, "modulate:a", 0.2, 0.075)
+		tween.chain()
+		tween.set_parallel(true)
+		tween.tween_property(self, "scale", Vector2(1.0, 1.0), 0.075) \
+			.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+		tween.tween_property(self, "modulate:a", end_alpha, 0.075)
 
 	func _draw() -> void:
 		var slot_rect := Rect2(
 			Vector2((size.x - SLOT_SIZE) / 2.0, (size.y - SLOT_SIZE) / 2.0 + 6),
 			Vector2(SLOT_SIZE, SLOT_SIZE))
 
-		# "HOLD" label above slot
-		var font := ThemeDB.fallback_font
-		var label_text := "HOLD"
-		var font_size := 9
+		# Label above slot: "HOLD" or "USED"
+		var font: Font = _get_font()
+		var label_text := "USED" if not enabled else "HOLD"
+		var font_size := 11
 		var text_size := font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
 		var label_x := slot_rect.position.x + (SLOT_SIZE - text_size.x) / 2.0
 		var label_y := slot_rect.position.y - 4.0
@@ -223,22 +255,26 @@ class HoldSlot extends Control:
 		bg_style.corner_radius_bottom_right = int(CORNER_RADIUS)
 		draw_style_box(bg_style, slot_rect)
 
-		# Border (dashed)
-		_draw_dashed_rounded_rect(slot_rect, BORDER_COLOR, BORDER_WIDTH)
+		# Border: dashed when empty, solid when piece held
+		if held_piece == null:
+			_draw_dashed_rounded_rect(slot_rect, EMPTY_BORDER_COLOR, EMPTY_BORDER_WIDTH)
+		else:
+			var border_style := StyleBoxFlat.new()
+			border_style.bg_color = Color(0, 0, 0, 0)
+			border_style.border_color = BORDER_COLOR
+			border_style.border_width_top = int(BORDER_WIDTH)
+			border_style.border_width_bottom = int(BORDER_WIDTH)
+			border_style.border_width_left = int(BORDER_WIDTH)
+			border_style.border_width_right = int(BORDER_WIDTH)
+			border_style.corner_radius_top_left = int(CORNER_RADIUS)
+			border_style.corner_radius_top_right = int(CORNER_RADIUS)
+			border_style.corner_radius_bottom_left = int(CORNER_RADIUS)
+			border_style.corner_radius_bottom_right = int(CORNER_RADIUS)
+			draw_style_box(border_style, slot_rect)
 
-		# Draw held piece or empty indicator
+		# Draw held piece
 		if held_piece != null:
 			_draw_piece_preview(slot_rect)
-
-		# Disabled overlay
-		if not enabled:
-			var overlay_style := StyleBoxFlat.new()
-			overlay_style.bg_color = Color(0, 0, 0, 0.4)
-			overlay_style.corner_radius_top_left = int(CORNER_RADIUS)
-			overlay_style.corner_radius_top_right = int(CORNER_RADIUS)
-			overlay_style.corner_radius_bottom_left = int(CORNER_RADIUS)
-			overlay_style.corner_radius_bottom_right = int(CORNER_RADIUS)
-			draw_style_box(overlay_style, slot_rect)
 
 	func _draw_piece_preview(slot_rect: Rect2) -> void:
 		if held_piece == null:
@@ -263,7 +299,6 @@ class HoldSlot extends Control:
 					DrawUtils.draw_bubble_block(self, bg_rect, base_color, 0.12, 1.5)
 
 	func _draw_dashed_rounded_rect(rect: Rect2, color: Color, width: float) -> void:
-		# Simplified dashed border — draw dashed lines along each edge
 		var r := CORNER_RADIUS
 		var x1 := rect.position.x
 		var y1 := rect.position.y
@@ -324,30 +359,49 @@ class NextPreview extends Control:
 	var preview_pieces: Array = []
 	var cell_size: float = 28.0
 
-	const PREVIEW_SCALE := 0.35
-	const LABEL_COLOR := Color(0.533, 0.533, 0.667)  # #8888AA
+	const PREVIEW_SCALE := 0.30
+	const BG_COLOR := Color(0.118, 0.118, 0.290, 0.4)  # #1E1E4A alpha 0.4
+	const LABEL_COLOR := Color(0.533, 0.533, 0.667, 0.5)  # #8888AA alpha 0.5
 	const PREVIEW_OPACITY := 0.5
+	const CORNER_RADIUS := 10.0
+
+	static var _fredoka_font: Font = null
+
+	static func _get_font() -> Font:
+		if _fredoka_font == null:
+			_fredoka_font = load("res://assets/fonts/Fredoka-Bold.ttf")
+		return _fredoka_font
 
 	func _draw() -> void:
 		if preview_pieces.is_empty():
 			return
 
-		# Subtle divider line at top
-		draw_line(Vector2(0, 0), Vector2(size.x, 0), Color(1, 1, 1, 0.05), 1.0)
+		# Subtle separator line at top
+		draw_line(Vector2(8, 0), Vector2(size.x - 8, 0), Color(1, 1, 1, 0.06), 1.0)
+
+		# Background rounded rect
+		var bg_rect := Rect2(Vector2(0, 2), Vector2(size.x, size.y - 2))
+		var bg_style := StyleBoxFlat.new()
+		bg_style.bg_color = BG_COLOR
+		bg_style.corner_radius_top_left = int(CORNER_RADIUS)
+		bg_style.corner_radius_top_right = int(CORNER_RADIUS)
+		bg_style.corner_radius_bottom_left = int(CORNER_RADIUS)
+		bg_style.corner_radius_bottom_right = int(CORNER_RADIUS)
+		draw_style_box(bg_style, bg_rect)
 
 		# "NEXT" label
-		var font := ThemeDB.fallback_font
-		var font_size := 9
+		var font: Font = _get_font()
+		var font_size := 10
 		var label_text := "NEXT"
-		var label_y := 16.0
-		draw_string(font, Vector2(4, label_y), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LABEL_COLOR)
+		var label_y := bg_rect.position.y + (bg_rect.size.y + font_size) / 2.0 - 1.0
+		draw_string(font, Vector2(8, label_y), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LABEL_COLOR)
 
 		# Draw mini pieces in a row
 		var draw_cell: float = cell_size * PREVIEW_SCALE
 		var inset := 1.0
-		var label_width := font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x + 12.0
+		var label_width := font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x + 16.0
 		var piece_start_x := label_width
-		var piece_y := 4.0
+		var piece_y := bg_rect.position.y
 
 		for piece_idx in preview_pieces.size():
 			var piece: BlockPiece = preview_pieces[piece_idx]
@@ -355,7 +409,7 @@ class NextPreview extends Control:
 				continue
 			var piece_w: float = piece.width * draw_cell
 			var piece_h: float = piece.height * draw_cell
-			var offset_y := piece_y + (size.y - piece_y - piece_h) / 2.0
+			var offset_y := piece_y + (bg_rect.size.y - piece_h) / 2.0
 
 			var base_color := AppColors.get_block_color(piece.color)
 			base_color.a = PREVIEW_OPACITY
@@ -365,9 +419,9 @@ class NextPreview extends Control:
 					if piece.shape[row_idx][col_idx] == 1:
 						var cx: float = piece_start_x + col_idx * draw_cell
 						var cy: float = offset_y + row_idx * draw_cell
-						var bg_rect := Rect2(
+						var bg_cell_rect := Rect2(
 							Vector2(cx + inset, cy + inset),
 							Vector2(draw_cell - inset * 2, draw_cell - inset * 2))
-						DrawUtils.draw_bubble_block(self, bg_rect, base_color, 0.08, 1.0)
+						DrawUtils.draw_bubble_block(self, bg_cell_rect, base_color, 0.08, 1.0)
 
 			piece_start_x += piece_w + 12.0

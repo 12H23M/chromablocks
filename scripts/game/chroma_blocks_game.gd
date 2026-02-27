@@ -502,7 +502,7 @@ func _play_effects_sequence(ed: Dictionary) -> void:
 				var lines: int = ed["lines_cleared"]
 				_apply_hit_stop(0.04 if lines >= 2 else 0.02)
 				board_renderer.play_line_clear_effect(ed["clear_rows"], ed["clear_cols"])
-				SoundManager.play_sfx("line_clear")
+				SoundManager.play_line_clear_sfx(lines)
 				HapticManager.line_clear_burst(lines)
 				if lines >= 2:
 					_spawn_multi_clear_popup(lines)
@@ -666,7 +666,7 @@ func _on_hold_pressed() -> void:
 		_state.tray_pieces[0] = old_held
 	_state.hold_used_this_tray = true
 	piece_tray.populate_tray(_state.tray_pieces)
-	piece_tray.update_hold_display(_state.held_piece, false)
+	piece_tray.update_hold_display(_state.held_piece, false, true)
 	SoundManager.play_sfx("block_place")
 	HapticManager.light()
 	_check_game_over()
