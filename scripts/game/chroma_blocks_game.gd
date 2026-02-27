@@ -917,9 +917,9 @@ func _create_game_orbs() -> void:
 	if bg == null:
 		return
 	var orb_data := [
-		{"color": Color(0.486, 0.227, 0.929, 0.05), "radius": 140.0, "cx": 0.25, "cy": 0.3, "period": 10.0, "amp_x": 35.0, "amp_y": 30.0, "phase": 1.0},
-		{"color": Color(0.302, 0.588, 1.0, 0.04), "radius": 120.0, "cx": 0.75, "cy": 0.55, "period": 9.0, "amp_x": 30.0, "amp_y": 40.0, "phase": 3.0},
-		{"color": Color(1.0, 0.42, 0.616, 0.03), "radius": 130.0, "cx": 0.5, "cy": 0.8, "period": 11.0, "amp_x": 45.0, "amp_y": 25.0, "phase": 5.0},
+		{"color": Color(0.486, 0.227, 0.929, 0.02), "radius": 140.0, "cx": 0.25, "cy": 0.3, "period": 10.0, "amp_x": 35.0, "amp_y": 30.0, "phase": 1.0},
+		{"color": Color(0.302, 0.588, 1.0, 0.015), "radius": 120.0, "cx": 0.75, "cy": 0.55, "period": 9.0, "amp_x": 30.0, "amp_y": 40.0, "phase": 3.0},
+		{"color": Color(1.0, 0.42, 0.616, 0.015), "radius": 130.0, "cx": 0.5, "cy": 0.8, "period": 11.0, "amp_x": 45.0, "amp_y": 25.0, "phase": 5.0},
 	]
 	for data in orb_data:
 		var orb := GameOrb.new()
