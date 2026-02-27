@@ -99,7 +99,11 @@ func _build_ui() -> void:
 	main.set("theme_override_constants/separation", 0)
 	margin.add_child(main)
 
-	_add_spacer(main, 40)
+	# Top flex — pushes content toward vertical center
+	var top_flex := Control.new()
+	top_flex.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	top_flex.custom_minimum_size = Vector2(0, 20)
+	main.add_child(top_flex)
 
 	# 1. Logo
 	_logo_section = _build_logo()
@@ -115,11 +119,11 @@ func _build_ui() -> void:
 	_btn_section = _build_buttons()
 	main.add_child(_btn_section)
 
-	# Flex — limited max so bottom doesn't float too far
-	var flex := Control.new()
-	flex.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	flex.custom_minimum_size = Vector2(0, 16)
-	main.add_child(flex)
+	# Bottom flex — balances with top flex for centering
+	var bottom_flex := Control.new()
+	bottom_flex.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	bottom_flex.custom_minimum_size = Vector2(0, 20)
+	main.add_child(bottom_flex)
 
 	# 4. Bottom icons
 	_bottom_section = _build_bottom()
