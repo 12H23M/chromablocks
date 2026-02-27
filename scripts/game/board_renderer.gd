@@ -18,6 +18,8 @@ var _shockwaves: Array = []
 var _highlighted_cells: Array = []
 var _predicted_cells: Array = []
 var _blast_hint_cells: Array = []
+var _near_line_hint_cells: Array = []
+var _cluster_hint_cells: Array = []
 
 func initialize() -> void:
 	_cells.clear()
@@ -570,6 +572,74 @@ func _draw() -> void:
 			draw_arc(sw["center"], radius, 0.0, TAU, 48, glow_color, width + 3.0)
 		# Main ring
 		draw_arc(sw["center"], radius, 0.0, TAU, 48, sw_color, width)
+
+
+## --- Near-Miss Hints (Phase 1: line near-complete + color cluster) ---
+
+func update_near_miss_hints(board: BoardState) -> void:
+	_update_near_line_hints(board)
+	_update_cluster_hints(board)
+
+
+func _update_near_line_hints(board: BoardState) -> void:
+	# Clear previous hints
+	for pos in _near_line_hint_cells:
+		_cells[pos.y][pos.x].clear_near_line_hint()
+	_near_line_hint_cells.clear()
+
+	# Check rows: 7/8 filled = near complete
+	for y in board.rows:
+		var filled := 0
+		for x in board.columns:
+			var cell: Dictionary = board.grid[y][x]
+			if cell["occupied"]:
+				filled += 1
+		if filled == 7:
+			for x in board.columns:
+				_cells[y][x].show_near_line_hint()
+				_near_line_hint_cells.append(Vector2i(x, y))
+
+	# Check columns: 7/8 filled = near complete
+	for x in board.columns:
+		var filled := 0
+		for y in board.rows:
+			var cell: Dictionary = board.grid[y][x]
+			if cell["occupied"]:
+				filled += 1
+		if filled == 7:
+			for y in board.rows:
+				if not _near_line_hint_cells.has(Vector2i(x, y)):
+					_cells[y][x].show_near_line_hint()
+					_near_line_hint_cells.append(Vector2i(x, y))
+
+
+func _update_cluster_hints(board: BoardState) -> void:
+	# Clear previous hints
+	for pos in _cluster_hint_cells:
+		_cells[pos.y][pos.x].clear_cluster_hint()
+	_cluster_hint_cells.clear()
+
+	# Find color groups of 4+ connected cells (chain triggers at 5)
+	var groups: Array = board.find_color_matches_threshold(4)
+	for group in groups:
+		if group.size() < 4:
+			continue
+		# Get group color from first cell
+		var first_pos: Vector2i = group[0]
+		var group_color: int = board.grid[first_pos.y][first_pos.x]["color"]
+		for pos in group:
+			var p: Vector2i = pos
+			_cells[p.y][p.x].show_cluster_hint(group_color)
+			_cluster_hint_cells.append(p)
+
+
+func clear_near_miss_hints() -> void:
+	for pos in _near_line_hint_cells:
+		_cells[pos.y][pos.x].clear_near_line_hint()
+	_near_line_hint_cells.clear()
+	for pos in _cluster_hint_cells:
+		_cells[pos.y][pos.x].clear_cluster_hint()
+	_cluster_hint_cells.clear()
 
 
 func _draw_corner_gems() -> void:

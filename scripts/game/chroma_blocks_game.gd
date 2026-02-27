@@ -109,6 +109,7 @@ func _start_new_game(daily: bool) -> void:
 		board_renderer.enable_gems()
 		board_renderer.update_from_state(_state.board)
 		board_renderer.update_crisis_state(_state.board)
+		board_renderer.update_near_miss_hints(_state.board)
 		piece_tray.populate_tray(tray)
 		piece_tray.update_hold_display(_state.held_piece, not _state.hold_used_this_tray)
 		piece_tray.update_next_preview(_next_tray_pieces)
@@ -391,8 +392,9 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	board_renderer.update_from_state(board)
 	hud.update_from_state(_state)
 
-	# 7.5 Crisis warning
+	# 7.5 Crisis warning + near-miss hints
 	board_renderer.update_crisis_state(board)
+	board_renderer.update_near_miss_hints(board)
 
 	# 7.6 Placement pulse
 	board_renderer.play_place_effect(piece.occupied_cells_at(gx, gy))
@@ -582,6 +584,7 @@ func _on_cell_tapped(gx: int, gy: int) -> void:
 	# Update visuals
 	board_renderer.update_from_state(board)
 	board_renderer.update_crisis_state(board)
+	board_renderer.update_near_miss_hints(board)
 	hud.update_from_state(_state)
 
 	# Effects

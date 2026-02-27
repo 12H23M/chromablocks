@@ -357,6 +357,87 @@ func _set_blast_pulse_alpha(t: float) -> void:
 	queue_redraw()
 
 
+## Near-miss line hint overlay (white pulse for 7/8 filled rows/cols)
+var _near_line_hint_active: bool = false
+var _near_line_hint_overlay := Color(1.0, 1.0, 1.0, 0.15)
+var _near_line_pulse_tween: Tween = null
+
+const _NEAR_LINE_ALPHA_MIN := 0.10
+const _NEAR_LINE_ALPHA_MAX := 0.20
+const _NEAR_LINE_PULSE_PERIOD := 1.5
+
+func show_near_line_hint() -> void:
+	_near_line_hint_active = true
+	_near_line_hint_overlay = Color(1.0, 1.0, 1.0, _NEAR_LINE_ALPHA_MAX)
+	_start_near_line_pulse()
+	queue_redraw()
+
+func clear_near_line_hint() -> void:
+	if _near_line_hint_active:
+		_near_line_hint_active = false
+		_stop_near_line_pulse()
+		queue_redraw()
+
+func _start_near_line_pulse() -> void:
+	_stop_near_line_pulse()
+	_near_line_pulse_tween = create_tween()
+	_near_line_pulse_tween.set_loops()
+	_near_line_pulse_tween.tween_method(_set_near_line_alpha, 1.0, 0.0, _NEAR_LINE_PULSE_PERIOD / 2.0) \
+		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	_near_line_pulse_tween.tween_method(_set_near_line_alpha, 0.0, 1.0, _NEAR_LINE_PULSE_PERIOD / 2.0) \
+		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+
+func _stop_near_line_pulse() -> void:
+	if _near_line_pulse_tween and _near_line_pulse_tween.is_valid():
+		_near_line_pulse_tween.kill()
+	_near_line_pulse_tween = null
+
+func _set_near_line_alpha(t: float) -> void:
+	_near_line_hint_overlay.a = lerpf(_NEAR_LINE_ALPHA_MIN, _NEAR_LINE_ALPHA_MAX, t)
+	queue_redraw()
+
+
+## Near-miss color cluster hint overlay (colored glow for 4+ connected same-color)
+var _cluster_hint_active: bool = false
+var _cluster_hint_overlay := Color(1.0, 1.0, 1.0, 0.12)
+var _cluster_pulse_tween: Tween = null
+
+const _CLUSTER_ALPHA_MIN := 0.08
+const _CLUSTER_ALPHA_MAX := 0.16
+const _CLUSTER_PULSE_PERIOD := 1.5
+
+func show_cluster_hint(block_color: int) -> void:
+	_cluster_hint_active = true
+	var hint_color: Color = AppColors.get_block_light_color(block_color) if block_color >= 0 else Color.WHITE
+	_cluster_hint_overlay = Color(hint_color.r, hint_color.g, hint_color.b, _CLUSTER_ALPHA_MAX)
+	_start_cluster_pulse()
+	queue_redraw()
+
+func clear_cluster_hint() -> void:
+	if _cluster_hint_active:
+		_cluster_hint_active = false
+		_stop_cluster_pulse()
+		queue_redraw()
+
+func _start_cluster_pulse() -> void:
+	_stop_cluster_pulse()
+	_cluster_pulse_tween = create_tween()
+	_cluster_pulse_tween.set_loops()
+	_cluster_pulse_tween.tween_method(_set_cluster_alpha, 1.0, 0.0, _CLUSTER_PULSE_PERIOD / 2.0) \
+		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	_cluster_pulse_tween.tween_method(_set_cluster_alpha, 0.0, 1.0, _CLUSTER_PULSE_PERIOD / 2.0) \
+		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+
+func _stop_cluster_pulse() -> void:
+	if _cluster_pulse_tween and _cluster_pulse_tween.is_valid():
+		_cluster_pulse_tween.kill()
+	_cluster_pulse_tween = null
+
+func _set_cluster_alpha(t: float) -> void:
+	_cluster_hint_overlay.a = lerpf(_CLUSTER_ALPHA_MIN, _CLUSTER_ALPHA_MAX, t)
+	queue_redraw()
+
+
 func _tween_to_empty(t: float) -> void:
 	_bg_color = _bg_color.lerp(AppColors.EMPTY_CELL, 1.0 - t)
 	_glow_color.a = _glow_color.a * t
@@ -439,6 +520,14 @@ func _draw() -> void:
 	if _blast_hint_active:
 		_draw_rounded_rect(bg_rect, _blast_hint_overlay, true, 1.0, 0.35)
 		_draw_rounded_rect(bg_rect, _blast_hint_border, false, 2.0, 0.35)
+
+	# Near-miss line hint overlay (white pulse)
+	if _near_line_hint_active:
+		_draw_rounded_rect(bg_rect, _near_line_hint_overlay, true, 1.0, 0.35)
+
+	# Near-miss cluster hint overlay (colored glow)
+	if _cluster_hint_active:
+		_draw_rounded_rect(bg_rect, _cluster_hint_overlay, true, 1.0, 0.35)
 
 	# Reset transform
 	if has_transform:
