@@ -1,15 +1,16 @@
 extends Control
-## Shows "CHROMA BLAST!" popup — dramatic full-screen effect.
+## Shows "BLAST!" popup — clean, contained within screen.
 ## Uses wall-clock timing to work during hit-stop.
 
 var _blast_color: Color = Color.WHITE
 var _center: Vector2 = Vector2.ZERO
 var _start_msec: int = 0
 var _label: Label
+var _count_label: Label
 
-const POP_DURATION := 0.15
-const HOLD_DURATION := 0.8
-const FADE_DURATION := 0.4
+const POP_DURATION := 0.12
+const HOLD_DURATION := 0.6
+const FADE_DURATION := 0.3
 const TOTAL_DURATION := POP_DURATION + HOLD_DURATION + FADE_DURATION
 
 
@@ -21,7 +22,6 @@ func show_blast(blast_color_idx: int, center_pos: Vector2) -> void:
 	position = Vector2.ZERO
 	size = viewport_size
 
-	# Map color index to display color
 	var color_map: Array = [
 		Color("FF6B6B"),  # CORAL
 		Color("FFB347"),  # AMBER
@@ -32,18 +32,23 @@ func show_blast(blast_color_idx: int, center_pos: Vector2) -> void:
 	]
 	_blast_color = color_map[blast_color_idx % color_map.size()]
 
+	# Load font
+	var font: Font = load("res://assets/fonts/Fredoka-Bold.ttf") as Font
+
 	_label = Label.new()
-	_label.text = "CHROMA BLAST!"
-	_label.add_theme_font_size_override("font_size", 56)
-	_label.add_theme_color_override("font_color", _blast_color)
-	_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.95))
-	_label.add_theme_constant_override("outline_size", 12)
-	_label.add_theme_color_override("font_shadow_color", Color(_blast_color.r, _blast_color.g, _blast_color.b, 0.6))
+	_label.text = "BLAST!"
+	_label.add_theme_font_size_override("font_size", 40)
+	_label.add_theme_color_override("font_color", Color.WHITE)
+	_label.add_theme_color_override("font_outline_color", Color(_blast_color.r * 0.3, _blast_color.g * 0.3, _blast_color.b * 0.3, 0.95))
+	_label.add_theme_constant_override("outline_size", 8)
+	_label.add_theme_color_override("font_shadow_color", Color(_blast_color.r, _blast_color.g, _blast_color.b, 0.5))
 	_label.add_theme_constant_override("shadow_offset_x", 0)
-	_label.add_theme_constant_override("shadow_offset_y", 4)
+	_label.add_theme_constant_override("shadow_offset_y", 3)
+	if font:
+		_label.add_theme_font_override("font", font)
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_label.position = Vector2(0, _center.y - 30)
-	_label.size = Vector2(size.x, 65)
+	_label.position = Vector2(0, _center.y - 25)
+	_label.size = Vector2(size.x, 55)
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_label)
 
@@ -63,12 +68,11 @@ func _process(_delta: float) -> void:
 
 	if elapsed < POP_DURATION:
 		var t := elapsed / POP_DURATION
-		scale_val = 0.3 + t * 1.4  # 0.3 → 1.7 overshoot
+		scale_val = lerp(0.5, 1.15, t)
 		alpha = 1.0
-	elif elapsed < POP_DURATION + 0.1:
-		# Settle from overshoot
-		var t := (elapsed - POP_DURATION) / 0.1
-		scale_val = lerp(1.7, 1.0, t)
+	elif elapsed < POP_DURATION + 0.08:
+		var t := (elapsed - POP_DURATION) / 0.08
+		scale_val = lerp(1.15, 1.0, t)
 		alpha = 1.0
 	elif elapsed < POP_DURATION + HOLD_DURATION:
 		scale_val = 1.0
@@ -87,30 +91,17 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	var elapsed := float(Time.get_ticks_msec() - _start_msec) / 1000.0
 	var alpha := clampf(1.0 - elapsed / TOTAL_DURATION, 0.0, 1.0)
-
 	if alpha < 0.01:
 		return
 
-	# Full-screen color flash
+	# Subtle color flash (contained)
 	var flash_alpha := 0.0
-	if elapsed < 0.3:
-		flash_alpha = 0.25 * (1.0 - elapsed / 0.3)
+	if elapsed < 0.2:
+		flash_alpha = 0.15 * (1.0 - elapsed / 0.2)
 	if flash_alpha > 0.0:
 		draw_rect(Rect2(Vector2.ZERO, size), Color(_blast_color.r, _blast_color.g, _blast_color.b, flash_alpha))
 
-	# Expanding ring
-	var ring_radius := 50.0 + elapsed * 200.0
-	var ring_alpha := alpha * 0.6
-	draw_arc(_center, ring_radius, 0, TAU, 64, Color(_blast_color, ring_alpha), 3.0)
-	if ring_radius > 80:
-		draw_arc(_center, ring_radius - 30, 0, TAU, 48, Color(_blast_color, ring_alpha * 0.4), 2.0)
-
-	# Radial burst (thick lines)
-	var burst_count := 16
-	for i in burst_count:
-		var angle := float(i) / float(burst_count) * TAU
-		var dir := Vector2(cos(angle), sin(angle))
-		var inner := 30.0 + elapsed * 50.0
-		var outer := inner + 60.0 + elapsed * 80.0
-		draw_line(_center + dir * inner, _center + dir * outer,
-			Color(_blast_color, 0.5 * alpha), 3.0)
+	# Single expanding ring
+	var ring_radius := 40.0 + elapsed * 150.0
+	var ring_alpha := alpha * 0.4
+	draw_arc(_center, ring_radius, 0, TAU, 48, Color(_blast_color, ring_alpha), 2.5)

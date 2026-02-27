@@ -547,19 +547,21 @@ func _play_effects_sequence(ed: Dictionary) -> void:
 			board_renderer.end_clear_anticipation()
 		)
 
-	# Phase 5 (800ms): Combo popup
-	if ed["combo"] >= 1:
+	# Phase 5 (800ms): Combo popup — only show x2+
+	if ed["combo"] >= 2:
 		var combo_time: float = maxf(delay, 0.8)
 		get_tree().create_timer(combo_time, true, false, true).timeout.connect(func():
 			var combo: int = ed["combo"]
-			if combo >= 2:
-				SoundManager.play_combo_sfx(combo)
+			SoundManager.play_combo_sfx(combo)
 			HapticManager.combo(combo)
 			_spawn_combo_popup(combo)
 			if combo >= 3:
 				_apply_hit_stop(0.05)
 		)
 		delay = combo_time + 0.25
+	elif ed["combo"] == 1:
+		# x1: haptic only, no popup
+		HapticManager.combo(1)
 
 	# Phase 6 (1100ms): Chroma Chain — cascade groups pop in sequence
 	if ed["chain_cascades"] > 0:
