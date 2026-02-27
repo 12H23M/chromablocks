@@ -609,11 +609,11 @@ func _play_effects_sequence(ed: Dictionary) -> void:
 		)
 		delay = blast_start + 0.4
 
-	# Phase 8 (2000ms): Score cascade
+	# Phase 8: Score popup — show immediately with line clear (no cascade delay)
 	if ed["score"] > 0:
-		var score_time: float = maxf(delay, 2.0)
+		var score_time: float = 0.15  # almost instant, right after placement
 		get_tree().create_timer(score_time, true, false, true).timeout.connect(func():
-			_spawn_score_cascade(ed)
+			_spawn_score_popup(ed["score"], ed["gx"], ed["gy"])
 		)
 
 	# Perfect clear effects (sound/haptics/shake — visual handled by cascade)
