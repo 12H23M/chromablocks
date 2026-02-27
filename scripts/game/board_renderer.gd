@@ -663,6 +663,34 @@ func clear_near_miss_hints() -> void:
 	_cluster_hint_cells.clear()
 
 
+## Perfect clear: wave of cell flashes radiating from center outward
+func play_perfect_clear_effect() -> void:
+	var center_x: float = float(GameConstants.BOARD_COLUMNS) / 2.0
+	var center_y: float = float(GameConstants.BOARD_ROWS) / 2.0
+	# Collect cells with their distance from center
+	var cell_dist: Array = []
+	for y in GameConstants.BOARD_ROWS:
+		for x in GameConstants.BOARD_COLUMNS:
+			var dx: float = float(x) - center_x + 0.5
+			var dy: float = float(y) - center_y + 0.5
+			var dist: float = sqrt(dx * dx + dy * dy)
+			cell_dist.append({"x": x, "y": y, "dist": dist})
+	# Sort by distance
+	cell_dist.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return a["dist"] < b["dist"])
+	# Max distance for normalization
+	var last_entry: Dictionary = cell_dist[cell_dist.size() - 1]
+	var max_dist: float = last_entry["dist"]
+	# Flash each cell with delay based on distance
+	for cd in cell_dist:
+		var x: int = cd["x"]
+		var y: int = cd["y"]
+		var d: float = cd["dist"]
+		var norm_dist: float = d / max_dist
+		var delay: float = norm_dist * 0.4  # 0 to 0.4s wave
+		_cells[y][x].play_perfect_wave_flash(delay)
+
+
 func _draw_corner_gems() -> void:
 	var gem_size := 10.0  # Half-size of the diamond (20px total)
 	var inset := 8.0  # Inside the frame corners

@@ -361,18 +361,20 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 		piece.cell_count, clear_result, color_result, new_combo, _state.level)
 
 	# Chroma Chain bonus scoring
-	var chroma_bonus: int = 0
+	var chain_bonus: int = 0
 	for cascade_idx in chain_result["cascades"]:
 		var pts_idx := mini(cascade_idx, GameConstants.CHROMA_CHAIN_POINTS_PER_CELL.size() - 1)
 		var groups: Array = chain_result["groups_per_cascade"][cascade_idx]
 		for group in groups:
-			chroma_bonus += group.size() * GameConstants.CHROMA_CHAIN_POINTS_PER_CELL[pts_idx]
+			chain_bonus += group.size() * GameConstants.CHROMA_CHAIN_POINTS_PER_CELL[pts_idx]
 
 	# Chroma Blast bonus scoring
+	var blast_bonus: int = 0
 	if blast_executed["cells_removed"] > 0:
-		chroma_bonus += blast_executed["cells_removed"] * GameConstants.CHROMA_BLAST_POINTS_PER_CELL
-		chroma_bonus += blast_result["blast_colors"].size() * GameConstants.CHROMA_BLAST_TRIGGER_BONUS
+		blast_bonus += blast_executed["cells_removed"] * GameConstants.CHROMA_BLAST_POINTS_PER_CELL
+		blast_bonus += blast_result["blast_colors"].size() * GameConstants.CHROMA_BLAST_TRIGGER_BONUS
 
+	var chroma_bonus: int = chain_bonus + blast_bonus
 	score_result["total"] += chroma_bonus
 
 	# 9. Level check
@@ -420,6 +422,8 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	if not blast_result["blast_colors"].is_empty():
 		var bc_arr: Array = blast_result["blast_colors"]
 		blast_color = bc_arr[0]
+	var combo_idx := clampi(new_combo, 0, GameConstants.COMBO_MULTIPLIERS.size() - 1)
+	var combo_mult: float = GameConstants.COMBO_MULTIPLIERS[combo_idx]
 	var effects_data: Dictionary = {
 		"has_clear": has_clear,
 		"lines_cleared": clear_result["lines_cleared"],
@@ -436,6 +440,12 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 		"gy": gy,
 		"is_perfect": clear_result.get("is_perfect", false),
 		"leveled_up": leveled_up,
+		# Score cascade breakdown
+		"line_clear_score": score_result["line_clear"],
+		"chain_bonus": chain_bonus,
+		"blast_bonus": blast_bonus,
+		"combo_mult": combo_mult,
+		"perfect_score": score_result["perfect_clear"],
 	}
 	_play_effects_sequence(effects_data)
 
@@ -528,17 +538,17 @@ func _play_effects_sequence(ed: Dictionary) -> void:
 		)
 		delay += 0.3
 
-	# Phase 6: Score popup (after all effects)
+	# Phase 6: Score cascade (replaces single score popup)
 	if ed["score"] > 0:
-		get_tree().create_timer(delay + 0.1, true, false, true).timeout.connect(func():
-			_spawn_score_popup(ed["score"], ed["gx"], ed["gy"])
+		var cascade_delay: float = delay + 0.1
+		get_tree().create_timer(cascade_delay, true, false, true).timeout.connect(func():
+			_spawn_score_cascade(ed)
 		)
 
-	# Perfect clear
+	# Perfect clear effects (sound/haptics/shake — visual handled by cascade)
 	if ed["is_perfect"]:
 		get_tree().create_timer(delay + 0.15, true, false, true).timeout.connect(func():
 			_apply_hit_stop(0.09)
-			_spawn_score_popup(GameConstants.PERFECT_CLEAR_BONUS, 5, 5)
 			SoundManager.play_sfx("perfect_clear")
 			board_renderer.play_screen_shake(10.0, 0.25)
 			HapticManager.perfect_clear()
@@ -750,6 +760,26 @@ func _spawn_score_popup(value: int, gx: int, gy: int) -> void:
 	var cell_size: float = board_renderer.get_cell_size()
 	var pos := board_renderer.global_position + Vector2(gx * cell_size, gy * cell_size)
 	popup.show_score(value, pos)
+
+func _spawn_score_cascade(ed: Dictionary) -> void:
+	var cascade := Control.new()
+	cascade.set_script(preload("res://scripts/game/score_cascade.gd"))
+	var overlay_layer := CanvasLayer.new()
+	overlay_layer.layer = 22  # Above blast popup (21)
+	add_child(overlay_layer)
+	overlay_layer.add_child(cascade)
+	var board_center: Vector2 = board_renderer.global_position + board_renderer.size / 2.0
+	var cascade_data: Dictionary = {
+		"line_clear": ed.get("line_clear_score", 0),
+		"chain_bonus": ed.get("chain_bonus", 0),
+		"blast_bonus": ed.get("blast_bonus", 0),
+		"blast_color": ed.get("blast_color", -1),
+		"combo_mult": ed.get("combo_mult", 1.0),
+		"perfect": ed.get("perfect_score", 0),
+		"total": ed.get("score", 0),
+	}
+	cascade.show_cascade(cascade_data, board_center, board_renderer)
+	cascade.tree_exited.connect(overlay_layer.queue_free)
 
 func _on_quit_to_home() -> void:
 	# Ensure time_scale is restored if quitting during hit stop

@@ -162,6 +162,28 @@ func play_adjacent_ripple(delay: float = 0.0) -> void:
 		 .set_ease(Tween.EASE_IN_OUT)
 
 
+## Perfect clear wave: brief white flash with scale pop, delayed by distance from center
+func play_perfect_wave_flash(delay: float) -> void:
+	var original_bg := _bg_color
+	var flash_color := Color(1.0, 1.0, 1.0, 0.9)
+	var tween := create_tween()
+	tween.set_process_mode(Tween.TWEEN_PROCESS_IDLE)
+	if delay > 0.0:
+		tween.tween_interval(delay)
+	# Flash white + scale pop
+	tween.tween_callback(func():
+		_bg_color = flash_color
+		_scale_factor = 1.08
+		queue_redraw()
+	)
+	tween.tween_property(self, "_scale_factor", 1.0, 0.12) \
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tween.parallel().tween_method(func(t: float):
+		_bg_color = flash_color.lerp(original_bg, 1.0 - t)
+		queue_redraw()
+	, 1.0, 0.0, 0.2)
+
+
 func play_clear_flash(duration: float, delay: float = 0.0, cached_color: Color = Color.TRANSPARENT) -> void:
 	var bright_color := Color.WHITE
 	if cached_color.a > 0.01:
