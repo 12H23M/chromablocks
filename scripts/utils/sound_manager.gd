@@ -8,19 +8,22 @@ const MASTER_VOLUME_DB := -6.0
 var _sfx_players: Dictionary = {}   # sfx_name -> AudioStreamPlayer
 var _combo_players: Dictionary = {}  # level (int) -> AudioStreamPlayer
 var _chain_players: Dictionary = {}  # cascade level (int) -> AudioStreamPlayer
+var _line_clear_players: Dictionary = {}  # line count (int) -> AudioStreamPlayer
 var _blast_player: AudioStreamPlayer
 var _sfx_ready := false
 var _gen_thread: Thread
 
 func _ready() -> void:
 	# Create players on main thread (no stream yet — assigned after bg synthesis)
-	for sfx_name in ["block_place", "line_clear", "color_match", "level_up",
+	for sfx_name in ["block_place", "color_match", "level_up",
 			"game_over", "perfect_clear", "button_press", "place_fail"]:
 		_sfx_players[sfx_name] = _create_empty_player()
 	for level in range(1, 8):
 		_combo_players[level] = _create_empty_player()
 	for level in range(1, 4):
 		_chain_players[level] = _create_empty_player()
+	for lines in range(1, 5):
+		_line_clear_players[lines] = _create_empty_player()
 	_blast_player = _create_empty_player()
 
 	# Synthesize all SFX in a background thread
@@ -38,7 +41,6 @@ func _create_empty_player() -> AudioStreamPlayer:
 func _generate_all_sfx() -> void:
 	var sfx_streams := {
 		"block_place": SFXGenerator.generate_block_place(),
-		"line_clear": SFXGenerator.generate_line_clear(),
 		"color_match": SFXGenerator.generate_color_match(),
 		"level_up": SFXGenerator.generate_level_up(),
 		"game_over": SFXGenerator.generate_game_over(),
@@ -52,17 +54,22 @@ func _generate_all_sfx() -> void:
 	var chain_streams := {}
 	for level in range(1, 4):
 		chain_streams[level] = SFXGenerator.generate_chain_sound(level)
+	var line_clear_streams := {}
+	for lines in range(1, 5):
+		line_clear_streams[lines] = SFXGenerator.generate_line_clear(lines)
 	var blast_stream := SFXGenerator.generate_blast_sound()
-	call_deferred("_apply_sfx_streams", sfx_streams, combo_streams, chain_streams, blast_stream)
+	call_deferred("_apply_sfx_streams", sfx_streams, combo_streams, chain_streams, line_clear_streams, blast_stream)
 
 
-func _apply_sfx_streams(sfx_streams: Dictionary, combo_streams: Dictionary, chain_streams: Dictionary = {}, blast_stream: AudioStreamWAV = null) -> void:
+func _apply_sfx_streams(sfx_streams: Dictionary, combo_streams: Dictionary, chain_streams: Dictionary = {}, line_clear_streams: Dictionary = {}, blast_stream: AudioStreamWAV = null) -> void:
 	for sfx_name in sfx_streams:
 		_sfx_players[sfx_name].stream = sfx_streams[sfx_name]
 	for level in combo_streams:
 		_combo_players[level].stream = combo_streams[level]
 	for level in chain_streams:
 		_chain_players[level].stream = chain_streams[level]
+	for lines in line_clear_streams:
+		_line_clear_players[lines].stream = line_clear_streams[lines]
 	if blast_stream:
 		_blast_player.stream = blast_stream
 	_sfx_ready = true
@@ -77,6 +84,15 @@ func play_sfx(sfx_name: String) -> void:
 		return
 	# play() restarts from beginning — safe because stream never changes
 	_sfx_players[sfx_name].play()
+
+
+func play_line_clear_sfx(line_count: int) -> void:
+	if not _sfx_ready:
+		return
+	if not SaveManager.is_sound_enabled():
+		return
+	var lines := clampi(line_count, 1, 4)
+	_line_clear_players[lines].play()
 
 
 func play_combo_sfx(combo: int) -> void:

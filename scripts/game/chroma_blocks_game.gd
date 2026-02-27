@@ -17,6 +17,10 @@ var _state: GameState
 var _piece_gen := PieceGenerator.new()
 var _pending_action := ""
 var _is_daily_mode := false  # 일일 챌린지 모드 플래그
+var _is_mission_run := false
+var _mission_select_overlay: Control = null
+var _mission_hud: VBoxContainer = null
+var _all_missions_completed_shown := false
 var _color_match_count := 0  # 누적 컬러 매치 횟수 (업적용)
 var _had_perfect_clear := false  # 퍼펙트 클리어 발생 여부 (업적용)
 var _hit_stop_duration := 0.0  # 현재 진행 중인 히트 스톱 잔여 시간
@@ -41,6 +45,7 @@ func _ready() -> void:
 	home_screen.start_pressed.connect(start_game)
 	home_screen.continue_pressed.connect(continue_game)
 	home_screen.daily_pressed.connect(start_daily_challenge)
+	home_screen.mission_pressed.connect(_show_mission_select)
 	game_over_screen.play_again_pressed.connect(start_game)
 	game_over_screen.go_home_pressed.connect(_on_go_home)
 	game_over_screen.continue_ad_pressed.connect(_on_continue_ad)
@@ -90,6 +95,7 @@ func _start_new_game(daily: bool) -> void:
 		Engine.time_scale = 1.0
 		_hit_stop_duration = 0.0
 		_is_daily_mode = daily
+		MusicManager.set_intensity(0)
 		SaveManager.clear_active_game()
 		_state.reset()
 		_piece_gen.reset()
@@ -465,6 +471,9 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	}
 	_play_effects_sequence(effects_data)
 
+	# 9.5. BGM reactive intensity
+	_update_bgm_intensity(board, new_combo)
+
 	# 10. Tray refill or game over
 	if _state.tray_pieces.is_empty():
 		_refill_tray()
@@ -740,6 +749,18 @@ func _apply_hit_stop(duration: float) -> void:
 			Engine.time_scale = 1.0
 			_hit_stop_duration = 0.0
 	)
+
+func _update_bgm_intensity(board: BoardState, combo: int) -> void:
+	var fill := board.fill_ratio()
+	var intensity: int
+	if fill > 0.7:
+		intensity = 2  # Crisis
+	elif combo >= 2:
+		intensity = 1  # Combo active
+	else:
+		intensity = 0  # Normal
+	MusicManager.set_intensity(intensity)
+
 
 func _spawn_combo_popup(combo: int) -> void:
 	var popup := Control.new()

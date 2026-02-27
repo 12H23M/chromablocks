@@ -22,48 +22,54 @@ static func generate_block_place() -> AudioStreamWAV:
 	return _make_wav(samples)
 
 
-static func generate_line_clear() -> AudioStreamWAV:
-	# Punchy ascending sweep: impact transient + sub-bass + whoosh noise
+static func generate_line_clear(line_count: int = 1) -> AudioStreamWAV:
+	# Swoosh (noise sweep high→low) + ding (pure tone) — pitch shifts up per line
 	var samples := PackedByteArray()
-	var duration := 0.3
+	var duration := 0.30
 	var total := int(SAMPLE_RATE * duration)
-	var fade_out_time := 0.06
 	var rng := RandomNumberGenerator.new()
-	rng.seed = 123  # Deterministic noise
+	rng.seed = 123 + line_count
+
+	# Pitch multiplier: shift up per additional line
+	var pitch_mult := 1.0 + float(line_count - 1) * 0.12
+	var ding_freq := 800.0 * pitch_mult
 
 	for i in total:
 		var t := float(i) / SAMPLE_RATE
-		var ratio := t / duration
+		var sample := 0.0
 
-		# Smooth ascending frequency sweep (C5 → G5)
-		var freq := lerpf(523.0, 784.0, ratio * ratio)
+		# Layer 1: Swoosh — filtered noise sweep high→low (0.15s)
+		if t < 0.15:
+			var swoosh_ratio := t / 0.15
+			# Sweep frequency for noise filter center
+			var sweep_center := lerpf(4000.0, 400.0, swoosh_ratio) * pitch_mult
+			var swoosh_env := _attack(t, 0.005) * (1.0 - swoosh_ratio) * 0.28
+			# Shaped noise with sine approximation of bandpass
+			var noise := rng.randf_range(-1.0, 1.0)
+			sample += noise * swoosh_env * sin(t * sweep_center * TAU) * 0.5
+			# Add a sine sweep for tonal whoosh
+			sample += sin(t * sweep_center * TAU) * swoosh_env * 0.5
 
-		# Envelope: soft attack, gentle sustain, smooth fade
-		var env := _attack(t, 0.01) * _exp_decay(t, 2.5) * 0.38
+		# Layer 2: Ding — pure tone at 800Hz * pitch_mult (starts at 0.08s, 0.15s duration)
+		var ding_t := t - 0.08
+		if ding_t > 0.0:
+			var ding_env := _exp_decay(ding_t, 6.0) * _attack(ding_t, 0.005) * 0.38
+			sample += sin(ding_t * ding_freq * TAU) * ding_env
+			# Bell harmonic
+			sample += sin(ding_t * ding_freq * 2.0 * TAU) * ding_env * 0.15
+			sample += sin(ding_t * ding_freq * 3.0 * TAU) * ding_env * 0.04
 
-		# Initial impact transient (first 20ms)
-		var impact := sin(t * 1200.0 * TAU) * _exp_decay(t, 60.0) * _attack(t, 0.001) * 0.22
+		# Layer 3: Impact transient (first 15ms)
+		var impact_env := _exp_decay(t, 60.0) * _attack(t, 0.001) * 0.20
+		sample += sin(t * 1200.0 * pitch_mult * TAU) * impact_env
 
-		# Main tone + soft harmonics for warmth
-		var sample := sin(t * freq * TAU) * env
-		sample += sin(t * freq * 2.0 * TAU) * env * 0.10
-		sample += sin(t * freq * 0.5 * TAU) * env * 0.08
+		# Layer 4: Sub-bass thump
+		sample += sin(t * 90.0 * TAU) * _exp_decay(t, 6.0) * _attack(t, 0.004) * 0.15
 
-		# Sub-bass layer (90Hz)
-		sample += sin(t * 90.0 * TAU) * _exp_decay(t, 6.0) * _attack(t, 0.005) * 0.18
-
-		# Whoosh noise layer
-		var whoosh := rng.randf_range(-1.0, 1.0) * _exp_decay(t, 5.0) * _attack(t, 0.01) * 0.10
-
-		sample += impact + whoosh
-
-		# Subtle shimmer (amplitude modulation)
-		sample *= 1.0 + sin(t * 12.0 * TAU) * 0.06
-
-		# Smooth fade-out
+		# Fade out
 		var remaining := duration - t
-		if remaining < fade_out_time:
-			sample *= remaining / fade_out_time
+		if remaining < 0.04:
+			sample *= remaining / 0.04
 
 		_write_sample(samples, sample)
 
@@ -88,22 +94,79 @@ static func generate_color_match() -> AudioStreamWAV:
 
 
 static func generate_combo_clear(combo_level: int) -> AudioStreamWAV:
-	# Pitched combo tone: higher combo → higher frequency
-	var freq_table := [440.0, 523.0, 587.0, 659.0, 784.0, 880.0, 988.0]
-	var idx := clampi(combo_level - 1, 0, freq_table.size() - 1)
-	var base_freq: float = freq_table[idx]
-
 	var samples := PackedByteArray()
-	var duration := 0.15
-	var total := int(SAMPLE_RATE * duration)
 
-	for i in total:
-		var t := float(i) / SAMPLE_RATE
-		var env := _exp_decay(t, 8.0) * _attack(t, 0.005) * 0.55
-		var sample := sin(t * base_freq * TAU) * env
-		# Soft harmonic for brightness
-		sample += sin(t * base_freq * 2.0 * TAU) * env * 0.12
-		_write_sample(samples, sample)
+	if combo_level <= 1:
+		# x1: not really a combo, simple tone (shouldn't normally play)
+		var duration := 0.12
+		var total := int(SAMPLE_RATE * duration)
+		for i in total:
+			var t := float(i) / SAMPLE_RATE
+			var env := _exp_decay(t, 10.0) * _attack(t, 0.004) * 0.40
+			var sample := sin(t * 440.0 * TAU) * env
+			_write_sample(samples, sample)
+
+	elif combo_level == 2:
+		# x2: Quick double-tap — two short tones 0.05s apart
+		var duration := 0.15
+		var total := int(SAMPLE_RATE * duration)
+		for i in total:
+			var t := float(i) / SAMPLE_RATE
+			var sample := 0.0
+			# First tap
+			var env1 := _exp_decay(t, 20.0) * _attack(t, 0.003) * 0.45
+			sample += sin(t * 523.0 * TAU) * env1
+			# Second tap (0.05s later, slightly higher)
+			var t2 := t - 0.05
+			if t2 > 0.0:
+				var env2 := _exp_decay(t2, 20.0) * _attack(t2, 0.003) * 0.45
+				sample += sin(t2 * 587.0 * TAU) * env2
+			_write_sample(samples, sample)
+
+	elif combo_level == 3:
+		# x3: Triple ascending arpeggio (C-E-G quick)
+		var duration := 0.20
+		var total := int(SAMPLE_RATE * duration)
+		var notes := [523.0, 659.0, 784.0]  # C5-E5-G5
+		for i in total:
+			var t := float(i) / SAMPLE_RATE
+			var sample := 0.0
+			for n in notes.size():
+				var note_t := t - float(n) * 0.04
+				if note_t < 0.0:
+					continue
+				var freq: float = notes[n]
+				var env := _exp_decay(note_t, 14.0) * _attack(note_t, 0.003) * 0.40
+				sample += sin(note_t * freq * TAU) * env
+				sample += sin(note_t * freq * 2.0 * TAU) * env * 0.15
+			_write_sample(samples, sample)
+
+	else:
+		# x4+: Chord + shimmer (simultaneous tones + high sweep)
+		var duration := 0.25
+		var total := int(SAMPLE_RATE * duration)
+		# Shift chord up per combo level
+		var pitch_shift := 1.0 + float(combo_level - 4) * 0.05
+		var chord := [523.0 * pitch_shift, 659.0 * pitch_shift, 784.0 * pitch_shift]
+		var rng := RandomNumberGenerator.new()
+		rng.seed = combo_level * 31
+		for i in total:
+			var t := float(i) / SAMPLE_RATE
+			var sample := 0.0
+			# Simultaneous chord
+			var env := _exp_decay(t, 5.0) * _attack(t, 0.005) * 0.30
+			for freq in chord:
+				sample += sin(t * freq * TAU) * env
+			# High shimmer sweep (3000→5000Hz)
+			var shimmer_t := maxf(0.0, t - 0.03)
+			if shimmer_t > 0.0:
+				var sweep_freq := lerpf(3000.0, 5000.0, shimmer_t / 0.2)
+				var shimmer_env := _exp_decay(shimmer_t, 8.0) * _attack(shimmer_t, 0.008) * 0.12
+				sample += sin(shimmer_t * sweep_freq * TAU) * shimmer_env
+			# Sparkle noise
+			if t < 0.1:
+				sample += rng.randf_range(-1.0, 1.0) * _exp_decay(t, 18.0) * 0.06
+			_write_sample(samples, sample)
 
 	return _make_wav(samples)
 
@@ -213,75 +276,111 @@ static func generate_place_fail() -> AudioStreamWAV:
 
 
 static func generate_chain_sound(cascade_level: int) -> AudioStreamWAV:
-	# Crystal bell tone — pitch rises with cascade level (C5 → E5 → G5)
-	var freq_table := [523.0, 659.0, 784.0]
-	var idx := clampi(cascade_level - 1, 0, freq_table.size() - 1)
-	var base_freq: float = freq_table[idx]
+	# Rising arpeggio — major chord notes shift up per cascade level
+	# Cascade 1: C-E-G, Cascade 2: D-F#-A, Cascade 3+: E-G#-B
+	var chord_table: Array = [
+		[523.0, 659.0, 784.0],    # C5-E5-G5
+		[587.0, 740.0, 880.0],    # D5-F#5-A5
+		[659.0, 831.0, 988.0],    # E5-G#5-B5
+	]
+	var idx := clampi(cascade_level - 1, 0, chord_table.size() - 1)
+	var chord: Array = chord_table[idx]
 
 	var samples := PackedByteArray()
 	var duration := 0.3
 	var total := int(SAMPLE_RATE * duration)
+	var note_gap := 0.06  # Time between arpeggio notes
 
 	for i in total:
 		var t := float(i) / SAMPLE_RATE
-		var env := _exp_decay(t, 5.0) * _attack(t, 0.003) * 0.50
-		# Main crystal tone
-		var sample := sin(t * base_freq * TAU) * env
-		# Bright harmonic overtones for bell quality
-		sample += sin(t * base_freq * 2.0 * TAU) * env * 0.25
-		sample += sin(t * base_freq * 3.0 * TAU) * env * 0.08
-		# Slight detuned shimmer
-		sample += sin(t * (base_freq * 1.005) * TAU) * env * 0.15
-		# Higher cascade levels get sparkle layer
+		var sample := 0.0
+
+		# Play each note in the arpeggio with staggered starts
+		for n in chord.size():
+			var note_start: float = float(n) * note_gap
+			var note_t := t - note_start
+			if note_t < 0.0:
+				continue
+			var freq: float = chord[n]
+			var env := _exp_decay(note_t, 5.0) * _attack(note_t, 0.004) * 0.35
+			# Main tone + bell harmonics
+			sample += sin(note_t * freq * TAU) * env
+			sample += sin(note_t * freq * 2.0 * TAU) * env * 0.20
+			sample += sin(note_t * freq * 3.0 * TAU) * env * 0.06
+			# Detuned shimmer for width
+			sample += sin(note_t * (freq * 1.005) * TAU) * env * 0.12
+
+		# Echo/reverb layer: delayed, quieter copy of the signal
+		var echo_delay := 0.08
+		var echo_t := t - echo_delay
+		if echo_t > 0.0:
+			for n in chord.size():
+				var note_start: float = float(n) * note_gap
+				var note_t := echo_t - note_start
+				if note_t < 0.0:
+					continue
+				var freq: float = chord[n]
+				var env := _exp_decay(note_t, 7.0) * _attack(note_t, 0.004) * 0.12
+				sample += sin(note_t * freq * TAU) * env
+
+		# Sparkle on higher cascades
 		if cascade_level >= 2:
-			var sparkle_freq := base_freq * 4.0
-			sample += sin(t * sparkle_freq * TAU) * _exp_decay(t, 12.0) * _attack(t, 0.005) * 0.06
+			var top_freq: float = chord[chord.size() - 1]
+			sample += sin(t * top_freq * 4.0 * TAU) * _exp_decay(t, 12.0) * _attack(t, 0.005) * 0.05
+
 		_write_sample(samples, sample)
 
 	return _make_wav(samples)
 
 
 static func generate_blast_sound() -> AudioStreamWAV:
-	# Powerful explosion: low thump + high sparkle layers
+	# Punchy blast: white noise impact + low boom + high shimmer sweep
 	var samples := PackedByteArray()
-	var duration := 0.5
+	var duration := 0.45
 	var total := int(SAMPLE_RATE * duration)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 777
 
 	for i in total:
 		var t := float(i) / SAMPLE_RATE
-		var ratio := t / duration
+		var sample := 0.0
 
-		# Layer 1: Sub-bass thump (60-80Hz)
-		var sub_freq := lerpf(80.0, 60.0, ratio)
-		var sub_env := _exp_decay(t, 4.0) * _attack(t, 0.003) * 0.35
-		var sample := sin(t * sub_freq * TAU) * sub_env
+		# Layer 1: White noise burst (first 0.05s) — impact hit
+		if t < 0.05:
+			var noise_env := _exp_decay(t, 40.0) * _attack(t, 0.001) * 0.40
+			sample += rng.randf_range(-1.0, 1.0) * noise_env
 
-		# Layer 2: Impact transient (first 30ms)
-		var impact_env := _exp_decay(t, 50.0) * _attack(t, 0.001) * 0.30
+		# Layer 2: Low frequency boom (60Hz, 0.2s decay)
+		var boom_env := _exp_decay(t, 5.0) * _attack(t, 0.003) * 0.38
+		sample += sin(t * 60.0 * TAU) * boom_env
+		# Sub-harmonic for weight
+		sample += sin(t * 30.0 * TAU) * boom_env * 0.3
+
+		# Layer 3: Impact transient (first 30ms)
+		var impact_env := _exp_decay(t, 55.0) * _attack(t, 0.001) * 0.28
 		sample += sin(t * 200.0 * TAU) * impact_env
-		sample += sin(t * 350.0 * TAU) * impact_env * 0.5
+		sample += sin(t * 350.0 * TAU) * impact_env * 0.4
 
-		# Layer 3: High sparkle (crystal shimmer fading in slightly delayed)
-		var sparkle_t := maxf(0.0, t - 0.05)
-		var sparkle_env := _exp_decay(sparkle_t, 6.0) * _attack(sparkle_t, 0.01) * 0.20
+		# Layer 4: Shimmer sweep (2000→4000Hz, 0.3s, starts at 0.05s)
+		var shimmer_t := maxf(0.0, t - 0.05)
+		if shimmer_t > 0.0 and shimmer_t < 0.35:
+			var shimmer_ratio := shimmer_t / 0.35
+			var shimmer_freq := lerpf(2000.0, 4000.0, shimmer_ratio)
+			var shimmer_env := _exp_decay(shimmer_t, 4.5) * _attack(shimmer_t, 0.01) * 0.18
+			sample += sin(shimmer_t * shimmer_freq * TAU) * shimmer_env
+			# Detuned copy for stereo-like width
+			sample += sin(shimmer_t * (shimmer_freq * 1.01) * TAU) * shimmer_env * 0.5
+
+		# Layer 5: Crystal sparkle (delayed)
+		var sparkle_t := maxf(0.0, t - 0.08)
+		var sparkle_env := _exp_decay(sparkle_t, 7.0) * _attack(sparkle_t, 0.01) * 0.12
 		sample += sin(sparkle_t * 1047.0 * TAU) * sparkle_env
-		sample += sin(sparkle_t * 1319.0 * TAU) * sparkle_env * 0.5
-		sample += sin(sparkle_t * 1568.0 * TAU) * sparkle_env * 0.3
-
-		# Layer 4: Noise burst for texture
-		var noise := rng.randf_range(-1.0, 1.0) * _exp_decay(t, 8.0) * _attack(t, 0.002) * 0.12
-
-		sample += noise
-
-		# Reverb-like tail via slow sine modulation
-		sample *= 1.0 + sin(t * 3.0 * TAU) * 0.08
+		sample += sin(sparkle_t * 1568.0 * TAU) * sparkle_env * 0.4
 
 		# Fade out
 		var remaining := duration - t
-		if remaining < 0.08:
-			sample *= remaining / 0.08
+		if remaining < 0.06:
+			sample *= remaining / 0.06
 
 		_write_sample(samples, sample)
 

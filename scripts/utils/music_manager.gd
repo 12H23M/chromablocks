@@ -13,6 +13,8 @@ const DEFAULT_TRACK := "chroma_dream"
 var _player: AudioStreamPlayer
 var _current_track_id: String = DEFAULT_TRACK
 var _fade_tween: Tween
+var _intensity_tween: Tween
+var _current_intensity: int = 0
 
 func _ready() -> void:
 	_player = AudioStreamPlayer.new()
@@ -132,6 +134,43 @@ func switch_track(track_id: String) -> void:
 	else:
 		_player.stop()
 		_player.stream = new_stream
+
+
+## Reactive intensity: adjust volume and pitch based on game state.
+## Level 0 (normal): base volume -6dB offset, normal pitch
+## Level 1 (combo active): -3dB offset, normal pitch
+## Level 2 (crisis, board >70%): 0dB offset, slight pitch up (1.02)
+func set_intensity(level: int) -> void:
+	level = clampi(level, 0, 2)
+	if level == _current_intensity:
+		return
+	_current_intensity = level
+
+	if not _player.playing:
+		return
+
+	var target_db: float
+	var target_pitch: float
+	match level:
+		0:
+			target_db = MUSIC_VOLUME_DB - 6.0
+			target_pitch = 1.0
+		1:
+			target_db = MUSIC_VOLUME_DB - 3.0
+			target_pitch = 1.0
+		2:
+			target_db = MUSIC_VOLUME_DB
+			target_pitch = 1.02
+		_:
+			target_db = MUSIC_VOLUME_DB - 6.0
+			target_pitch = 1.0
+
+	if _intensity_tween and _intensity_tween.is_valid():
+		_intensity_tween.kill()
+	_intensity_tween = create_tween()
+	_intensity_tween.set_parallel(true)
+	_intensity_tween.tween_property(_player, "volume_db", target_db, 0.5)
+	_intensity_tween.tween_property(_player, "pitch_scale", target_pitch, 0.5)
 
 
 func _kill_tween() -> void:
