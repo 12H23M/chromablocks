@@ -482,146 +482,105 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 ##
 ## Timeline:
 ##   0ms   — Place bounce (if no clear)
-##  150ms  — Anticipation: board dims, affected cells pulse white
-##  400ms  — Line clear: staggered cell flash + shrink, sound, haptic, shake, zoom
-##  700ms  — Un-dim board, zoom out
-##  800ms  — Combo popup
-## 1100ms  — Chroma Chain: cascade groups pop in sequence
-## 1500ms  — Chroma Blast: screen flash, cells explode, popup
-## 2000ms  — Score cascade
+## Tighter effect sequence — events overlap naturally instead of queuing.
+## Total ~0.8s for simple clear, ~1.2s with chain/blast.
 func _play_effects_sequence(ed: Dictionary) -> void:
 	var delay: float = 0.0
 
-	# Phase 1 (0ms): Place bounce if no line clear
+	# Immediate: Place bounce if no line clear
 	if not ed["has_clear"]:
 		board_renderer.play_place_bounce()
 
-	# Phase 2 (150ms): Anticipation — dim board + pulse affected cells
-	if ed["has_clear"]:
-		get_tree().create_timer(0.15, true, false, true).timeout.connect(func():
-			board_renderer.play_clear_anticipation(ed["clear_rows"], ed["clear_cols"])
-		)
+	# 0ms: Score popup — instant feedback
+	if ed["score"] > 0:
+		_spawn_score_popup(ed["score"], ed["gx"], ed["gy"])
 
-	# Phase 3 (400ms): Line clear + color match
+	# 100ms: Line clear + haptic + shake (the core feel)
 	if ed["has_clear"] or ed["has_color_match"]:
-		get_tree().create_timer(0.4, true, false, true).timeout.connect(func():
+		get_tree().create_timer(0.1, true, false, true).timeout.connect(func():
 			if ed["has_clear"]:
 				var lines: int = ed["lines_cleared"]
-				if lines >= 3:
-					_apply_hit_stop(0.05)
-				else:
-					_apply_hit_stop(0.03)
+				_apply_hit_stop(0.04 if lines >= 2 else 0.02)
 				board_renderer.play_line_clear_effect(ed["clear_rows"], ed["clear_cols"])
 				SoundManager.play_sfx("line_clear")
 				HapticManager.line_clear_burst(lines)
 				if lines >= 2:
 					_spawn_multi_clear_popup(lines)
-				# Screen shake based on line count
 				if lines >= 3:
-					board_renderer.play_screen_shake(9.0, 0.20)
+					board_renderer.play_screen_shake(8.0, 0.18)
 				elif lines >= 2:
-					board_renderer.play_screen_shake(6.0, 0.15)
+					board_renderer.play_screen_shake(5.0, 0.12)
 				else:
-					board_renderer.play_screen_shake(4.0, 0.10)
-				# Camera zoom pulse based on line count
-				var zoom_amount: float = 1.02
-				if lines >= 3:
-					zoom_amount = 1.06
-				elif lines >= 2:
-					zoom_amount = 1.04
-				board_renderer.play_camera_zoom(zoom_amount, 0.2)
+					board_renderer.play_screen_shake(3.0, 0.08)
 			if ed["has_color_match"]:
-				_apply_hit_stop(0.03)
+				_apply_hit_stop(0.02)
 				board_renderer.play_color_match_effect(ed["color_groups"])
 				SoundManager.play_sfx("color_match")
 				HapticManager.color_match()
 		)
-		if ed["has_clear"]:
-			delay = 0.7
-		else:
-			delay = 0.55
+		delay = 0.35
 
-	# Phase 4 (700ms): Un-dim board after line clear
-	if ed["has_clear"]:
-		get_tree().create_timer(0.7, true, false, true).timeout.connect(func():
-			board_renderer.end_clear_anticipation()
-		)
-
-	# Phase 5 (800ms): Combo popup — only show x2+
+	# +250ms after clear: Combo (x2+ only, overlaps with clear tail)
 	if ed["combo"] >= 2:
-		var combo_time: float = maxf(delay, 0.8)
-		get_tree().create_timer(combo_time, true, false, true).timeout.connect(func():
+		get_tree().create_timer(delay, true, false, true).timeout.connect(func():
 			var combo: int = ed["combo"]
 			SoundManager.play_combo_sfx(combo)
 			HapticManager.combo(combo)
 			_spawn_combo_popup(combo)
 			if combo >= 3:
-				_apply_hit_stop(0.05)
+				_apply_hit_stop(0.03)
 		)
-		delay = combo_time + 0.25
-	elif ed["combo"] == 1:
-		# x1: haptic only, no popup
-		HapticManager.combo(1)
+		delay += 0.15  # short gap, not full wait
 
-	# Phase 6 (1100ms): Chroma Chain — cascade groups pop in sequence
+	# +150ms: Chain (compact — all groups fire quickly)
 	if ed["chain_cascades"] > 0:
-		var chain_start: float = maxf(delay, 1.1)
-		var groups_per_cascade: Array = ed["chain_groups_per_cascade"]
-		var group_delay: float = 0.0
-		for cascade_idx in ed["chain_cascades"]:
-			var groups: Array = groups_per_cascade[cascade_idx]
-			for group in groups:
-				var this_delay: float = chain_start + group_delay
-				var captured_group: Array = group
-				get_tree().create_timer(this_delay, true, false, true).timeout.connect(func():
-					board_renderer.play_chain_cascade_group(captured_group, 0.02)
-				)
-				group_delay += 0.2  # 0.2s between groups
-
-		# Chain popup + sound after all groups
-		var chain_popup_time: float = chain_start + group_delay
+		var chain_start: float = delay
 		var cascades_count: int = ed["chain_cascades"]
-		get_tree().create_timer(chain_popup_time, true, false, true).timeout.connect(func():
-			_apply_hit_stop(0.05)
+		get_tree().create_timer(chain_start, true, false, true).timeout.connect(func():
+			_apply_hit_stop(0.04)
 			_spawn_chain_popup(cascades_count)
 			SoundManager.play_chain_sound(cascades_count)
 			HapticManager.chroma_chain(cascades_count)
-			var shake_str: float = 5.0 + float(cascades_count) * 3.0
-			board_renderer.play_screen_shake(shake_str, 0.15 + cascades_count * 0.05)
+			board_renderer.play_screen_shake(4.0 + float(cascades_count) * 2.0, 0.12)
 		)
-		delay = chain_popup_time + 0.2
+		# Chain cascade groups fire with minimal stagger
+		if ed.has("chain_groups_per_cascade"):
+			var groups_per_cascade: Array = ed["chain_groups_per_cascade"]
+			var group_offset: float = 0.0
+			for cascade_idx in cascades_count:
+				if cascade_idx < groups_per_cascade.size():
+					var groups: Array = groups_per_cascade[cascade_idx]
+					for group in groups:
+						var captured_group: Array = group
+						var t: float = chain_start + group_offset
+						get_tree().create_timer(t, true, false, true).timeout.connect(func():
+							board_renderer.play_chain_cascade_group(captured_group, 0.02)
+						)
+						group_offset += 0.1  # fast 0.1s between groups
+		delay = chain_start + 0.2
 
-	# Phase 7 (1500ms): Chroma Blast — screen flash + cell explosion + popup
+	# +200ms: Blast (fires quickly after chain)
 	if ed["blast_cells"] > 0:
-		var blast_start: float = maxf(delay, 1.5)
+		var blast_start: float = delay
 		var blast_color: int = ed["blast_color"]
-		var blast_positions: Array = ed["blast_positions"]
-		# Screen flash first
+		var blast_positions: Array = ed.get("blast_positions", [])
 		get_tree().create_timer(blast_start, true, false, true).timeout.connect(func():
-			board_renderer.play_blast_flash(blast_color)
-		)
-		# Cell explosion + popup slightly after flash
-		get_tree().create_timer(blast_start + 0.1, true, false, true).timeout.connect(func():
-			_apply_hit_stop(0.09)
-			board_renderer.play_blast_cell_explosion(blast_positions, blast_color)
+			_apply_hit_stop(0.06)
+			if board_renderer.has_method("play_blast_flash"):
+				board_renderer.play_blast_flash(blast_color)
+			if board_renderer.has_method("play_blast_cell_explosion") and not blast_positions.is_empty():
+				board_renderer.play_blast_cell_explosion(blast_positions, blast_color)
 			_spawn_blast_popup(blast_color)
 			SoundManager.play_blast_sound()
 			HapticManager.chroma_blast()
-			board_renderer.play_screen_shake(12.0, 0.30)
+			board_renderer.play_screen_shake(10.0, 0.25)
 		)
-		delay = blast_start + 0.4
+		delay = blast_start + 0.3
 
-	# Phase 8: Score popup — show immediately with line clear (no cascade delay)
-	if ed["score"] > 0:
-		var score_time: float = 0.15  # almost instant, right after placement
-		get_tree().create_timer(score_time, true, false, true).timeout.connect(func():
-			_spawn_score_popup(ed["score"], ed["gx"], ed["gy"])
-		)
-
-	# Perfect clear effects (sound/haptics/shake — visual handled by cascade)
+	# Perfect clear
 	if ed["is_perfect"]:
-		get_tree().create_timer(delay + 0.15, true, false, true).timeout.connect(func():
-			_apply_hit_stop(0.09)
+		get_tree().create_timer(delay + 0.1, true, false, true).timeout.connect(func():
+			_apply_hit_stop(0.06)
 			SoundManager.play_sfx("perfect_clear")
 			board_renderer.play_screen_shake(10.0, 0.25)
 			HapticManager.perfect_clear()
