@@ -9,6 +9,10 @@ var _prev_combo := 0
 var _combo_tween: Tween
 var _displayed_score: int = 0
 var _score_tween: Tween
+var _color_flash_tween: Tween
+var _new_best_shown := false
+var _new_best_label: Label
+var _current_high_score: int = 0
 
 
 func _ready() -> void:
@@ -16,11 +20,13 @@ func _ready() -> void:
 
 
 func update_from_state(state: GameState) -> void:
+	_current_high_score = state.high_score
 	_animate_score(state.score)
 	level_label.text = "%02d" % state.level
 	best_label.text = _format_number(state.high_score)
 	_update_combo(state.combo)
 	_update_level_progress(state.lines_cleared, state.level)
+	_check_new_best(state.score)
 
 
 func _update_level_progress(lines_cleared: int, current_level: int) -> void:
@@ -51,7 +57,7 @@ func _animate_score(target_score: int) -> void:
 	_score_tween.tween_method(_set_score_display, _displayed_score, target_score, 0.3) \
 		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
 
-	# Scale bounce when score increases
+	# Scale bounce + color flash when score increases
 	if score_increased:
 		score_label.pivot_offset = score_label.size / 2.0
 		_score_tween.parallel().tween_property(score_label, "scale",
@@ -60,6 +66,14 @@ func _animate_score(target_score: int) -> void:
 		_score_tween.tween_property(score_label, "scale",
 			Vector2.ONE, 0.075) \
 			.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+
+		# Gold color flash
+		if _color_flash_tween and _color_flash_tween.is_valid():
+			_color_flash_tween.kill()
+		_color_flash_tween = create_tween()
+		score_label.add_theme_color_override("font_color", Color("#FFD93D"))
+		_color_flash_tween.tween_property(score_label, "theme_override_colors/font_color",
+			Color.WHITE, 0.3).set_ease(Tween.EASE_OUT)
 
 
 func _set_score_display(value: int) -> void:
@@ -79,6 +93,65 @@ func _format_number(value: int) -> String:
 		if count % 3 == 0 and i > 0:
 			result = "," + result
 	return result
+
+
+func _check_new_best(current_score: int) -> void:
+	if _new_best_shown:
+		return
+	if _current_high_score <= 0:
+		return
+	if current_score <= _current_high_score:
+		return
+	_new_best_shown = true
+	_show_new_best_label()
+
+
+func _show_new_best_label() -> void:
+	var score_display := score_label.get_parent()
+	if score_display == null:
+		return
+	_new_best_label = Label.new()
+	_new_best_label.text = "NEW BEST!"
+	_new_best_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var fredoka: Font = score_label.get_theme_font("font")
+	if fredoka:
+		_new_best_label.add_theme_font_override("font", fredoka)
+	_new_best_label.add_theme_font_size_override("font_size", 14)
+	_new_best_label.add_theme_color_override("font_color", Color("#FFD93D"))
+	_new_best_label.modulate.a = 0.7
+	_new_best_label.scale = Vector2.ZERO
+	score_display.add_child(_new_best_label)
+
+	# Pop-in animation (defer one frame so size is computed for pivot)
+	await get_tree().process_frame
+	if not is_instance_valid(_new_best_label):
+		return
+	_new_best_label.pivot_offset = _new_best_label.size / 2.0
+	var tw := create_tween()
+	tw.tween_property(_new_best_label, "scale", Vector2(1.1, 1.1), 0.12) \
+		.set_ease(Tween.EASE_OUT)
+	tw.tween_property(_new_best_label, "scale", Vector2.ONE, 0.08) \
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+
+	# Start pulse loop after pop-in
+	tw.tween_callback(_start_new_best_pulse)
+
+
+func _start_new_best_pulse() -> void:
+	if not is_instance_valid(_new_best_label):
+		return
+	var pulse := create_tween().set_loops()
+	pulse.tween_property(_new_best_label, "modulate:a", 1.0, 0.4) \
+		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	pulse.tween_property(_new_best_label, "modulate:a", 0.7, 0.4) \
+		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+
+
+func reset_new_best() -> void:
+	_new_best_shown = false
+	if is_instance_valid(_new_best_label):
+		_new_best_label.queue_free()
+		_new_best_label = null
 
 
 func _update_combo(combo: int) -> void:

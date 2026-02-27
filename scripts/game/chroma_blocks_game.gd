@@ -98,6 +98,7 @@ func _start_new_game(daily: bool) -> void:
 	_prefill_board(_state.board)
 	SaveManager.increment_games_played()
 	game_over_screen.reset_ad_state()
+	hud.reset_new_best()
 
 	var tray := _piece_gen.generate_tray(_state.level, _state.board)
 	_state.tray_pieces = tray
@@ -132,6 +133,7 @@ func continue_game() -> void:
 	_state = saved_state
 	_state.high_score = SaveManager.get_high_score()
 	_state.status = Enums.GameStatus.PLAYING
+	hud.reset_new_best()
 	board_renderer.update_from_state(_state.board)
 	piece_tray.populate_tray(_state.tray_pieces)
 	hud.update_from_state(_state)
