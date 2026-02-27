@@ -12,6 +12,8 @@ var blocks_placed: int = 0
 var max_combo: int = 0
 var held_piece: BlockPiece = null
 var hold_used_this_tray: bool = false
+var is_mission_run: bool = false
+var active_missions: Array = []  # Array[MissionSystem.Mission]
 
 
 func _init() -> void:
@@ -31,6 +33,8 @@ func reset() -> void:
 	max_combo = 0
 	held_piece = null
 	hold_used_this_tray = false
+	is_mission_run = false
+	active_missions = []
 
 
 func apply_turn_result(board_new: BoardState, score_total: int, lines_cleared_delta: int,

@@ -78,6 +78,21 @@ func _ready() -> void:
 	else:
 		_show_home_initial()
 
+	# Create mission HUD (hidden by default) — insert after HudSpacer in GameUI
+	_mission_hud = VBoxContainer.new()
+	_mission_hud.set_script(load("res://scripts/ui/mission_hud.gd"))
+	var game_ui := get_node("UILayer/GameUI")
+	var hud_spacer := game_ui.get_node("HudSpacer")
+	game_ui.add_child(_mission_hud)
+	game_ui.move_child(_mission_hud, hud_spacer.get_index() + 1)
+	var mission_hud_margin := MarginContainer.new()
+	mission_hud_margin.name = "MissionHudMargin"
+	mission_hud_margin.add_theme_constant_override("margin_left", 14)
+	mission_hud_margin.add_theme_constant_override("margin_right", 14)
+	game_ui.add_child(mission_hud_margin)
+	game_ui.move_child(mission_hud_margin, hud_spacer.get_index() + 1)
+	_mission_hud.reparent(mission_hud_margin)
+
 # ── Public API ──
 
 func start_game() -> void:
@@ -90,7 +105,29 @@ func start_daily_challenge() -> void:
 		print("[Daily] Already played today. Best: %d — replaying." % best)
 	_start_new_game(true)
 
-func _start_new_game(daily: bool) -> void:
+
+func _show_mission_select() -> void:
+	if is_instance_valid(_mission_select_overlay):
+		_mission_select_overlay.queue_free()
+	_mission_select_overlay = Control.new()
+	_mission_select_overlay.set_script(load("res://scripts/ui/mission_select_overlay.gd"))
+	var ui_layer: CanvasLayer = get_node("UILayer")
+	ui_layer.add_child(_mission_select_overlay)
+	_mission_select_overlay.start_mission_run.connect(_on_mission_start)
+	_mission_select_overlay.back_pressed.connect(func():
+		if is_instance_valid(_mission_select_overlay):
+			_mission_select_overlay.queue_free()
+			_mission_select_overlay = null)
+
+
+func _on_mission_start(missions: Array) -> void:
+	if is_instance_valid(_mission_select_overlay):
+		_mission_select_overlay.queue_free()
+		_mission_select_overlay = null
+	_start_new_game(false, true, missions)
+
+
+func _start_new_game(daily: bool, mission_run: bool = false, missions: Array = []) -> void:
 	ScreenTransition.fade_through_black(get_tree(), func() -> void:
 		Engine.time_scale = 1.0
 		_hit_stop_duration = 0.0
@@ -130,7 +167,19 @@ func _start_new_game(daily: bool) -> void:
 
 		_color_match_count = 0
 		_had_perfect_clear = false
-		var mode := "daily" if daily else "normal"
+
+		# Mission run setup
+		_is_mission_run = mission_run
+		_all_missions_completed_shown = false
+		_state.is_mission_run = mission_run
+		if mission_run and not missions.is_empty():
+			_state.active_missions = missions
+			_mission_hud.setup(missions)
+		else:
+			_state.active_missions = []
+			_mission_hud.hide_hud()
+
+		var mode := "daily" if daily else ("mission" if mission_run else "normal")
 		AnalyticsManager.game_start(mode)
 		if daily:
 			AnalyticsManager.daily_challenge_start()
@@ -391,6 +440,10 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	# 10. Update state
 	_state.apply_turn_result(board, score_result["total"],
 		clear_result["lines_cleared"], new_combo, new_level, piece)
+
+	# 10.5 Mission tracking
+	if _is_mission_run and not _state.active_missions.is_empty():
+		_update_mission_progress(clear_result, chain_result, blast_executed, new_combo)
 
 	# 11. Cache cell colors for clear animations BEFORE state update
 	if clear_result["has_clears"]:
@@ -718,11 +771,45 @@ func _check_game_over() -> void:
 			SaveManager.get_games_played(), daily_streak)
 		if not newly_unlocked.is_empty():
 			print("[Achievement] Unlocked: %s" % str(newly_unlocked))
+		# Hide mission HUD on game over
+		if _is_mission_run:
+			_mission_hud.hide_hud()
 		AdManager.on_game_ended()
 		SoundManager.play_sfx("game_over")
 		HapticManager.game_over()
 		game_over_screen.show_result(_state)
 		game_over_triggered.emit()
+
+## Update mission progress after a piece placement turn.
+func _update_mission_progress(clear_result: Dictionary, chain_result: Dictionary,
+		blast_executed: Dictionary, new_combo: int) -> void:
+	var missions: Array = _state.active_missions
+	if missions.is_empty():
+		return
+
+	var lines: int = clear_result.get("lines_cleared", 0)
+	if lines > 0:
+		MissionSystem.update_progress(missions, MissionSystem.MissionType.CLEAR_LINES, lines)
+	if new_combo > 0:
+		MissionSystem.update_progress(missions, MissionSystem.MissionType.REACH_COMBO, new_combo)
+	if chain_result.get("cascades", 0) > 0:
+		var cascade_count: int = chain_result["cascades"]
+		MissionSystem.update_progress(missions, MissionSystem.MissionType.TRIGGER_CHAIN, cascade_count)
+	if blast_executed.get("cells_removed", 0) > 0:
+		MissionSystem.update_progress(missions, MissionSystem.MissionType.TRIGGER_BLAST, 1)
+	MissionSystem.update_progress(missions, MissionSystem.MissionType.SCORE_POINTS, _state.score)
+	MissionSystem.update_progress(missions, MissionSystem.MissionType.PLACE_PIECES, 1)
+
+	# Refresh HUD
+	_mission_hud.refresh()
+
+	# Check all completed
+	if not _all_missions_completed_shown and MissionSystem.all_completed(missions):
+		_all_missions_completed_shown = true
+		var popup := Control.new()
+		popup.set_script(load("res://scripts/ui/mission_complete_popup.gd"))
+		popup.show_popup(self)
+
 
 func _apply_hit_stop(duration: float) -> void:
 	# If a hit stop is already in progress, only replace with longer duration
@@ -843,6 +930,8 @@ func _on_quit_to_home() -> void:
 	board_renderer.modulate.a = 1.0
 	board_renderer.scale = Vector2.ONE
 	piece_tray.modulate.a = 1.0
+	_mission_hud.hide_hud()
+	_is_mission_run = false
 	ScreenTransition.fade_through_black(get_tree(), func() -> void:
 		board_renderer.disable_gems()
 		home_screen.refresh_stats()

@@ -3,12 +3,14 @@ extends Control
 signal start_pressed()
 signal continue_pressed()
 signal daily_pressed()
+signal mission_pressed()
 signal settings_pressed()
 signal how_to_play_pressed()
 
 # ─── Node references ───
 var _bg: ColorRect
 var _play_btn: Button
+var _mission_btn: Button
 var _continue_btn: Button
 var _daily_btn: Button
 var _sound_btn: Button
@@ -336,6 +338,31 @@ func _build_buttons() -> VBoxContainer:
 	_play_btn.add_theme_stylebox_override("pressed", pp)
 	_play_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	v.add_child(_play_btn)
+
+	# MISSION
+	_mission_btn = Button.new()
+	_mission_btn.text = "MISSION"
+	_mission_btn.name = "MissionButton"
+	if _fredoka_bold:
+		_mission_btn.add_theme_font_override("font", _fredoka_bold)
+	_mission_btn.add_theme_font_size_override("font_size", 18)
+	_mission_btn.add_theme_color_override("font_color", Color.WHITE)
+	_mission_btn.custom_minimum_size = Vector2(280, 56)
+	var ms := StyleBoxFlat.new()
+	ms.bg_color = Color("#2196F3")
+	_r(ms, 16)
+	ms.border_width_bottom = 4
+	ms.border_color = Color("#1565C0")
+	ms.shadow_color = Color(0.13, 0.59, 0.95, 0.3)
+	ms.shadow_size = 8
+	_mission_btn.add_theme_stylebox_override("normal", ms)
+	_mission_btn.add_theme_stylebox_override("hover", ms)
+	var mp := ms.duplicate() as StyleBoxFlat
+	mp.bg_color = Color("#1976D2")
+	mp.shadow_size = 3
+	_mission_btn.add_theme_stylebox_override("pressed", mp)
+	_mission_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	v.add_child(_mission_btn)
 
 	# Daily + Continue — equal width row
 	var row := HBoxContainer.new()
@@ -675,6 +702,9 @@ func _connect_signals() -> void:
 	_continue_btn.pressed.connect(func():
 		SoundManager.play_sfx("button_press")
 		continue_pressed.emit())
+	_mission_btn.pressed.connect(func():
+		SoundManager.play_sfx("button_press")
+		mission_pressed.emit())
 	_daily_btn.pressed.connect(func():
 		SoundManager.play_sfx("button_press")
 		daily_pressed.emit())

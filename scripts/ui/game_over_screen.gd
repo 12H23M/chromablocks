@@ -24,6 +24,8 @@ var _used_ad_this_game := false
 var _glow_tween: Tween
 var _particle_timer: float = 0.0
 var _particles: Array = []
+var _mission_results_container: VBoxContainer = null
+var _fredoka_bold: Font = null
 
 const GRADE_THRESHOLDS := {
 	"S": 10000,
@@ -46,6 +48,7 @@ const PARTICLE_COLORS: Array[Color] = [
 
 
 func _ready() -> void:
+	_fredoka_bold = load("res://assets/fonts/Fredoka-Bold.ttf") as Font
 	$Content/ButtonSection/PlayAgainButton.pressed.connect(func():
 		SoundManager.play_sfx("button_press")
 		play_again_pressed.emit())
@@ -209,14 +212,105 @@ func show_result(state: GameState) -> void:
 				lbl.text = str(v)
 			, 0, val, 0.4).set_ease(Tween.EASE_OUT).set_delay(delay + 0.1)
 
+	# --- Mission results (if mission run) ---
+	_clear_mission_results()
+	var btn_delay: float = 1.1
+	if state.is_mission_run and not state.active_missions.is_empty():
+		_show_mission_results(state.active_missions, speed_scale)
+		btn_delay = 1.6  # extra time for mission results to appear
+
 	# --- Button stagger (alpha only) ---
 	var btn_tween := create_tween()
 	btn_tween.set_speed_scale(speed_scale)
-	btn_tween.tween_interval(1.1)
+	btn_tween.tween_interval(btn_delay)
 	btn_tween.tween_property(play_btn, "modulate:a", 1.0, 0.25) \
 		.set_ease(Tween.EASE_OUT)
 	btn_tween.tween_interval(0.15)
 	btn_tween.tween_property(home_btn, "modulate:a", 1.0, 0.25) \
+		.set_ease(Tween.EASE_OUT)
+
+
+func _clear_mission_results() -> void:
+	if is_instance_valid(_mission_results_container):
+		_mission_results_container.queue_free()
+		_mission_results_container = null
+
+
+func _show_mission_results(missions: Array, speed_scale: float) -> void:
+	_mission_results_container = VBoxContainer.new()
+	_mission_results_container.set("theme_override_constants/separation", 6)
+	_mission_results_container.modulate.a = 0.0
+
+	# Insert into Content, before ButtonSection
+	var content := $Content
+	var btn_section := $Content/ButtonSection
+	content.add_child(_mission_results_container)
+	content.move_child(_mission_results_container, btn_section.get_index())
+
+	# Header
+	var header := Label.new()
+	header.text = "MISSIONS"
+	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if _fredoka_bold:
+		header.add_theme_font_override("font", _fredoka_bold)
+	header.add_theme_font_size_override("font_size", 14)
+	header.add_theme_color_override("font_color", Color("#2196F3"))
+	_mission_results_container.add_child(header)
+
+	var total_xp: int = 0
+	for m in missions:
+		var mission: MissionSystem.Mission = m
+		var row := HBoxContainer.new()
+		row.set("theme_override_constants/separation", 8)
+		_mission_results_container.add_child(row)
+
+		var icon := Label.new()
+		if mission.completed:
+			icon.text = "✓"
+			icon.add_theme_color_override("font_color", Color("#4CAF50"))
+			total_xp += mission.xp_reward
+		else:
+			icon.text = "✗"
+			icon.add_theme_color_override("font_color", Color("#F44336"))
+		icon.add_theme_font_size_override("font_size", 13)
+		icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(icon)
+
+		var desc := Label.new()
+		desc.text = mission.description
+		desc.add_theme_font_size_override("font_size", 12)
+		desc.add_theme_color_override("font_color", Color("#C8C0E0"))
+		desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		desc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(desc)
+
+		var xp := Label.new()
+		if mission.completed:
+			xp.text = "+%d XP" % mission.xp_reward
+			xp.add_theme_color_override("font_color", Color("#FFD93D"))
+		else:
+			xp.text = "%d/%d" % [mission.progress, mission.target]
+			xp.add_theme_color_override("font_color", Color("#6B5FA0"))
+		xp.add_theme_font_size_override("font_size", 12)
+		xp.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(xp)
+
+	# Total XP
+	if total_xp > 0:
+		var total_label := Label.new()
+		total_label.text = "Mission XP: +%d" % total_xp
+		total_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		if _fredoka_bold:
+			total_label.add_theme_font_override("font", _fredoka_bold)
+		total_label.add_theme_font_size_override("font_size", 14)
+		total_label.add_theme_color_override("font_color", Color("#FFD93D"))
+		_mission_results_container.add_child(total_label)
+
+	# Fade in
+	var tw := create_tween()
+	tw.set_speed_scale(speed_scale)
+	tw.tween_interval(1.1)
+	tw.tween_property(_mission_results_container, "modulate:a", 1.0, 0.3) \
 		.set_ease(Tween.EASE_OUT)
 
 
