@@ -22,6 +22,8 @@ func _ready() -> void:
 	_player.volume_db = MUSIC_VOLUME_DB
 	_player.bus = "Master"
 	add_child(_player)
+	# Safety net: if stream ends without looping, restart it
+	_player.finished.connect(_on_player_finished)
 
 	# 저장된 트랙 ID (없으면 기본값)
 	var saved := SaveManager.get_music_track()
@@ -38,15 +40,24 @@ func _ready() -> void:
 			_player.play()
 
 
-func _load_track(track_id: String) -> AudioStreamWAV:
+func _load_track(track_id: String) -> AudioStream:
 	var path: String = TRACKS.get(track_id, TRACKS[DEFAULT_TRACK])
 	var stream = load(path)
 	if stream is AudioStreamWAV:
 		stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		stream.loop_begin = 0
-		stream.loop_end = stream.data.size() / 2
+		stream.loop_end = -1  # loop entire track
+		return stream
+	# Also handle other stream types (QOA compressed imports)
+	if stream:
 		return stream
 	return null
+
+
+func _on_player_finished() -> void:
+	# Loop fallback: if the stream didn't loop natively, restart
+	if SaveManager.is_music_enabled() and _player.stream:
+		_player.play()
 
 
 func play() -> void:
