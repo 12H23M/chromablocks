@@ -5,11 +5,11 @@ const FADE_DURATION := 1.0
 
 # WAV 트랙 목록 (프리로드 경로)
 const TRACKS: Dictionary = {
-	"retro_korobeiniki": "res://assets/music/retro_korobeiniki.wav",
-	"chroma_dream": "res://assets/music/chroma_dream.wav",
-	"neon_pulse": "res://assets/music/neon_pulse.wav",
+	"arcade_pack_01": "res://assets/music/arcade_pack_01.wav",
+	"arcade_pack_02": "res://assets/music/arcade_pack_02.wav",
+	"arcade_pack_03": "res://assets/music/arcade_pack_03.wav",
 }
-const DEFAULT_TRACK := "retro_korobeiniki"
+const DEFAULT_TRACK := "arcade_pack_01"
 
 var _player: AudioStreamPlayer
 var _current_track_id: String = DEFAULT_TRACK
