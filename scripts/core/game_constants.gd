@@ -63,20 +63,21 @@ const CHROMA_BLAST_POINTS_PER_CELL: int = 50
 const CHROMA_BLAST_TRIGGER_BONUS: int = 500
 const CHROMA_BLAST_LINE_BONUS: int = 200
 
-# Cell Aging (Color Heat)
-const CELL_AGE_STAGE1: int = 5    # age 5+: slightly darker
-const CELL_AGE_STAGE2: int = 12   # age 12+: crack effect + darker + shake
-const CELL_AGE_DARKEN_STAGE1: float = 0.20  # darken amount for stage 1
-const CELL_AGE_DARKEN_STAGE2: float = 0.40  # darken amount for stage 2
+# Cell Aging — disabled (visual-only, no gameplay impact)
+const CELL_AGE_ENABLED: bool = false
+const CELL_AGE_STAGE1: int = 5
+const CELL_AGE_STAGE2: int = 12
+const CELL_AGE_DARKEN_STAGE1: float = 0.20
+const CELL_AGE_DARKEN_STAGE2: float = 0.40
 
-# Special Tiles
+# Special Tiles — constants kept for mission mode, but disabled in normal play
 const SPECIAL_TILE_NONE: int = -1
-const SPECIAL_TILE_BOMB: int = 0    # 3x3 area destruction on tap
-const SPECIAL_TILE_RAINBOW: int = 1 # wildcard — matches any color in chains
-const SPECIAL_TILE_FREEZE: int = 2  # auto-activate: reset nearby cell ages
-const SPECIAL_TILE_DROP_CHANCE: float = 0.20  # per cleared line
-const SPECIAL_TILE_BOMB_RADIUS: int = 1       # 3x3 = center ± 1
-const SPECIAL_TILE_FREEZE_RADIUS: int = 2     # 5x5 diamond
+const SPECIAL_TILE_BOMB: int = 0
+const SPECIAL_TILE_RAINBOW: int = 1
+const SPECIAL_TILE_FREEZE: int = 2
+const SPECIAL_TILE_DROP_CHANCE: float = 0.0   # disabled in normal mode (was 0.20)
+const SPECIAL_TILE_BOMB_RADIUS: int = 1
+const SPECIAL_TILE_FREEZE_RADIUS: int = 2
 const SPECIAL_TILE_BOMB_BONUS: int = 300
 
 

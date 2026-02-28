@@ -405,8 +405,9 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 		special_result = SpecialTileSystem.try_drop_specials(board, completed_rows, completed_cols)
 		board = special_result["board"]
 
-	# 7.2. Increment all cell ages
-	board = board.increment_ages()
+	# 7.2. Increment all cell ages (skip if aging disabled)
+	if GameConstants.CELL_AGE_ENABLED:
+		board = board.increment_ages()
 
 	# 8. Scoring (base + chroma bonus)
 	var did_clear: bool = clear_result["lines_cleared"] > 0 or color_result["has_matches"] or blast_executed["cells_removed"] > 0 or chain_result["total_cells_cleared"] > 0

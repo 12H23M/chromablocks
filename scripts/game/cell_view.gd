@@ -62,8 +62,8 @@ func set_filled(block_color: int, age: int = 0, special_type: int = -1) -> void:
 	_highlight_color = Color(light.r, light.g, light.b, 0.4)
 	_border_color = light
 
-	# Age shake for stage 2+
-	if _age >= GameConstants.CELL_AGE_STAGE2:
+	# Age shake for stage 2+ (disabled when aging is off)
+	if GameConstants.CELL_AGE_ENABLED and _age >= GameConstants.CELL_AGE_STAGE2:
 		set_process(true)
 	else:
 		set_process(false)
@@ -91,7 +91,7 @@ func clear_highlight() -> void:
 		set_empty()
 
 func _process(_delta: float) -> void:
-	if _age >= GameConstants.CELL_AGE_STAGE2 and _occupied:
+	if GameConstants.CELL_AGE_ENABLED and _age >= GameConstants.CELL_AGE_STAGE2 and _occupied:
 		_age_shake_offset = Vector2(
 			randf_range(-0.7, 0.7),
 			randf_range(-0.7, 0.7)
@@ -515,10 +515,11 @@ func _draw() -> void:
 
 	# Apply age darkening to render color
 	var render_bg := _bg_color
-	if _occupied and _age >= GameConstants.CELL_AGE_STAGE2:
-		render_bg = render_bg.darkened(GameConstants.CELL_AGE_DARKEN_STAGE2)
-	elif _occupied and _age >= GameConstants.CELL_AGE_STAGE1:
-		render_bg = render_bg.darkened(GameConstants.CELL_AGE_DARKEN_STAGE1)
+	if GameConstants.CELL_AGE_ENABLED:
+		if _occupied and _age >= GameConstants.CELL_AGE_STAGE2:
+			render_bg = render_bg.darkened(GameConstants.CELL_AGE_DARKEN_STAGE2)
+		elif _occupied and _age >= GameConstants.CELL_AGE_STAGE1:
+			render_bg = render_bg.darkened(GameConstants.CELL_AGE_DARKEN_STAGE1)
 
 	# Use bubble style for occupied cells AND during clear animation (scale_factor tweening)
 	var _is_block := _occupied or (_scale_factor < 0.99 and _scale_factor > 0.01)
@@ -536,8 +537,8 @@ func _draw() -> void:
 			_draw_rounded_rect(glow_rect, _glow_color, true, 1.0, 0.35)
 		# Full bubble with shadow, shine, specular, rim
 		DrawUtils.draw_bubble_block(self, bg_rect, render_bg)
-		# Age stage 2 crack overlay
-		if _occupied and _age >= GameConstants.CELL_AGE_STAGE2:
+		# Age stage 2 crack overlay (disabled when aging off)
+		if GameConstants.CELL_AGE_ENABLED and _occupied and _age >= GameConstants.CELL_AGE_STAGE2:
 			_draw_crack_overlay(bg_rect)
 		# Special tile icon overlay
 		if _special_type != GameConstants.SPECIAL_TILE_NONE:
