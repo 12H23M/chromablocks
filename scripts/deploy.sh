@@ -98,3 +98,9 @@ fi
 echo ""
 echo "================================"
 echo "🎉 Deploy complete!"
+
+# 6. Discord notification
+DISCORD_CHANNEL="1476561662936092722"
+if command -v openclaw &>/dev/null; then
+  openclaw message send --channel discord --target "$DISCORD_CHANNEL" --message "📱✅ **배포 완료!** 폰에서 확인해봐!" 2>/dev/null &
+fi
