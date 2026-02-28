@@ -10,6 +10,7 @@ var status: int = Enums.GameStatus.READY
 var high_score: int = 0
 var blocks_placed: int = 0
 var max_combo: int = 0
+var chains_triggered: int = 0
 var held_piece: BlockPiece = null
 var hold_used_this_tray: bool = false
 var is_mission_run: bool = false
@@ -31,6 +32,7 @@ func reset() -> void:
 	status = Enums.GameStatus.READY
 	blocks_placed = 0
 	max_combo = 0
+	chains_triggered = 0
 	held_piece = null
 	hold_used_this_tray = false
 	is_mission_run = false

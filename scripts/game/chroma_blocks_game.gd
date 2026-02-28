@@ -390,6 +390,8 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 		chain_result = ChromaChainSystem.process_chains(board)
 		board = chain_result["board"]
 		clear_result["lines_cleared"] += chain_result["extra_lines_cleared"]
+		if chain_result["cascades"] > 0:
+			_state.chains_triggered += 1
 
 	# 7. Color match (toggle via GameConstants.COLOR_MATCH_ENABLED)
 	var color_result: Dictionary

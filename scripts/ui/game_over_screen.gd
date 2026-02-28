@@ -5,17 +5,17 @@ signal go_home_pressed()
 signal continue_ad_pressed()
 signal double_score_ad_pressed()
 
-@onready var final_score: Label = $Content/ScoreCard/CardVBox/FinalScoreValue
-@onready var best_score_label: Label = $Content/ScoreCard/CardVBox/BestScoreLabel
-@onready var new_best_badge: PanelContainer = $Content/ScoreCard/CardVBox/NewBestBadge
-@onready var near_miss_label: Label = $Content/ScoreCard/CardVBox/NearMissLabel
-@onready var lines_value: Label = $Content/ScoreCard/CardVBox/Stats/LinesBox/LinesValue
-@onready var blocks_value: Label = $Content/ScoreCard/CardVBox/Stats/BlocksBox/BlocksValue
-@onready var combos_value: Label = $Content/ScoreCard/CardVBox/Stats/CombosBox/CombosValue
-@onready var grade_label: Label = $Content/GradeLabel
-@onready var title_label: Label = $Content/GameOverTitle
-@onready var score_card: PanelContainer = $Content/ScoreCard
-@onready var stats_container: HBoxContainer = $Content/ScoreCard/CardVBox/Stats
+@onready var final_score: Label = $ScrollContainer/Content/FinalScoreValue
+@onready var best_score_label: Label = $ScrollContainer/Content/BestScoreLabel
+@onready var new_best_badge: PanelContainer = $ScrollContainer/Content/NewBestBadge
+@onready var near_miss_label: Label = $ScrollContainer/Content/NearMissLabel
+@onready var lines_value: Label = $ScrollContainer/Content/Stats/LinesBox/LinesValue
+@onready var blocks_value: Label = $ScrollContainer/Content/Stats/BlocksBox/BlocksValue
+@onready var combos_value: Label = $ScrollContainer/Content/Stats/CombosBox/CombosValue
+@onready var chains_value: Label = $ScrollContainer/Content/Stats/ChainsBox/ChainsValue
+@onready var grade_label: Label = $ScrollContainer/Content/GradeContainer/GradeLabel
+@onready var title_label: Label = $ScrollContainer/Content/GameOverTitle
+@onready var stats_container: HBoxContainer = $ScrollContainer/Content/Stats
 @onready var particle_layer: Control = $ParticleLayer
 
 var _continue_btn: Button
@@ -33,31 +33,32 @@ const GRADE_THRESHOLDS := {
 	"B": 2000,
 }
 const GRADE_COLORS := {
-	"S": Color(1, 0.84, 0, 1),
-	"A": Color(0.65, 0.55, 0.87, 1),
-	"B": Color(0.37, 0.73, 0.96, 1),
-	"C": Color(0.5, 0.5, 0.5, 1),
+	"S": Color(1, 0.84, 0, 1),        # Gold
+	"A": Color(0.65, 0.55, 0.87, 1),  # Purple
+	"B": Color(0.37, 0.73, 0.96, 1),  # Blue
+	"C": Color(1, 0.55, 0.26, 1),     # Orange (was grey)
 }
 const PARTICLE_COLORS: Array[Color] = [
-	Color(0.37, 0.73, 0.96, 0.4),
-	Color(0.42, 0.77, 0.54, 0.4),
-	Color(0.65, 0.55, 0.87, 0.4),
-	Color(1, 0.49, 0.56, 0.4),
-	Color(1, 0.78, 0.32, 0.4),
+	Color(1, 0.42, 0.61, 0.3),     # Pink
+	Color(0.30, 0.59, 1.0, 0.3),   # Blue
+	Color(0.42, 0.80, 0.47, 0.3),  # Green
+	Color(1, 0.85, 0.24, 0.3),     # Gold
+	Color(0.61, 0.45, 0.81, 0.3),  # Purple
+	Color(1, 0.55, 0.26, 0.3),     # Orange
 ]
 
 
 func _ready() -> void:
 	_fredoka_bold = load("res://assets/fonts/Fredoka-Bold.ttf") as Font
-	$Content/ButtonSection/PlayAgainButton.pressed.connect(func():
+	$ScrollContainer/Content/ButtonSection/PlayAgainButton.pressed.connect(func():
 		SoundManager.play_sfx("button_press")
 		play_again_pressed.emit())
-	$Content/ButtonSection/HomeButton.pressed.connect(func():
+	$ScrollContainer/Content/ButtonSection/HomeButton.pressed.connect(func():
 		SoundManager.play_sfx("button_press")
 		go_home_pressed.emit())
 
-	_continue_btn = $Content/AdSection/ContinueAdButton
-	_double_btn = $Content/AdSection/DoubleScoreAdButton
+	_continue_btn = $ScrollContainer/Content/AdSection/ContinueAdButton
+	_double_btn = $ScrollContainer/Content/AdSection/DoubleScoreAdButton
 	_continue_btn.pressed.connect(func():
 		SoundManager.play_sfx("button_press")
 		continue_ad_pressed.emit())
@@ -88,11 +89,11 @@ func show_result(state: GameState) -> void:
 
 	# Reset values
 	final_score.text = "0"
-	best_score_label.text = "BEST: " + FormatUtils.format_number(best)
+	best_score_label.text = "👑 BEST: " + FormatUtils.format_number(best)
 	best_score_label.visible = true
 	new_best_badge.visible = is_new_best
 
-	# Near-miss feedback: within 20% of high score but didn't beat it
+	# Near-miss feedback
 	near_miss_label.visible = false
 	if not is_new_best and state.high_score > 0:
 		var threshold: float = state.high_score * 0.8
@@ -101,7 +102,7 @@ func show_result(state: GameState) -> void:
 			near_miss_label.text = "최고 기록까지 %d점!" % difference
 			near_miss_label.visible = true
 
-	# Grade setup (hidden initially)
+	# Grade
 	var grade_str: String = _get_grade(state.score)
 	grade_label.text = grade_str
 	grade_label.add_theme_color_override("font_color", GRADE_COLORS[grade_str])
@@ -112,18 +113,21 @@ func show_result(state: GameState) -> void:
 	lines_value.text = "0"
 	blocks_value.text = "0"
 	combos_value.text = "0"
+	chains_value.text = "0"
 
-	# Hide stats initially for stagger (alpha only — no position changes in VBox!)
-	var lines_box: VBoxContainer = $Content/ScoreCard/CardVBox/Stats/LinesBox
-	var blocks_box: VBoxContainer = $Content/ScoreCard/CardVBox/Stats/BlocksBox
-	var combos_box: VBoxContainer = $Content/ScoreCard/CardVBox/Stats/CombosBox
+	# Hide stats initially
+	var lines_box: VBoxContainer = $ScrollContainer/Content/Stats/LinesBox
+	var blocks_box: VBoxContainer = $ScrollContainer/Content/Stats/BlocksBox
+	var combos_box: VBoxContainer = $ScrollContainer/Content/Stats/CombosBox
+	var chains_box: VBoxContainer = $ScrollContainer/Content/Stats/ChainsBox
 	lines_box.modulate.a = 0.0
 	blocks_box.modulate.a = 0.0
 	combos_box.modulate.a = 0.0
+	chains_box.modulate.a = 0.0
 
-	# Hide buttons initially (alpha only — position in VBox causes overlap!)
-	var play_btn: Button = $Content/ButtonSection/PlayAgainButton
-	var home_btn: Button = $Content/ButtonSection/HomeButton
+	# Hide buttons initially
+	var play_btn: Button = $ScrollContainer/Content/ButtonSection/PlayAgainButton
+	var home_btn: Button = $ScrollContainer/Content/ButtonSection/HomeButton
 	play_btn.modulate.a = 0.0
 	home_btn.modulate.a = 0.0
 
@@ -135,9 +139,6 @@ func show_result(state: GameState) -> void:
 	# Entrance animation
 	modulate.a = 0.0
 	visible = true
-	var content := $Content
-	var original_y: float = content.position.y
-	content.position.y += 30
 
 	# Clear old particles
 	_particles.clear()
@@ -145,18 +146,15 @@ func show_result(state: GameState) -> void:
 
 	var speed_scale: float = 1.0 / maxf(Engine.time_scale, 0.01)
 
-	# --- Main entrance tween ---
+	# Fade in
 	var tween := create_tween()
 	tween.set_speed_scale(speed_scale)
-	tween.tween_property(self, "modulate:a", 1.0, 0.25) \
-		 .set_ease(Tween.EASE_OUT)
-	tween.parallel().tween_property(content, "position:y", original_y, 0.3) \
-		 .set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(self, "modulate:a", 1.0, 0.3).set_ease(Tween.EASE_OUT)
 
-	# --- Title glow pulse (looping) ---
+	# Title glow pulse
 	_start_title_glow(speed_scale)
 
-	# --- Grade bounce in ---
+	# Grade bounce in
 	var grade_tween := create_tween()
 	grade_tween.set_speed_scale(speed_scale)
 	grade_tween.tween_interval(0.35)
@@ -166,7 +164,7 @@ func show_result(state: GameState) -> void:
 	grade_tween.tween_property(grade_label, "scale", Vector2(1.0, 1.0), 0.15) \
 		.set_ease(Tween.EASE_IN_OUT)
 
-	# --- Score counting with bounce ---
+	# Score counting
 	if state.score > 0:
 		var count_tween := create_tween()
 		count_tween.set_speed_scale(speed_scale)
@@ -175,7 +173,6 @@ func show_result(state: GameState) -> void:
 			final_score.text = FormatUtils.format_number(value)
 		, 0, target_score, 0.8).set_ease(Tween.EASE_OUT).set_delay(0.4)
 
-		# Bounce at end of count
 		var bounce_tween := create_tween()
 		bounce_tween.set_speed_scale(speed_scale)
 		bounce_tween.tween_interval(1.2)
@@ -184,26 +181,25 @@ func show_result(state: GameState) -> void:
 		bounce_tween.tween_property(final_score, "scale", Vector2(1.0, 1.0), 0.15) \
 			.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_BOUNCE)
 
-	# --- New best glow border ---
+	# New best glow
 	if is_new_best:
 		_animate_new_best_glow(speed_scale)
 
-	# --- Stats stagger animation ---
-	var stat_boxes: Array[VBoxContainer] = [lines_box, blocks_box, combos_box]
-	var stat_values: Array[int] = [state.lines_cleared, state.blocks_placed, state.max_combo]
-	var stat_labels: Array[Label] = [lines_value, blocks_value, combos_value]
+	# Stats stagger animation
+	var stat_boxes: Array = [lines_box, blocks_box, combos_box, chains_box]
+	var stat_values: Array = [state.lines_cleared, state.blocks_placed, state.max_combo, state.chains_triggered]
+	var stat_labels: Array = [lines_value, blocks_value, combos_value, chains_value]
 
-	for i in range(3):
+	for i in range(4):
 		var box: VBoxContainer = stat_boxes[i]
 		var val: int = stat_values[i]
 		var lbl: Label = stat_labels[i]
-		var delay: float = 0.6 + i * 0.15
+		var delay: float = 0.6 + i * 0.12
 
 		var st := create_tween()
 		st.set_speed_scale(speed_scale)
 		st.tween_interval(delay)
-		st.tween_property(box, "modulate:a", 1.0, 0.25) \
-			.set_ease(Tween.EASE_OUT)
+		st.tween_property(box, "modulate:a", 1.0, 0.25).set_ease(Tween.EASE_OUT)
 
 		if val > 0:
 			var ct := create_tween()
@@ -212,22 +208,20 @@ func show_result(state: GameState) -> void:
 				lbl.text = str(v)
 			, 0, val, 0.4).set_ease(Tween.EASE_OUT).set_delay(delay + 0.1)
 
-	# --- Mission results (if mission run) ---
+	# Mission results
 	_clear_mission_results()
 	var btn_delay: float = 1.1
 	if state.is_mission_run and not state.active_missions.is_empty():
 		_show_mission_results(state.active_missions, speed_scale)
-		btn_delay = 1.6  # extra time for mission results to appear
+		btn_delay = 1.6
 
-	# --- Button stagger (alpha only) ---
+	# Button stagger
 	var btn_tween := create_tween()
 	btn_tween.set_speed_scale(speed_scale)
 	btn_tween.tween_interval(btn_delay)
-	btn_tween.tween_property(play_btn, "modulate:a", 1.0, 0.25) \
-		.set_ease(Tween.EASE_OUT)
-	btn_tween.tween_interval(0.15)
-	btn_tween.tween_property(home_btn, "modulate:a", 1.0, 0.25) \
-		.set_ease(Tween.EASE_OUT)
+	btn_tween.tween_property(play_btn, "modulate:a", 1.0, 0.25).set_ease(Tween.EASE_OUT)
+	btn_tween.tween_interval(0.12)
+	btn_tween.tween_property(home_btn, "modulate:a", 1.0, 0.25).set_ease(Tween.EASE_OUT)
 
 
 func _clear_mission_results() -> void:
@@ -241,20 +235,19 @@ func _show_mission_results(missions: Array, speed_scale: float) -> void:
 	_mission_results_container.set("theme_override_constants/separation", 6)
 	_mission_results_container.modulate.a = 0.0
 
-	# Insert into Content, before ButtonSection
-	var content := $Content
-	var btn_section := $Content/ButtonSection
+	var content := $ScrollContainer/Content
+	var btn_section := $ScrollContainer/Content/ButtonSection
 	content.add_child(_mission_results_container)
 	content.move_child(_mission_results_container, btn_section.get_index())
 
 	# Header
 	var header := Label.new()
-	header.text = "MISSIONS"
+	header.text = "⭐ MISSIONS"
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if _fredoka_bold:
 		header.add_theme_font_override("font", _fredoka_bold)
-	header.add_theme_font_size_override("font_size", 14)
-	header.add_theme_color_override("font_color", Color("#2196F3"))
+	header.add_theme_font_size_override("font_size", 13)
+	header.add_theme_color_override("font_color", Color("#FFD93D"))
 	_mission_results_container.add_child(header)
 
 	var total_xp: int = 0
@@ -267,11 +260,11 @@ func _show_mission_results(missions: Array, speed_scale: float) -> void:
 		var icon := Label.new()
 		if mission.completed:
 			icon.text = "✓"
-			icon.add_theme_color_override("font_color", Color("#4CAF50"))
+			icon.add_theme_color_override("font_color", Color("#6BCB77"))
 			total_xp += mission.xp_reward
 		else:
-			icon.text = "✗"
-			icon.add_theme_color_override("font_color", Color("#F44336"))
+			icon.text = "✕"
+			icon.add_theme_color_override("font_color", Color("#EF4444"))
 		icon.add_theme_font_size_override("font_size", 13)
 		icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(icon)
@@ -279,7 +272,7 @@ func _show_mission_results(missions: Array, speed_scale: float) -> void:
 		var desc := Label.new()
 		desc.text = mission.description
 		desc.add_theme_font_size_override("font_size", 12)
-		desc.add_theme_color_override("font_color", Color("#C8C0E0"))
+		desc.add_theme_color_override("font_color", Color(1, 1, 1, 0.55))
 		desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		desc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(desc)
@@ -290,12 +283,11 @@ func _show_mission_results(missions: Array, speed_scale: float) -> void:
 			xp.add_theme_color_override("font_color", Color("#FFD93D"))
 		else:
 			xp.text = "%d/%d" % [mission.progress, mission.target]
-			xp.add_theme_color_override("font_color", Color("#6B5FA0"))
-		xp.add_theme_font_size_override("font_size", 12)
+			xp.add_theme_color_override("font_color", Color(1, 1, 1, 0.3))
+		xp.add_theme_font_size_override("font_size", 11)
 		xp.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(xp)
 
-	# Total XP
 	if total_xp > 0:
 		var total_label := Label.new()
 		total_label.text = "Mission XP: +%d" % total_xp
@@ -306,12 +298,10 @@ func _show_mission_results(missions: Array, speed_scale: float) -> void:
 		total_label.add_theme_color_override("font_color", Color("#FFD93D"))
 		_mission_results_container.add_child(total_label)
 
-	# Fade in
 	var tw := create_tween()
 	tw.set_speed_scale(speed_scale)
 	tw.tween_interval(1.1)
-	tw.tween_property(_mission_results_container, "modulate:a", 1.0, 0.3) \
-		.set_ease(Tween.EASE_OUT)
+	tw.tween_property(_mission_results_container, "modulate:a", 1.0, 0.3).set_ease(Tween.EASE_OUT)
 
 
 func _start_title_glow(speed_scale: float) -> void:
@@ -338,15 +328,15 @@ func _animate_new_best_glow(speed_scale: float) -> void:
 
 func _update_particles(delta: float) -> void:
 	_particle_timer += delta
-	if _particle_timer > 0.15:
+	if _particle_timer > 0.2:
 		_particle_timer = 0.0
 		_spawn_particle()
 
 	var to_remove: Array[int] = []
 	for i in range(_particles.size()):
-		_particles[i]["y"] += _particles[i]["speed"] * delta
-		_particles[i]["alpha"] -= delta * 0.3
-		if _particles[i]["alpha"] <= 0 or _particles[i]["y"] > size.y:
+		_particles[i]["y"] -= _particles[i]["speed"] * delta  # Rise upward
+		_particles[i]["alpha"] -= delta * 0.25
+		if _particles[i]["alpha"] <= 0 or _particles[i]["y"] < -20:
 			to_remove.append(i)
 
 	for i in range(to_remove.size() - 1, -1, -1):
@@ -357,15 +347,15 @@ func _update_particles(delta: float) -> void:
 
 
 func _spawn_particle() -> void:
-	if _particles.size() > 30:
+	if _particles.size() > 20:
 		return
 	var p := {
 		"x": randf_range(0, size.x),
-		"y": randf_range(-20, -5),
-		"size": randf_range(3.0, 8.0),
-		"speed": randf_range(20.0, 50.0),
+		"y": size.y + randf_range(5, 20),
+		"size": randf_range(4.0, 10.0),
+		"speed": randf_range(25.0, 55.0),
 		"color": PARTICLE_COLORS[randi() % PARTICLE_COLORS.size()],
-		"alpha": randf_range(0.2, 0.5),
+		"alpha": randf_range(0.15, 0.35),
 		"rotation": randf_range(0, TAU),
 	}
 	_particles.append(p)
