@@ -106,44 +106,39 @@ const TEMPLATES_EXPERT: Array = [
 
 # ── DDA: Block Blast style templates for empty/sparse boards ──
 const TEMPLATES_RUSH: Array = [
-	{ "t": [SizeCat.LARGE, SizeCat.LARGE, SizeCat.HUGE], "w": 0.30 },
-	{ "t": [SizeCat.MEDIUM, SizeCat.LARGE, SizeCat.HUGE], "w": 0.25 },
-	{ "t": [SizeCat.LARGE, SizeCat.HUGE, SizeCat.HUGE], "w": 0.20 },
-	{ "t": [SizeCat.MEDIUM, SizeCat.LARGE, SizeCat.LARGE], "w": 0.15 },
+	{ "t": [SizeCat.MEDIUM, SizeCat.LARGE, SizeCat.LARGE], "w": 0.30 },
+	{ "t": [SizeCat.MEDIUM, SizeCat.MEDIUM, SizeCat.LARGE], "w": 0.25 },
+	{ "t": [SizeCat.SMALL, SizeCat.LARGE, SizeCat.LARGE], "w": 0.20 },
+	{ "t": [SizeCat.MEDIUM, SizeCat.LARGE, SizeCat.HUGE], "w": 0.15 },
 	{ "t": [SizeCat.LARGE, SizeCat.LARGE, SizeCat.LARGE], "w": 0.10 },
 ]
 
 # Progressive piece exclusion by level
+# Progressive unlock — fewer exclusions = more variety from the start
 const EXCLUDED_LV1: Array = [
-	Enums.PieceType.TET_T_R, Enums.PieceType.TET_T_L,
-	Enums.PieceType.TET_Z, Enums.PieceType.TET_S,
-	Enums.PieceType.TET_Z_V, Enums.PieceType.TET_S_V,
+	# Only exclude the most complex 5-cell pieces at level 1-2
 	Enums.PieceType.PENT_PLUS, Enums.PieceType.PENT_U,
-	Enums.PieceType.PENT_T,
 	Enums.PieceType.PENT_N, Enums.PieceType.PENT_N_R,
 	Enums.PieceType.PENT_N_V, Enums.PieceType.PENT_N_V2,
 ]
 const EXCLUDED_LV3: Array = [
-	Enums.PieceType.TET_Z, Enums.PieceType.TET_S,
-	Enums.PieceType.TET_Z_V, Enums.PieceType.TET_S_V,
+	# Level 3-4: only plus and U excluded
 	Enums.PieceType.PENT_PLUS, Enums.PieceType.PENT_U,
-	Enums.PieceType.PENT_T,
-	# N-pieces allowed from level 3+
 ]
 const EXCLUDED_LV5: Array = [
-	Enums.PieceType.PENT_PLUS, Enums.PieceType.PENT_U,
-	Enums.PieceType.PENT_T,
+	# Level 5-7: everything unlocked except plus
+	Enums.PieceType.PENT_PLUS,
 ]
 # Level 8+: All pieces allowed
 
 # ── DDA thresholds ──
-const DDA_RUSH_THRESHOLD := 0.30       # fill < 30% → rush mode (big pieces)
-const DDA_RUSH_CHANCE := 0.80           # 80% chance to use rush templates
-const DDA_MERCY_MILD := 0.50            # fill 50-70% → mild mercy (was 65%)
-const DDA_MERCY_STRONG := 0.70          # fill 70-85% → strong mercy (was 80%)
-const DDA_MERCY_CRITICAL := 0.85        # fill 85%+ → critical mercy (was 90%)
-const DDA_FIT_CHECK_CHANCE := 0.60      # placeable-only filter chance (50%+) (was 30%)
-const DDA_FIT_CRITICAL_CHANCE := 0.80   # placeable-only filter (85%+) (was 40%)
+const DDA_RUSH_THRESHOLD := 0.20       # fill < 20% → rush mode (was 30%)
+const DDA_RUSH_CHANCE := 0.50           # 50% chance to use rush templates (was 80%)
+const DDA_MERCY_MILD := 0.40            # fill 40%+ → mild mercy (was 50%)
+const DDA_MERCY_STRONG := 0.60          # fill 60%+ → strong mercy (was 70%)
+const DDA_MERCY_CRITICAL := 0.75        # fill 75%+ → critical mercy (was 85%)
+const DDA_FIT_CHECK_CHANCE := 0.70      # placeable-only filter (was 60%)
+const DDA_FIT_CRITICAL_CHANCE := 0.90   # placeable-only filter (was 80%)
 
 # ── Color mercy ──
 const COLOR_CLUSTER_CHANCE := 0.25      # basic tray color clustering
@@ -381,7 +376,7 @@ func _rescue_tray(tray: Array, board: BoardState, level: int) -> Array:
 func _generate_relief_tray(board: BoardState, level: int) -> Array:
 	var tray: Array = []
 	var color_count: int = _get_color_count(level)
-	for cat in [SizeCat.SMALL, SizeCat.SMALL, SizeCat.MEDIUM]:
+	for cat in [SizeCat.TINY, SizeCat.SMALL, SizeCat.SMALL]:
 		var pool: Array = CATEGORY_PIECES[cat].duplicate()
 		pool.shuffle()
 		var placed := false
