@@ -29,6 +29,7 @@ var _game_orbs: Array = []
 var _next_tray_pieces: Array = []
 
 func _ready() -> void:
+	_apply_safe_area()
 	_state = GameState.new()
 	_state.high_score = SaveManager.get_high_score()
 	board_renderer.initialize()
@@ -1158,6 +1159,27 @@ func _process(_delta: float) -> void:
 		var oy: float = cos(t * freq * 0.7 + phase) * amp_y
 		orb.position.x = viewport_size.x * cx + ox - orb.orb_radius
 		orb.position.y = viewport_size.y * cy + oy - orb.orb_radius
+
+
+func _apply_safe_area() -> void:
+	var safe_area := DisplayServer.get_display_safe_area()
+	var screen_size := DisplayServer.screen_get_size()
+	if screen_size.x <= 0 or screen_size.y <= 0:
+		return
+	# Convert safe area to viewport coords
+	var viewport_size := get_viewport().get_visible_rect().size
+	var scale_x := viewport_size.x / screen_size.x
+	var scale_y := viewport_size.y / screen_size.y
+	var top_margin := int(safe_area.position.y * scale_y)
+	var bottom_margin := int((screen_size.y - safe_area.end.y) * scale_y)
+	# Apply to TopMargin (min 48px for aesthetic padding)
+	var top_container := get_node_or_null("UILayer/GameUI/TopMargin")
+	if top_container:
+		top_container.set("theme_override_constants/margin_top", maxi(top_margin + 8, 48))
+	# Apply bottom safe area to ad banner / bottom nav area
+	var bottom_nav := get_node_or_null("UILayer/GameUI/BottomNav")
+	if bottom_nav and bottom_margin > 0:
+		bottom_nav.set("theme_override_constants/margin_bottom", bottom_margin)
 
 
 func _notification(what: int) -> void:
