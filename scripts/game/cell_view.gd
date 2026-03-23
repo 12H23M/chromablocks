@@ -14,6 +14,7 @@ var _scale_factor := 1.0
 # Cached color for clear-out tween (block-colored instead of white)
 var _clear_color := Color.WHITE
 var _clear_tween: Tween = null
+var _clearing: bool = false
 
 # Cell aging (Color Heat)
 var _age: int = 0
@@ -29,6 +30,7 @@ func set_empty() -> void:
 	if _clear_tween and _clear_tween.is_valid():
 		_clear_tween.kill()
 		_clear_tween = null
+	_clearing = false
 	_stop_special_pulse()
 	_occupied = false
 	_color = -1
@@ -48,6 +50,7 @@ func set_filled(block_color: int, age: int = 0, special_type: int = -1) -> void:
 	if _clear_tween and _clear_tween.is_valid():
 		_clear_tween.kill()
 		_clear_tween = null
+	_clearing = false
 	_occupied = true
 	_color = block_color
 	_scale_factor = 1.0
@@ -199,6 +202,7 @@ func play_clear_flash(duration: float, delay: float = 0.0, cached_color: Color =
 	# Mark as not occupied immediately
 	_occupied = false
 	_color = -1
+	_clearing = true
 
 	var tween := create_tween()
 	_clear_tween = tween
@@ -236,6 +240,7 @@ func play_clear_flash(duration: float, delay: float = 0.0, cached_color: Color =
 	# Phase 4: Ensure fully reset — don't call set_empty (it kills tween mid-callback)
 	tween.tween_callback(func():
 		_clear_tween = null
+		_clearing = false
 		# Only reset if cell wasn't re-filled during animation
 		if not _occupied:
 			_color = -1
@@ -255,6 +260,7 @@ func play_color_match_flash(duration: float, delay: float = 0.0) -> void:
 
 	_occupied = false
 	_color = -1
+	_clearing = true
 
 	var tween := create_tween()
 	_clear_tween = tween
@@ -280,6 +286,7 @@ func play_color_match_flash(duration: float, delay: float = 0.0) -> void:
 	tween.tween_method(_tween_to_empty, 1.0, 0.0, duration - 0.05)
 	tween.tween_callback(func():
 		_clear_tween = null
+		_clearing = false
 		# Only reset if cell wasn't re-filled during animation
 		if not _occupied:
 			_color = -1
@@ -496,7 +503,7 @@ func _draw_ellipse(center: Vector2, radius: Vector2, color: Color, segments: int
 
 
 func _draw() -> void:
-	var inset := 2.5  # gap between cells for bubble separation
+	var inset := 3.0  # gap between cells for bubble separation
 
 	# Apply scale + age shake transform around cell center
 	var has_transform := false
@@ -521,8 +528,8 @@ func _draw() -> void:
 		elif _occupied and _age >= GameConstants.CELL_AGE_STAGE1:
 			render_bg = render_bg.darkened(GameConstants.CELL_AGE_DARKEN_STAGE1)
 
-	# Use bubble style for occupied cells AND during clear animation (scale_factor tweening)
-	var _is_block := _occupied or (_scale_factor < 0.99 and _scale_factor > 0.01)
+	# Use bubble style for occupied cells AND during clear animation
+	var _is_block := _occupied or _clearing
 	if _is_block and render_bg.a > 0.1:
 		# === BUBBLE STYLE BLOCK ===
 		# Special tile outer glow
@@ -531,10 +538,7 @@ func _draw() -> void:
 			sp_glow.a = _special_glow_alpha * 0.4
 			var sp_rect := Rect2(bg_rect.position - Vector2(2, 2), bg_rect.size + Vector2(4, 4))
 			_draw_rounded_rect(sp_rect, sp_glow, true, 1.0, 0.35)
-		# Glow aura (behind bubble)
-		if _glow_color.a > 0.01:
-			var glow_rect := Rect2(bg_rect.position - Vector2(1, 1), bg_rect.size + Vector2(2, 2))
-			_draw_rounded_rect(glow_rect, _glow_color, true, 1.0, 0.35)
+		# Glow aura removed — was bleeding into adjacent cells
 		# Full bubble with shadow, shine, specular, rim
 		DrawUtils.draw_bubble_block(self, bg_rect, render_bg)
 		# Age stage 2 crack overlay (disabled when aging off)
@@ -545,9 +549,6 @@ func _draw() -> void:
 			_draw_special_icon(bg_rect)
 	else:
 		# === EMPTY CELL ===
-		# Glow
-		if _glow_color.a > 0.01:
-			_draw_rounded_rect(bg_rect, _glow_color, true, 1.0, 0.35)
 		# Subtle empty well
 		_draw_rounded_rect(bg_rect, render_bg, true, 1.0, 0.35)
 		# Highlight override (for placement preview)

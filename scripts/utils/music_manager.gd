@@ -1,6 +1,6 @@
 extends Node
 
-const MUSIC_VOLUME_DB := -12.0
+const MUSIC_VOLUME_DB := -6.0
 const FADE_DURATION := 1.0
 
 # WAV 트랙 목록 (프리로드 경로)
@@ -46,10 +46,12 @@ func _load_track(track_id: String) -> AudioStream:
 	if stream is AudioStreamWAV:
 		stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		stream.loop_begin = 0
-		stream.loop_end = -1  # loop entire track
+		stream.loop_end = stream.data.size() / 2  # 16-bit mono = 2 bytes per sample
+		print("[MusicManager] WAV loop set: begin=0, end=%d" % (stream.data.size() / 2))
 		return stream
 	# Also handle other stream types (QOA compressed imports)
 	if stream:
+		print("[MusicManager] non-WAV stream, returning as-is")
 		return stream
 	return null
 

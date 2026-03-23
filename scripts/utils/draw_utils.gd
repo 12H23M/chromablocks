@@ -53,9 +53,13 @@ static func draw_bubble_block(canvas: CanvasItem, rect: Rect2, base_color: Color
 	var w: float = rect.size.x
 	var h: float = rect.size.y
 
-	# Shadow (soft, slightly larger)
-	var shadow_rect := Rect2(rect.position + Vector2(0, shadow_offset_y), rect.size)
-	draw_rounded_rect(canvas, shadow_rect, Color(0.0, 0.0, 0.0, shadow_strength))
+	# Shadow fully inside block rect (no bleed)
+	# Instead of offset shadow, darken the bottom portion of the block area
+	var shadow_h := rect.size.y * 0.3
+	var shadow_rect := Rect2(
+		Vector2(rect.position.x + 1.0, rect.position.y + rect.size.y - shadow_h),
+		Vector2(rect.size.x - 2.0, shadow_h))
+	draw_rounded_rect(canvas, shadow_rect, Color(0.0, 0.0, 0.0, shadow_strength * 0.7))
 
 	# Base — slightly brighter center for depth
 	draw_rounded_rect(canvas, rect, base_color)
