@@ -28,6 +28,11 @@ var _hit_stop_id := 0  # Monotonic counter to track the active hit stop
 var _game_orbs: Array = []
 var _next_tray_pieces: Array = []
 
+# ── Auto-play ──
+var _auto_player := AutoPlayer.new()
+var _auto_play_enabled := false
+var _auto_play_timer: Timer = null
+
 func _ready() -> void:
 	_apply_safe_area()
 	_state = GameState.new()
@@ -78,6 +83,13 @@ func _ready() -> void:
 		)
 	else:
 		_show_home_initial()
+
+	# Auto-play timer
+	_auto_play_timer = Timer.new()
+	_auto_play_timer.wait_time = 0.3
+	_auto_play_timer.one_shot = false
+	_auto_play_timer.timeout.connect(_on_auto_play_tick)
+	add_child(_auto_play_timer)
 
 	# Create mission HUD (hidden by default) — insert after HudSpacer in GameUI
 	_mission_hud = VBoxContainer.new()
@@ -184,6 +196,12 @@ func _start_new_game(daily: bool, mission_run: bool = false, missions: Array = [
 		AnalyticsManager.game_start(mode)
 		if daily:
 			AnalyticsManager.daily_challenge_start()
+
+		# Auto-play: restart timer if enabled
+		if _auto_play_enabled:
+			_auto_player.reset_stats()
+			_auto_play_timer.start()
+
 		state_changed.emit(_state)
 	)
 
@@ -426,6 +444,10 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 		var groups: Array = chain_result["groups_per_cascade"][cascade_idx]
 		for group in groups:
 			chain_bonus += group.size() * GameConstants.CHROMA_CHAIN_POINTS_PER_CELL[pts_idx]
+
+	# Auto-player blast tracking
+	if _auto_play_enabled and blast_executed["cells_removed"] > 0:
+		_auto_player.record_blast()
 
 	# Chroma Blast bonus scoring
 	var blast_bonus: int = 0
@@ -1159,6 +1181,64 @@ func _process(_delta: float) -> void:
 		var oy: float = cos(t * freq * 0.7 + phase) * amp_y
 		orb.position.x = viewport_size.x * cx + ox - orb.orb_radius
 		orb.position.y = viewport_size.y * cy + oy - orb.orb_radius
+
+
+# ── Auto-play API ──
+
+func set_auto_play(enabled: bool) -> void:
+	_auto_play_enabled = enabled
+	if enabled and _state.status == Enums.GameStatus.PLAYING:
+		_auto_player.reset_stats()
+		_auto_play_timer.start()
+		print("[AutoPlayer] Started — stats reset")
+	else:
+		_auto_play_timer.stop()
+		if not enabled:
+			print("[AutoPlayer] Stopped — turns:%d score:%d combo:%d chains:%d blasts:%d" % [
+				_auto_player.stats["turns"],
+				_auto_player.stats["score"],
+				_auto_player.stats["max_combo"],
+				_auto_player.stats["chains"],
+				_auto_player.stats["blasts"],
+			])
+
+func is_auto_play() -> bool:
+	return _auto_play_enabled
+
+func get_auto_play_stats() -> Dictionary:
+	return _auto_player.stats.duplicate()
+
+func _on_auto_play_tick() -> void:
+	if _state.status != Enums.GameStatus.PLAYING:
+		_auto_play_timer.stop()
+		if _auto_play_enabled:
+			print("[AutoPlayer] Game over — final stats: turns:%d score:%d combo:%d chains:%d blasts:%d lines:%d" % [
+				_auto_player.stats["turns"],
+				_auto_player.stats["score"],
+				_auto_player.stats["max_combo"],
+				_auto_player.stats["chains"],
+				_auto_player.stats["blasts"],
+				_auto_player.stats["lines_cleared"],
+			])
+		return
+	if _dragging_piece != null:
+		return  # User is dragging, skip this tick
+
+	var move := _auto_player.find_best_move(_state.board, _state.tray_pieces)
+	if move.is_empty():
+		return  # No valid move — game over check will handle it
+
+	# Remove the piece from the tray visually
+	var piece: BlockPiece = move["piece"]
+	var piece_idx := _state.tray_pieces.find(piece)
+	if piece_idx >= 0:
+		piece_tray.remove_piece_at(piece_idx)
+
+	# Place piece using existing game logic
+	_place_piece(piece, move["gx"], move["gy"])
+
+	# Record stats
+	_auto_player.record_turn(_state)
 
 
 func _apply_safe_area() -> void:
