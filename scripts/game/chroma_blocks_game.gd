@@ -30,7 +30,7 @@ var _next_tray_pieces: Array = []
 
 # ── Auto-play ──
 var _auto_player := AutoPlayer.new()
-var _auto_play_enabled := true
+var _auto_play_enabled := false
 var _auto_play_timer: Timer = null
 
 func _ready() -> void:
