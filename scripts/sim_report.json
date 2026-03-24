@@ -1,0 +1,516 @@
+{
+  "baseline": {
+    "n_games": 1000,
+    "score": {
+      "mean": 187514.105,
+      "median": 187505,
+      "min": 163950,
+      "max": 208975,
+      "p25": 183030,
+      "p75": 191760,
+      "p90": 195805,
+      "p95": 198720
+    },
+    "level": {
+      "mean": 14.431,
+      "median": 14,
+      "min": 14,
+      "max": 15,
+      "p25": 14,
+      "p75": 15,
+      "p90": 15,
+      "p95": 15
+    },
+    "lines_cleared": {
+      "mean": 473.634,
+      "median": 474,
+      "min": 443,
+      "max": 504,
+      "p25": 467,
+      "p75": 480,
+      "p90": 486,
+      "p95": 490
+    },
+    "pieces_placed": {
+      "mean": 1479.135,
+      "median": 1479,
+      "min": 1453,
+      "max": 1496,
+      "p25": 1475,
+      "p75": 1484,
+      "p90": 1487,
+      "p95": 1489
+    },
+    "max_combo": {
+      "mean": 3.763,
+      "median": 4,
+      "min": 3,
+      "max": 7,
+      "p25": 3,
+      "p75": 4,
+      "p90": 5,
+      "p95": 5
+    },
+    "game_over_fill": {
+      "mean": 0.0,
+      "median": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "p25": 0.0,
+      "p75": 0.0,
+      "p90": 0.0,
+      "p95": 0.0
+    },
+    "chain_triggers": 176683,
+    "blast_triggers": 50124,
+    "perfect_clears": 70
+  },
+  "config": {
+    "board_cols": 8,
+    "board_rows": 8,
+    "tray_size": 3,
+    "placement_pts_per_cell": 5,
+    "perfect_clear_bonus": 2000,
+    "line_clear_points": {
+      "1": 100,
+      "2": 300,
+      "3": 600,
+      "4": 1000
+    },
+    "combo_multipliers": [
+      1.0,
+      1.2,
+      1.5,
+      2.0,
+      2.5,
+      3.0,
+      3.5,
+      4.0
+    ],
+    "chroma_chain_enabled": true,
+    "chroma_chain_threshold": 5,
+    "chroma_chain_max_cascade": 2,
+    "chroma_chain_pts_per_cell": [
+      30,
+      60,
+      90
+    ],
+    "chroma_blast_enabled": true,
+    "chroma_blast_threshold": 6,
+    "chroma_blast_pts_per_cell": 50,
+    "chroma_blast_trigger_bonus": 500,
+    "chroma_blast_line_bonus": 200,
+    "dda_rush_threshold": 0.2,
+    "dda_rush_chance": 0.5,
+    "dda_mercy_mild": 0.4,
+    "dda_mercy_strong": 0.6,
+    "dda_mercy_critical": 0.75,
+    "dda_fit_check_chance": 0.7,
+    "dda_fit_critical_chance": 0.9,
+    "color_cluster_chance": 0.25,
+    "color_mercy_threshold": 0.35,
+    "color_mercy_chance": 0.4,
+    "color_mercy_min_group": 4,
+    "expert_color_reduce_level": 25,
+    "expert_tray_reduce_level": 30,
+    "expert_color_count": 6,
+    "max_tight_streak": 2,
+    "max_trays": 500
+  },
+  "grid_search": [
+    {
+      "name": "baseline",
+      "overrides": {},
+      "elapsed_sec": 5.35,
+      "score_mean": 186740,
+      "score_median": 187250,
+      "score_p90": 194675,
+      "level_mean": 14.4,
+      "lines_mean": 473.2,
+      "pieces_mean": 1478.9,
+      "combo_mean": 3.8,
+      "fill_mean": 0.0,
+      "chains_total": 35458,
+      "blasts_total": 9863,
+      "perfects_total": 13
+    },
+    {
+      "name": "dda_mercy_mild=0.35",
+      "overrides": {
+        "dda_mercy_mild": 0.35
+      },
+      "elapsed_sec": 5.38,
+      "score_mean": 186985,
+      "score_median": 186880,
+      "score_p90": 194660,
+      "level_mean": 14.4,
+      "lines_mean": 473.4,
+      "pieces_mean": 1479.6,
+      "combo_mean": 3.8,
+      "fill_mean": 0.0,
+      "chains_total": 35350,
+      "blasts_total": 9930,
+      "perfects_total": 11
+    },
+    {
+      "name": "dda_mercy_mild=0.45",
+      "overrides": {
+        "dda_mercy_mild": 0.45
+      },
+      "elapsed_sec": 5.26,
+      "score_mean": 187494,
+      "score_median": 187435,
+      "score_p90": 194835,
+      "level_mean": 14.5,
+      "lines_mean": 474.9,
+      "pieces_mean": 1477.6,
+      "combo_mean": 3.8,
+      "fill_mean": 0.0,
+      "chains_total": 35087,
+      "blasts_total": 10020,
+      "perfects_total": 14
+    },
+    {
+      "name": "dda_mercy_strong=0.55",
+      "overrides": {
+        "dda_mercy_strong": 0.55
+      },
+      "elapsed_sec": 5.32,
+      "score_mean": 187231,
+      "score_median": 186430,
+      "score_p90": 194970,
+      "level_mean": 14.4,
+      "lines_mean": 473.3,
+      "pieces_mean": 1478.3,
+      "combo_mean": 3.7,
+      "fill_mean": 0.0,
+      "chains_total": 35243,
+      "blasts_total": 10004,
+      "perfects_total": 15
+    },
+    {
+      "name": "dda_mercy_strong=0.65",
+      "overrides": {
+        "dda_mercy_strong": 0.65
+      },
+      "elapsed_sec": 5.52,
+      "score_mean": 187156,
+      "score_median": 187660,
+      "score_p90": 194880,
+      "level_mean": 14.4,
+      "lines_mean": 472.5,
+      "pieces_mean": 1478.8,
+      "combo_mean": 3.7,
+      "fill_mean": 0.0,
+      "chains_total": 35458,
+      "blasts_total": 9948,
+      "perfects_total": 11
+    },
+    {
+      "name": "dda_mercy_critical=0.70",
+      "overrides": {
+        "dda_mercy_critical": 0.7
+      },
+      "elapsed_sec": 5.44,
+      "score_mean": 186726,
+      "score_median": 187110,
+      "score_p90": 193825,
+      "level_mean": 14.4,
+      "lines_mean": 473.6,
+      "pieces_mean": 1478.9,
+      "combo_mean": 3.8,
+      "fill_mean": 0.0,
+      "chains_total": 35483,
+      "blasts_total": 9837,
+      "perfects_total": 14
+    },
+    {
+      "name": "dda_mercy_critical=0.80",
+      "overrides": {
+        "dda_mercy_critical": 0.8
+      },
+      "elapsed_sec": 5.37,
+      "score_mean": 186903,
+      "score_median": 187310,
+      "score_p90": 194680,
+      "level_mean": 14.3,
+      "lines_mean": 472.9,
+      "pieces_mean": 1478.9,
+      "combo_mean": 3.8,
+      "fill_mean": 0.0,
+      "chains_total": 35429,
+      "blasts_total": 9896,
+      "perfects_total": 13
+    },
+    {
+      "name": "dda_rush_threshold=0.15",
+      "overrides": {
+        "dda_rush_threshold": 0.15
+      },
+      "elapsed_sec": 5.49,
+      "score_mean": 186881,
+      "score_median": 186855,
+      "score_p90": 194430,
+      "level_mean": 14.3,
+      "lines_mean": 471.9,
+      "pieces_mean": 1479.6,
+      "combo_mean": 3.8,
+      "fill_mean": 0.0,
+      "chains_total": 35287,
+      "blasts_total": 10023,
+      "perfects_total": 11
+    },
+    {
+      "name": "dda_rush_threshold=0.25",
+      "overrides": {
+        "dda_rush_threshold": 0.25
+      },
+      "elapsed_sec": 5.34,
+      "score_mean": 188107,
+      "score_median": 187895,
+      "score_p90": 195790,
+      "level_mean": 14.5,
+      "lines_mean": 473.7,
+      "pieces_mean": 1478.4,
+      "combo_mean": 3.8,
+      "fill_mean": 0.0,
+      "chains_total": 35973,
+      "blasts_total": 9849,
+      "perfects_total": 14
+    },
+    {
+      "name": "dda_rush_chance=0.30",
+      "overrides": {
+        "dda_rush_chance": 0.3
+      },
+      "elapsed_sec": 5.37,
+      "score_mean": 186750,
+      "score_median": 186320,
+      "score_p90": 195360,
+      "level_mean": 14.4,
+      "lines_mean": 473.7,
+      "pieces_mean": 1478.9,
+      "combo_mean": 3.8,
+      "fill_mean": 0.0,
+      "chains_total": 35144,
+      "blasts_total": 9949,
+      "perfects_total": 9
+    },
+    {
+      "name": "dda_rush_chance=0.70",
+      "overrides": {
+        "dda_rush_chance": 0.7
+      },
+      "elapsed_sec": 5.37,
+      "score_mean": 187472,
+      "score_median": 187615,
+      "score_p90": 195070,
+      "level_mean": 14.5,
+      "lines_mean": 474.3,
+      "pieces_mean": 1478.8,
+      "combo_mean": 3.7,
+      "fill_mean": 0.0,
+      "chains_total": 35355,
+      "blasts_total": 9938,
+      "perfects_total": 17
+    },
+    {
+      "name": "chain_threshold=4",
+      "overrides": {
+        "chroma_chain_threshold": 4
+      },
+      "elapsed_sec": 5.94,
+      "score_mean": 192527,
+      "score_median": 192895,
+      "score_p90": 199915,
+      "level_mean": 13.0,
+      "lines_mean": 407.6,
+      "pieces_mean": 1489.3,
+      "combo_mean": 3.0,
+      "fill_mean": 0.0,
+      "chains_total": 49364,
+      "blasts_total": 9218,
+      "perfects_total": 32
+    },
+    {
+      "name": "chain_threshold=6",
+      "overrides": {
+        "chroma_chain_threshold": 6
+      },
+      "elapsed_sec": 5.14,
+      "score_mean": 185805,
+      "score_median": 186420,
+      "score_p90": 195330,
+      "level_mean": 15.1,
+      "lines_mean": 513.8,
+      "pieces_mean": 1467.6,
+      "combo_mean": 4.1,
+      "fill_mean": 0.0,
+      "chains_total": 23486,
+      "blasts_total": 10737,
+      "perfects_total": 11
+    },
+    {
+      "name": "blast_threshold=5",
+      "overrides": {
+        "chroma_blast_threshold": 5
+      },
+      "elapsed_sec": 5.78,
+      "score_mean": 251377,
+      "score_median": 251230,
+      "score_p90": 261700,
+      "level_mean": 14.0,
+      "lines_mean": 446.2,
+      "pieces_mean": 1487.3,
+      "combo_mean": 3.5,
+      "fill_mean": 0.0,
+      "chains_total": 31779,
+      "blasts_total": 24217,
+      "perfects_total": 47
+    },
+    {
+      "name": "blast_threshold=7",
+      "overrides": {
+        "chroma_blast_threshold": 7
+      },
+      "elapsed_sec": 5.19,
+      "score_mean": 157022,
+      "score_median": 156755,
+      "score_p90": 163365,
+      "level_mean": 14.9,
+      "lines_mean": 487.5,
+      "pieces_mean": 1473.8,
+      "combo_mean": 4.0,
+      "fill_mean": 0.0,
+      "chains_total": 37348,
+      "blasts_total": 3373,
+      "perfects_total": 9
+    },
+    {
+      "name": "combo_aggressive",
+      "overrides": {
+        "combo_multipliers": [
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          4.0,
+          5.0,
+          6.0
+        ]
+      },
+      "elapsed_sec": 5.51,
+      "score_mean": 203189,
+      "score_median": 203450,
+      "score_p90": 210965,
+      "level_mean": 14.4,
+      "lines_mean": 473.2,
+      "pieces_mean": 1478.9,
+      "combo_mean": 3.8,
+      "fill_mean": 0.0,
+      "chains_total": 35458,
+      "blasts_total": 9863,
+      "perfects_total": 13
+    },
+    {
+      "name": "combo_conservative",
+      "overrides": {
+        "combo_multipliers": [
+          1.0,
+          1.1,
+          1.2,
+          1.3,
+          1.5,
+          1.8,
+          2.0,
+          2.5
+        ]
+      },
+      "elapsed_sec": 5.45,
+      "score_mean": 179818,
+      "score_median": 180240,
+      "score_p90": 187685,
+      "level_mean": 14.4,
+      "lines_mean": 473.2,
+      "pieces_mean": 1478.9,
+      "combo_mean": 3.8,
+      "fill_mean": 0.0,
+      "chains_total": 35458,
+      "blasts_total": 9863,
+      "perfects_total": 13
+    },
+    {
+      "name": "max_tight_streak=1",
+      "overrides": {
+        "max_tight_streak": 1
+      },
+      "elapsed_sec": 5.35,
+      "score_mean": 186899,
+      "score_median": 186340,
+      "score_p90": 195430,
+      "level_mean": 14.4,
+      "lines_mean": 473.5,
+      "pieces_mean": 1479.7,
+      "combo_mean": 3.9,
+      "fill_mean": 0.0,
+      "chains_total": 35357,
+      "blasts_total": 9923,
+      "perfects_total": 13
+    },
+    {
+      "name": "max_tight_streak=3",
+      "overrides": {
+        "max_tight_streak": 3
+      },
+      "elapsed_sec": 5.44,
+      "score_mean": 186562,
+      "score_median": 186795,
+      "score_p90": 194680,
+      "level_mean": 14.4,
+      "lines_mean": 473.1,
+      "pieces_mean": 1478.6,
+      "combo_mean": 3.7,
+      "fill_mean": 0.0,
+      "chains_total": 35500,
+      "blasts_total": 9841,
+      "perfects_total": 13
+    },
+    {
+      "name": "dda_fit_check=0.50",
+      "overrides": {
+        "dda_fit_check_chance": 0.5
+      },
+      "elapsed_sec": 5.26,
+      "score_mean": 186245,
+      "score_median": 186335,
+      "score_p90": 193875,
+      "level_mean": 14.4,
+      "lines_mean": 472.4,
+      "pieces_mean": 1475.4,
+      "combo_mean": 3.8,
+      "fill_mean": 0.0,
+      "chains_total": 35272,
+      "blasts_total": 9852,
+      "perfects_total": 12
+    },
+    {
+      "name": "dda_fit_check=0.90",
+      "overrides": {
+        "dda_fit_check_chance": 0.9
+      },
+      "elapsed_sec": 5.43,
+      "score_mean": 188144,
+      "score_median": 188165,
+      "score_p90": 195930,
+      "level_mean": 14.5,
+      "lines_mean": 475.1,
+      "pieces_mean": 1481.8,
+      "combo_mean": 3.8,
+      "fill_mean": 0.0,
+      "chains_total": 35444,
+      "blasts_total": 10084,
+      "perfects_total": 14
+    }
+  ]
+}
