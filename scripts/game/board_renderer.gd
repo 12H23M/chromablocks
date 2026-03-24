@@ -2,8 +2,19 @@ extends Control
 
 signal cell_tapped(grid_x: int, grid_y: int)
 
-const CellScene := preload("res://scenes/game/cell.tscn")
-const ClearParticlesScript := preload("res://scripts/game/clear_particles.gd")
+## Lazy-loaded resources — deferred until first use to speed up scene tree init.
+var _CellScene: PackedScene
+var _ClearParticlesScript: GDScript
+
+func _get_cell_scene() -> PackedScene:
+	if _CellScene == null:
+		_CellScene = load("res://scenes/game/cell.tscn")
+	return _CellScene
+
+func _get_clear_particles_script() -> GDScript:
+	if _ClearParticlesScript == null:
+		_ClearParticlesScript = load("res://scripts/game/clear_particles.gd")
+	return _ClearParticlesScript
 const CORNER_RADIUS := 20
 const BORDER_WIDTH := 2.5
 
@@ -12,6 +23,14 @@ var _cell_size: float = 36.0
 var _bg_style: StyleBoxFlat
 var _shake_tween: Tween
 var _bounce_tween: Tween
+var _shake_offset: Vector2 = Vector2.ZERO:
+	set(value):
+		_shake_offset = value
+		_apply_offsets()
+var _bounce_offset: Vector2 = Vector2.ZERO:
+	set(value):
+		_bounce_offset = value
+		_apply_offsets()
 var _crisis_pulse_tween: Tween
 var _crisis_active: bool = false
 var _shockwaves: Array = []
@@ -33,7 +52,7 @@ func initialize() -> void:
 	for y in GameConstants.BOARD_ROWS:
 		var row: Array = []
 		for x in GameConstants.BOARD_COLUMNS:
-			var cell_node := CellScene.instantiate()
+			var cell_node := _get_cell_scene().instantiate()
 			cell_node.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			add_child(cell_node)
 			cell_node.set_empty()
@@ -312,7 +331,7 @@ func _emit_particles_and_shockwave(positions: Array, colors: Array, intensity: f
 		return
 	# Particle burst — add to parent to avoid board's clip_children clipping
 	var particles := Control.new()
-	particles.set_script(ClearParticlesScript)
+	particles.set_script(_get_clear_particles_script())
 	particles.top_level = true
 	var effect_parent := get_parent() if get_parent() != null else self
 	effect_parent.add_child(particles)
@@ -481,13 +500,13 @@ func _set_border_alpha(alpha: float) -> void:
 
 # --- Screen Shake (Game Feel P0) ---
 
+func _apply_offsets() -> void:
+	position = _get_rest_position() + _shake_offset + _bounce_offset
+
 func play_screen_shake(intensity: float, duration: float) -> void:
 	if _shake_tween and _shake_tween.is_valid():
 		_shake_tween.kill()
-	if _bounce_tween and _bounce_tween.is_valid():
-		_bounce_tween.kill()
-	var rest_pos := _get_rest_position()
-	position = rest_pos
+	_shake_offset = Vector2.ZERO
 
 	var oscillations := 6
 	var step_duration := duration / float(oscillations)
@@ -495,17 +514,13 @@ func play_screen_shake(intensity: float, duration: float) -> void:
 
 	for i in oscillations:
 		var progress := float(i) / float(oscillations)
-		# Sinusoidal decay: amplitude decreases as we progress
 		var amplitude := intensity * (1.0 - progress)
-		var angle := progress * TAU * 2.0  # Vary direction
-		var offset := Vector2(cos(angle), sin(angle)) * amplitude
-		_shake_tween.tween_property(self, "position",
-			rest_pos + offset, step_duration) \
+		var angle := progress * TAU * 2.0
+		var target_offset := Vector2(cos(angle), sin(angle)) * amplitude
+		_shake_tween.tween_property(self, "_shake_offset", target_offset, step_duration) \
 			.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
 
-	# Restore to rest position at the end
-	_shake_tween.tween_property(self, "position",
-		rest_pos, step_duration * 0.5) \
+	_shake_tween.tween_property(self, "_shake_offset", Vector2.ZERO, step_duration * 0.5) \
 		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
 
 
@@ -514,15 +529,14 @@ func play_screen_shake(intensity: float, duration: float) -> void:
 func play_place_bounce() -> void:
 	if _bounce_tween and _bounce_tween.is_valid():
 		_bounce_tween.kill()
-	var rest_pos := _get_rest_position()
-	position = rest_pos
+	_bounce_offset = Vector2.ZERO
 
 	_bounce_tween = create_tween()
-	_bounce_tween.tween_property(self, "position:y",
-		rest_pos.y + 2.0, 0.04) \
+	_bounce_tween.tween_property(self, "_bounce_offset",
+		Vector2(0.0, 2.0), 0.04) \
 		.set_ease(Tween.EASE_OUT)
-	_bounce_tween.tween_property(self, "position:y",
-		rest_pos.y, 0.08) \
+	_bounce_tween.tween_property(self, "_bounce_offset",
+		Vector2.ZERO, 0.08) \
 		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 
 

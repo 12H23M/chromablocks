@@ -5,7 +5,12 @@ signal piece_drag_moved(piece_node: Control, global_pos: Vector2)
 signal piece_drag_ended(piece_node: Control, global_pos: Vector2)
 signal hold_pressed()
 
-const DraggablePieceScene := preload("res://scenes/game/draggable_piece.tscn")
+var _DraggablePieceScene: PackedScene
+
+func _get_draggable_piece_scene() -> PackedScene:
+	if _DraggablePieceScene == null:
+		_DraggablePieceScene = load("res://scenes/game/draggable_piece.tscn")
+	return _DraggablePieceScene
 const CARD_RADIUS := 16
 const CARD_BORDER_WIDTH := 1.5
 const PLATE_RADIUS := 18
@@ -89,7 +94,7 @@ func update_hold_display(piece: BlockPiece, enabled: bool, animate: bool = false
 func populate_tray(pieces: Array, animate: bool = false) -> void:
 	clear_tray()
 	for i in pieces.size():
-		var piece_node := DraggablePieceScene.instantiate()
+		var piece_node := _get_draggable_piece_scene().instantiate()
 		_pieces_container.add_child(piece_node)
 		piece_node.setup(pieces[i], i, _tray_cell_size)
 		piece_node.size_flags_horizontal = Control.SIZE_EXPAND_FILL

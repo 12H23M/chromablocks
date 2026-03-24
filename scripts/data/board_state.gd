@@ -4,6 +4,12 @@ var columns: int
 var rows: int
 var grid: Array  # Array[Array[Dictionary]] — {occupied, color, age, special_type}
 
+## Flat packed arrays for fast inner-loop occupancy/color checks.
+## Layout: index = y * columns + x.  Updated lazily via _refresh_packed().
+var _packed_occupied: PackedInt32Array
+var _packed_color: PackedInt32Array
+var _packed_dirty: bool = true
+
 
 func _init(p_cols: int = 8, p_rows: int = 8, p_grid: Array = []) -> void:
 	columns = p_cols
@@ -13,6 +19,7 @@ func _init(p_cols: int = 8, p_rows: int = 8, p_grid: Array = []) -> void:
 	else:
 		grid = p_grid
 		_normalize_grid()
+	_packed_dirty = true
 
 
 ## Ensure all cells have age and special_type fields (backward compat with old saves)
@@ -40,6 +47,25 @@ static func _empty_cell() -> Dictionary:
 	return {"occupied": false, "color": -1, "age": 0, "special_type": GameConstants.SPECIAL_TILE_NONE}
 
 
+## Rebuild flat packed arrays from the grid Dictionary data.
+func _refresh_packed() -> void:
+	if not _packed_dirty:
+		return
+	var total: int = rows * columns
+	_packed_occupied = PackedInt32Array()
+	_packed_occupied.resize(total)
+	_packed_color = PackedInt32Array()
+	_packed_color.resize(total)
+	var idx: int = 0
+	for y in rows:
+		for x in columns:
+			var cell: Dictionary = grid[y][x]
+			_packed_occupied[idx] = 1 if cell["occupied"] else 0
+			_packed_color[idx] = cell["color"]
+			idx += 1
+	_packed_dirty = false
+
+
 var is_empty: bool:
 	get:
 		for y in rows:
@@ -50,12 +76,12 @@ var is_empty: bool:
 
 
 func fill_ratio() -> float:
+	_refresh_packed()
 	var occupied := 0
-	for y in rows:
-		for x in columns:
-			if grid[y][x]["occupied"]:
-				occupied += 1
-	return float(occupied) / float(rows * columns)
+	var total: int = rows * columns
+	for i in total:
+		occupied += _packed_occupied[i]
+	return float(occupied) / float(total)
 
 
 func is_cell_occupied(x: int, y: int) -> bool:
@@ -85,11 +111,13 @@ func place_piece(piece: BlockPiece, gx: int, gy: int) -> BoardState:
 
 
 func get_completed_rows() -> Array:
+	_refresh_packed()
 	var completed: Array = []
 	for y in rows:
 		var full := true
+		var base: int = y * columns
 		for x in columns:
-			if not grid[y][x]["occupied"]:
+			if _packed_occupied[base + x] == 0:
 				full = false
 				break
 		if full:
@@ -98,11 +126,12 @@ func get_completed_rows() -> Array:
 
 
 func get_completed_columns() -> Array:
+	_refresh_packed()
 	var completed: Array = []
 	for x in columns:
 		var full := true
 		for y in rows:
-			if not grid[y][x]["occupied"]:
+			if _packed_occupied[y * columns + x] == 0:
 				full = false
 				break
 		if full:
@@ -294,12 +323,23 @@ func increment_ages() -> BoardState:
 
 
 func can_place_any_piece(pieces: Array) -> bool:
+	_refresh_packed()
 	for piece in pieces:
 		for gy in rows:
 			for gx in columns:
-				if can_place_piece_at(piece, gx, gy):
+				if _can_place_piece_packed(piece, gx, gy):
 					return true
 	return false
+
+
+## Fast placement check using packed occupancy array — avoids Dictionary lookups.
+func _can_place_piece_packed(piece: BlockPiece, gx: int, gy: int) -> bool:
+	for cell in piece.occupied_cells_at(gx, gy):
+		if cell.x < 0 or cell.x >= columns or cell.y < 0 or cell.y >= rows:
+			return false
+		if _packed_occupied[cell.y * columns + cell.x] == 1:
+			return false
+	return true
 
 
 func _copy_grid() -> Array:
