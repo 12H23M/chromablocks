@@ -99,7 +99,6 @@ func show_result(state: GameState) -> void:
 	_best_score_row.modulate.a = 0.0
 	for chip in _stat_chips:
 		chip.modulate.a = 0.0
-		chip.position.x = -30.0
 	_mission_container.modulate.a = 0.0
 	_play_again_btn.modulate.a = 0.0
 	_home_btn.modulate.a = 0.0
@@ -175,8 +174,6 @@ func show_result(state: GameState) -> void:
 		ct.set_speed_scale(speed_scale)
 		ct.tween_interval(delay)
 		ct.tween_property(chip, "modulate:a", 1.0, 0.25).set_ease(Tween.EASE_OUT)
-		ct.parallel().tween_property(chip, "position:x", 0.0, 0.3) \
-			.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 
 		if val > 0:
 			var vt := create_tween()
@@ -341,10 +338,14 @@ func _build_ui() -> void:
 	_best_score_row.add_child(_new_best_label)
 
 	# ── Stat chips (glass style) ──
+	var stat_margin := MarginContainer.new()
+	stat_margin.add_theme_constant_override("margin_left", 12)
+	stat_margin.add_theme_constant_override("margin_right", 12)
+	_content.add_child(stat_margin)
 	var stat_row := HBoxContainer.new()
 	stat_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	stat_row.add_theme_constant_override("separation", 6)
-	_content.add_child(stat_row)
+	stat_margin.add_child(stat_row)
 
 	for i in range(4):
 		var meta: Dictionary = STAT_META[i]
