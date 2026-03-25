@@ -495,7 +495,7 @@ func _tween_to_empty(t: float) -> void:
 	queue_redraw()
 
 ## Convenience wrappers for DrawUtils
-func _draw_rounded_rect(rect: Rect2, color: Color, filled: bool = true, line_width: float = 1.0, radius_ratio: float = 0.35) -> void:
+func _draw_rounded_rect(rect: Rect2, color: Color, filled: bool = true, line_width: float = 1.0, radius_ratio: float = 0.2) -> void:
 	DrawUtils.draw_rounded_rect(self, rect, color, filled, line_width, radius_ratio)
 
 func _draw_ellipse(center: Vector2, radius: Vector2, color: Color, segments: int = 12) -> void:
@@ -537,7 +537,7 @@ func _draw() -> void:
 			var sp_glow := _get_special_glow_color()
 			sp_glow.a = _special_glow_alpha * 0.4
 			var sp_rect := Rect2(bg_rect.position - Vector2(2, 2), bg_rect.size + Vector2(4, 4))
-			_draw_rounded_rect(sp_rect, sp_glow, true, 1.0, 0.35)
+			_draw_rounded_rect(sp_rect, sp_glow, true, 1.0, 0.2)
 		# Glow aura removed — was bleeding into adjacent cells
 		# Full bubble with shadow, shine, specular, rim
 		DrawUtils.draw_bubble_block(self, bg_rect, render_bg)
@@ -550,28 +550,28 @@ func _draw() -> void:
 	else:
 		# === EMPTY CELL ===
 		# Subtle empty well
-		_draw_rounded_rect(bg_rect, render_bg, true, 1.0, 0.35)
+		_draw_rounded_rect(bg_rect, render_bg, true, 1.0, 0.2)
 		# Highlight override (for placement preview)
 		if _highlight_color.a > 0.01:
-			_draw_rounded_rect(bg_rect, _highlight_color, true, 1.0, 0.35)
+			_draw_rounded_rect(bg_rect, _highlight_color, true, 1.0, 0.2)
 
 	# Line prediction overlay + accented border
 	if _line_prediction_active:
-		_draw_rounded_rect(bg_rect, _line_prediction_overlay, true, 1.0, 0.35)
-		_draw_rounded_rect(bg_rect, _line_prediction_border, false, 1.5, 0.35)
+		_draw_rounded_rect(bg_rect, _line_prediction_overlay, true, 1.0, 0.2)
+		_draw_rounded_rect(bg_rect, _line_prediction_border, false, 1.5, 0.2)
 
 	# Blast hint overlay (gold/orange glow)
 	if _blast_hint_active:
-		_draw_rounded_rect(bg_rect, _blast_hint_overlay, true, 1.0, 0.35)
-		_draw_rounded_rect(bg_rect, _blast_hint_border, false, 2.0, 0.35)
+		_draw_rounded_rect(bg_rect, _blast_hint_overlay, true, 1.0, 0.2)
+		_draw_rounded_rect(bg_rect, _blast_hint_border, false, 2.0, 0.2)
 
 	# Near-miss line hint overlay (white pulse)
 	if _near_line_hint_active:
-		_draw_rounded_rect(bg_rect, _near_line_hint_overlay, true, 1.0, 0.35)
+		_draw_rounded_rect(bg_rect, _near_line_hint_overlay, true, 1.0, 0.2)
 
 	# Near-miss cluster hint overlay (colored glow)
 	if _cluster_hint_active:
-		_draw_rounded_rect(bg_rect, _cluster_hint_overlay, true, 1.0, 0.35)
+		_draw_rounded_rect(bg_rect, _cluster_hint_overlay, true, 1.0, 0.2)
 
 	# Reset transform
 	if has_transform:

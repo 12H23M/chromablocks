@@ -3,7 +3,7 @@ class_name DrawUtils
 
 
 ## Draw a rounded rectangle using polygon approximation
-static func draw_rounded_rect(canvas: CanvasItem, rect: Rect2, color: Color, filled: bool = true, line_width: float = 1.0, radius_ratio: float = 0.35) -> void:
+static func draw_rounded_rect(canvas: CanvasItem, rect: Rect2, color: Color, filled: bool = true, line_width: float = 1.0, radius_ratio: float = 0.2) -> void:
 	if rect.size.x < 1.0 or rect.size.y < 1.0 or color.a < 0.005:
 		return
 	var r := minf(minf(rect.size.x, rect.size.y) * radius_ratio, minf(rect.size.x, rect.size.y) * 0.5)
@@ -43,49 +43,52 @@ static func draw_ellipse(canvas: CanvasItem, center: Vector2, radius: Vector2, c
 	canvas.draw_colored_polygon(points, color)
 
 
-## Draw a complete bubble-style block
+## Draw a complete Polished Gem / Soft 3D block
 static func draw_bubble_block(canvas: CanvasItem, rect: Rect2, base_color: Color, shadow_strength: float = 0.15, shadow_offset_y: float = 2.0) -> void:
 	if rect.size.x < 1.0 or rect.size.y < 1.0:
 		return
 
-	var cx: float = rect.position.x + rect.size.x / 2.0
-	var cy: float = rect.position.y + rect.size.y / 2.0
 	var w: float = rect.size.x
 	var h: float = rect.size.y
+	var radius_ratio := 0.2  # Polished gem: slightly less round than bubble
 
-	# Shadow fully inside block rect (no bleed)
-	# Instead of offset shadow, darken the bottom portion of the block area
-	var shadow_h := rect.size.y * 0.3
+	# 1. Soft drop shadow — same color, inside block rect only (no bleed!)
+	var shadow_inset := 2.0
 	var shadow_rect := Rect2(
-		Vector2(rect.position.x + 1.0, rect.position.y + rect.size.y - shadow_h),
-		Vector2(rect.size.x - 2.0, shadow_h))
-	draw_rounded_rect(canvas, shadow_rect, Color(0.0, 0.0, 0.0, shadow_strength * 0.7))
+		Vector2(rect.position.x + shadow_inset, rect.position.y + shadow_inset + 2.0),
+		Vector2(w - shadow_inset * 2.0, h - shadow_inset * 2.0))
+	var shadow_color := Color(base_color.r * 0.3, base_color.g * 0.3, base_color.b * 0.3, 0.30)
+	draw_rounded_rect(canvas, shadow_rect, shadow_color, true, 1.0, radius_ratio)
 
-	# Base — slightly brighter center for depth
-	draw_rounded_rect(canvas, rect, base_color)
+	# 2. Base color rounded rect
+	draw_rounded_rect(canvas, rect, base_color, true, 1.0, radius_ratio)
 
-	# Bottom darkening (3D depth) — darker, rounder feel
-	var dark_color := Color(base_color.r * 0.6, base_color.g * 0.6, base_color.b * 0.6, 0.35)
-	var bottom_h := h * 0.45
+	# 3. Top-to-bottom micro gradient — top 40% lightened
+	var grad_h := h * 0.4
+	var grad_rect := Rect2(rect.position, Vector2(w, grad_h))
+	var grad_color := Color(base_color.r * 1.1, base_color.g * 1.1, base_color.b * 1.1, 0.15)
+	draw_rounded_rect(canvas, grad_rect, grad_color, true, 1.0, radius_ratio)
+
+	# 4. Specular highlight — upper-left, slightly smaller than bubble style
+	var highlight_cx: float = rect.position.x + w * 0.32
+	var highlight_cy: float = rect.position.y + h * 0.28
+	var highlight_r: float = w * 0.18
+	canvas.draw_circle(Vector2(highlight_cx, highlight_cy), highlight_r, Color(1.0, 1.0, 1.0, 0.28))
+	canvas.draw_circle(Vector2(highlight_cx, highlight_cy), highlight_r * 0.55, Color(1.0, 1.0, 1.0, 0.20))
+	canvas.draw_circle(Vector2(highlight_cx, highlight_cy), highlight_r * 0.2, Color(1.0, 1.0, 1.0, 0.35))
+
+	# 5. Prism light stripe — horizontal band at top, white alpha 0.12
+	var stripe_rect := Rect2(
+		rect.position + Vector2(3.0, 2.0),
+		Vector2(w - 6.0, h * 0.18))
+	draw_rounded_rect(canvas, stripe_rect, Color(1.0, 1.0, 1.0, 0.12), true, 1.0, 0.3)
+
+	# 6. Bottom 30% darkened — black alpha 0.15 for depth
+	var bottom_h := h * 0.30
 	var bottom_rect := Rect2(
 		Vector2(rect.position.x, rect.position.y + h - bottom_h),
 		Vector2(w, bottom_h))
-	draw_rounded_rect(canvas, bottom_rect, dark_color, true, 1.0, 0.35)
+	draw_rounded_rect(canvas, bottom_rect, Color(0.0, 0.0, 0.0, 0.15), true, 1.0, radius_ratio)
 
-	# Water drop highlight — circular white glow in upper-left
-	var highlight_cx: float = rect.position.x + w * 0.35
-	var highlight_cy: float = rect.position.y + h * 0.30
-	var highlight_r: float = w * 0.22
-	# Radial gradient simulation (3 circles)
-	canvas.draw_circle(Vector2(highlight_cx, highlight_cy), highlight_r, Color(1.0, 1.0, 1.0, 0.35))
-	canvas.draw_circle(Vector2(highlight_cx, highlight_cy), highlight_r * 0.6, Color(1.0, 1.0, 1.0, 0.25))
-	canvas.draw_circle(Vector2(highlight_cx, highlight_cy), highlight_r * 0.25, Color(1.0, 1.0, 1.0, 0.4))
-
-	# Top shine band — curved feel
-	var shine_rect := Rect2(
-		rect.position + Vector2(4.0, 2.0),
-		Vector2(w - 8.0, h * 0.22))
-	draw_rounded_rect(canvas, shine_rect, Color(1.0, 1.0, 1.0, 0.15), true, 1.0, 0.3)
-
-	# Rim light (subtle border glow)
-	draw_rounded_rect(canvas, rect, Color(1.0, 1.0, 1.0, 0.08), false)
+	# 7. Rim light — ultra-subtle white outline, alpha 0.06
+	draw_rounded_rect(canvas, rect, Color(1.0, 1.0, 1.0, 0.06), false, 1.0, radius_ratio)

@@ -618,9 +618,9 @@ func _create_sparkles() -> void:
 
 func _create_orbs() -> void:
 	var orb_data := [
-		{"color": Color("#7C3AED", 0.02), "radius": 160.0, "cx": 0.3, "cy": 0.25, "period": 10.0, "amp_x": 40.0, "amp_y": 35.0, "phase": 0.0},
-		{"color": Color("#4D96FF", 0.015), "radius": 140.0, "cx": 0.7, "cy": 0.50, "period": 8.0, "amp_x": 35.0, "amp_y": 45.0, "phase": 2.0},
-		{"color": Color("#FF6B9D", 0.015), "radius": 120.0, "cx": 0.4, "cy": 0.75, "period": 12.0, "amp_x": 50.0, "amp_y": 30.0, "phase": 4.0},
+		{"color": Color("#A8A4FF", 0.02), "radius": 160.0, "cx": 0.3, "cy": 0.25, "period": 10.0, "amp_x": 40.0, "amp_y": 35.0, "phase": 0.0},
+		{"color": Color("#4ECDC4", 0.015), "radius": 140.0, "cx": 0.7, "cy": 0.50, "period": 8.0, "amp_x": 35.0, "amp_y": 45.0, "phase": 2.0},
+		{"color": Color("#FF6B6B", 0.015), "radius": 120.0, "cx": 0.4, "cy": 0.75, "period": 12.0, "amp_x": 50.0, "amp_y": 30.0, "phase": 4.0},
 	]
 	for data in orb_data:
 		var orb := BackgroundOrb.new()

@@ -1,43 +1,43 @@
 extends Node
 
-# 기본 블록 색상 (default 테마 — Bubble Pop)
-var CORAL := Color("FF6B9D")
-var CORAL_LIGHT := Color("FFA8C4")
-var CORAL_GLOW := Color(Color("FF6B9D"), 0.40)
+# 기본 블록 색상 (default 테마 — Prismatic Pop)
+var CORAL := Color("FF6B6B")           # 리빙 코랄
+var CORAL_LIGHT := Color("FF9E9E")
+var CORAL_GLOW := Color(Color("FF6B6B"), 0.40)
 
-var AMBER := Color("FF8C42")
-var AMBER_LIGHT := Color("FFC08A")
-var AMBER_GLOW := Color(Color("FF8C42"), 0.40)
+var AMBER := Color("4ECDC4")           # 스카이 블루 (Enums.BlockColor.AMBER 유지)
+var AMBER_LIGHT := Color("7EDED8")
+var AMBER_GLOW := Color(Color("4ECDC4"), 0.40)
 
-var LEMON := Color("FFD93D")
-var LEMON_LIGHT := Color("FFEC82")
-var LEMON_GLOW := Color(Color("FFD93D"), 0.40)
+var LEMON := Color("FFE66D")           # 선샤인 옐로우
+var LEMON_LIGHT := Color("FFF0A0")
+var LEMON_GLOW := Color(Color("FFE66D"), 0.40)
 
-var MINT := Color("6BCB77")
-var MINT_LIGHT := Color("A3E8A8")
-var MINT_GLOW := Color(Color("6BCB77"), 0.40)
+var MINT := Color("A8A4FF")            # 라벤더 블록 (Enums.BlockColor.MINT 유지)
+var MINT_LIGHT := Color("C8C5FF")
+var MINT_GLOW := Color(Color("A8A4FF"), 0.40)
 
-var SKY := Color("4D96FF")
-var SKY_LIGHT := Color("8DBFFF")
-var SKY_GLOW := Color(Color("4D96FF"), 0.40)
+var SKY := Color("6BCB77")             # 민트 프레시 (Enums.BlockColor.SKY 유지)
+var SKY_LIGHT := Color("98E0A0")
+var SKY_GLOW := Color(Color("6BCB77"), 0.40)
 
-var LAVENDER := Color("9B72CF")
-var LAVENDER_LIGHT := Color("C4A8E8")
-var LAVENDER_GLOW := Color(Color("9B72CF"), 0.40)
+var LAVENDER := Color("FF9A9E")        # 피치 (Enums.BlockColor.LAVENDER 유지)
+var LAVENDER_LIGHT := Color("FFBFC2")
+var LAVENDER_GLOW := Color(Color("FF9A9E"), 0.40)
 
 var SPECIAL := Color("FFD700")
 
-# Dark Theme UI
-var BACKGROUND := Color("241860")
-var CARD_SURFACE := Color("1E1A5A")
-var CARD_BORDER := Color("2E2A78")
-var ACCENT := Color("42B9F5")
-var ACCENT_TEXT := Color("5EC0F7")
-var TEXT_PRIMARY := Color("FFFFFF")
-var TEXT_SECONDARY := Color("9B8AC4")
-var TEXT_MUTED := Color("6B5A98")
-var BORDER := Color("2d1b69")
-var GRID_LINE := Color("1f1550")
+# Dark Theme UI — Midnight Prism
+var BACKGROUND := Color("1C1C2E")      # 소프트 다크
+var CARD_SURFACE := Color("252540")     # 미드 네이비
+var CARD_BORDER := Color("3D3D5C")
+var ACCENT := Color("A8A4FF")           # 라벤더 악센트
+var ACCENT_TEXT := Color("C8C5FF")
+var TEXT_PRIMARY := Color("F0F0FF")     # 스타라이트
+var TEXT_SECONDARY := Color("8B8FB0")   # 문스톤
+var TEXT_MUTED := Color("5A5A80")
+var BORDER := Color("3D3D5C")
+var GRID_LINE := Color("2E2E4A")
 
 # Score popup accents
 var GOLDEN := Color("FFD700")
@@ -45,15 +45,15 @@ var SAGE_GREEN := Color("6BCB77")
 
 # Ghost/highlight
 var HIGHLIGHT_VALID := Color(Color("6BCB77"), 0.30)
-var HIGHLIGHT_INVALID := Color(Color("FF8A8A"), 0.30)
+var HIGHLIGHT_INVALID := Color(Color("FF6B6B"), 0.30)
 
 # Empty cell (dark well)
-var EMPTY_CELL := Color(1.0, 1.0, 1.0, 0.12)
-var EMPTY_BORDER := Color(1.0, 1.0, 1.0, 0.08)
+var EMPTY_CELL := Color(Color("2E2E4A"), 0.15)
+var EMPTY_BORDER := Color(Color("2E2E4A"), 0.10)
 
 # Board
-var BOARD_BG := Color("1C1660")
-var BOARD_BORDER := Color(0.51, 0.43, 1.0, 0.3)
+var BOARD_BG := Color("252540")         # 미드 네이비
+var BOARD_BORDER := Color(Color("3D3D5C"), 0.3)
 
 # 테마 변경 시그널 — UI 갱신에 사용
 signal theme_changed()

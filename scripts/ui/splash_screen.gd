@@ -19,9 +19,9 @@ var _tweens: Array[Tween] = []
 var _glow_node: Control = null
 
 const BLOCK_COLORS: Array[Color] = [
-	Color("FF5252"), Color("FFA726"), Color("FFD93D"),
-	Color("4DD0A8"), Color("42A5F5"), Color("A370F7"),
-	Color("FF6B9D"), Color("FFD93D"), Color("42A5F5"),
+	Color("FF6B6B"), Color("4ECDC4"), Color("FFE66D"),
+	Color("A8A4FF"), Color("6BCB77"), Color("FF9A9E"),
+	Color("FF6B6B"), Color("FFE66D"), Color("4ECDC4"),
 ]
 
 # Spiral order: center → cross → corners

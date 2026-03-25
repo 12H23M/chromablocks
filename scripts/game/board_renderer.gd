@@ -573,7 +573,7 @@ func _draw() -> void:
 	border_style.border_width_top = 2
 	border_style.border_width_right = 2
 	border_style.border_width_bottom = 2
-	border_style.border_color = Color("3A3A6E")
+	border_style.border_color = Color("3D3D5C")
 	border_style.corner_radius_top_left = CORNER_RADIUS + 2
 	border_style.corner_radius_top_right = CORNER_RADIUS + 2
 	border_style.corner_radius_bottom_left = CORNER_RADIUS + 2

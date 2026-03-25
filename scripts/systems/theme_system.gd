@@ -11,37 +11,37 @@ const DEFAULT_THEME := "default"
 # 각 색상은 {"bg": Color, "light": Color, "bright": Color} 구조
 const THEMES: Dictionary = {
 	"default": {
-		"name": "기본",
+		"name": "Prismatic Pop",
 		"colors": {
 			Enums.BlockColor.CORAL: {
-				"bg": Color("FF7E8E"),
-				"light": Color("FFB0BA"),
-				"bright": Color("FF7E8E"),
+				"bg": Color("FF6B6B"),
+				"light": Color("FF9E9E"),
+				"bright": Color("FF6B6B"),
 			},
 			Enums.BlockColor.AMBER: {
-				"bg": Color("FFAA42"),
-				"light": Color("FFCF8A"),
-				"bright": Color("FFAA42"),
+				"bg": Color("4ECDC4"),
+				"light": Color("7EDED8"),
+				"bright": Color("4ECDC4"),
 			},
 			Enums.BlockColor.LEMON: {
-				"bg": Color("FFD536"),
-				"light": Color("FFE87A"),
-				"bright": Color("FFD536"),
+				"bg": Color("FFE66D"),
+				"light": Color("FFF0A0"),
+				"bright": Color("FFE66D"),
 			},
 			Enums.BlockColor.MINT: {
-				"bg": Color("5EC97B"),
-				"light": Color("9DE8A8"),
-				"bright": Color("5EC97B"),
+				"bg": Color("A8A4FF"),
+				"light": Color("C8C5FF"),
+				"bright": Color("A8A4FF"),
 			},
 			Enums.BlockColor.SKY: {
-				"bg": Color("42B9F5"),
-				"light": Color("8DD6FA"),
-				"bright": Color("42B9F5"),
+				"bg": Color("6BCB77"),
+				"light": Color("98E0A0"),
+				"bright": Color("6BCB77"),
 			},
 			Enums.BlockColor.LAVENDER: {
-				"bg": Color("A78BDF"),
-				"light": Color("CFBEF0"),
-				"bright": Color("A78BDF"),
+				"bg": Color("FF9A9E"),
+				"light": Color("FFBFC2"),
+				"bright": Color("FF9A9E"),
 			},
 			Enums.BlockColor.SPECIAL: {
 				"bg": Color("FFD700"),
