@@ -1,0 +1,9 @@
+{
+  "name": "chromablocks-dev",
+  "version": "1.0.0",
+  "description": "ChromaBlocks 모바일 블록 퍼즐 게임 전용 개발 플러그인. 8x8 보드, 7색 블록(6 일반 + SPECIAL), Godot 4.6/GDScript 기반 7인 에이전트 개발팀.",
+  "author": {
+    "name": "ChromaBlocks Dev Team"
+  },
+  "keywords": ["godot", "gdscript", "mobile", "puzzle", "chromablocks", "game-dev"]
+}
