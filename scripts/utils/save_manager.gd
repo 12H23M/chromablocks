@@ -230,3 +230,52 @@ func clear_active_game() -> void:
 	_config.set_value(ACTIVE_SECTION, "has_active", false)
 	_dirty = true
 	flush()
+
+
+# --- Play Streak -------------------------------------------------------
+
+func get_play_streak() -> int:
+	return _config.get_value("streak", "count", 0)
+
+
+func get_last_play_timestamp() -> int:
+	return _config.get_value("streak", "last_play_ts", 0)
+
+
+## Call after each game completes. Increments streak or resets if >24h gap.
+func update_play_streak() -> void:
+	var now_ts: int = int(Time.get_unix_time_from_system())
+	var last_ts: int = get_last_play_timestamp()
+	var current: int = get_play_streak()
+	var elapsed: int = now_ts - last_ts
+
+	if last_ts == 0 or elapsed > 86400:
+		# First play or >24h gap — start new streak
+		current = 1
+	else:
+		current += 1
+
+	_config.set_value("streak", "count", current)
+	_config.set_value("streak", "last_play_ts", now_ts)
+	_mark_dirty()
+	flush()
+
+
+## Check if streak is still alive (last play within 24h).
+func is_streak_alive() -> bool:
+	var last_ts: int = get_last_play_timestamp()
+	if last_ts == 0:
+		return false
+	var now_ts: int = int(Time.get_unix_time_from_system())
+	return (now_ts - last_ts) <= 86400
+
+
+# --- Previous Score (for comparison) ------------------------------------
+
+func get_previous_score() -> int:
+	return _config.get_value("game", "previous_score", 0)
+
+
+func save_previous_score(score: int) -> void:
+	_config.set_value("game", "previous_score", score)
+	_mark_dirty()

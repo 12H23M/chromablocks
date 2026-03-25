@@ -764,7 +764,11 @@ func refresh_stats() -> void:
 	_games_value.text = str(SaveManager.get_games_played())
 	_avg_value.text = FormatUtils.format_number(SaveManager.get_avg_score())
 	if _streak_value:
-		_streak_value.text = str(DailyChallengeSystem.get_streak())
+		var play_streak: int = SaveManager.get_play_streak()
+		if SaveManager.is_streak_alive():
+			_streak_value.text = str(play_streak)
+		else:
+			_streak_value.text = "0"
 	var has_save := SaveManager.has_active_game()
 	if has_save:
 		_continue_btn.modulate.a = 1.0
@@ -814,9 +818,9 @@ func _update_daily_button() -> void:
 		else:
 			_daily_desc.text = "Same puzzle for everyone today"
 	if _fire_badge and _badge_panel:
-		var streak := DailyChallengeSystem.get_streak()
-		if streak >= 2:
-			_fire_badge.text = "%d" % streak
+		var play_streak: int = SaveManager.get_play_streak()
+		if SaveManager.is_streak_alive() and play_streak >= 2:
+			_fire_badge.text = "🔥 %d" % play_streak
 			_badge_panel.visible = true
 		else:
 			_badge_panel.visible = false

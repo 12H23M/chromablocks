@@ -9,11 +9,15 @@ signal continue_ad_pressed()
 signal double_score_ad_pressed()
 
 # ── Constants ──────────────────────────────────────────────────────
-const GRADE_THRESHOLDS := { "S": 10000, "A": 5000, "B": 2000 }
+const GRADE_THRESHOLDS := { "S+": 15000, "S": 10000, "A+": 7000, "A": 5000, "B+": 3000, "B": 2000, "C+": 1000 }
 const GRADE_COLORS := {
+	"S+": Color(1.0, 0.92, 0.2),
 	"S": Color(1.0, 0.84, 0.0),
+	"A+": Color(0.75, 0.62, 0.92),
 	"A": Color(0.65, 0.55, 0.87),
+	"B+": Color(0.47, 0.80, 1.0),
 	"B": Color(0.37, 0.73, 0.96),
+	"C+": Color(1.0, 0.65, 0.36),
 	"C": Color(1.0, 0.55, 0.26),
 }
 const PARTICLE_COLORS: Array[Color] = [
@@ -60,6 +64,9 @@ var _double_btn: Button
 var _play_again_btn: Button
 var _home_btn: Button
 var _ad_section: HBoxContainer
+var _next_grade_label: Label
+var _score_diff_label: Label
+var _streak_label: Label
 
 
 func _ready() -> void:
@@ -88,15 +95,57 @@ func show_result(state: GameState) -> void:
 	_best_val_label.text = FormatUtils.format_number(best)
 	_new_best_label.visible = is_new_best
 	_grade_label.text = grade_str
+	# Smaller font for 2-char grades like S+, A+, etc.
+	if grade_str.length() > 1:
+		_grade_label.add_theme_font_size_override("font_size", 34)
+	else:
+		_grade_label.add_theme_font_size_override("font_size", 44)
 	_grade_label.add_theme_color_override("font_color", GRADE_COLORS[grade_str])
 	_grade_hex.set_meta("grade", grade_str)
 	_grade_hex.queue_redraw()
+
+	# Next grade hint
+	var next_info: Dictionary = _get_next_grade_info(state.score)
+	if not next_info.is_empty():
+		_next_grade_label.text = "%s 등급까지 %s점!" % [next_info["grade"], FormatUtils.format_number(next_info["gap"])]
+		_next_grade_label.visible = true
+	else:
+		_next_grade_label.text = "최고 등급 달성! 🏆"
+		_next_grade_label.visible = true
+
+	# Score diff vs previous game
+	var prev_score: int = SaveManager.get_previous_score()
+	if prev_score > 0:
+		var diff: int = state.score - prev_score
+		if diff > 0:
+			_score_diff_label.text = "+%s점 향상!" % FormatUtils.format_number(diff)
+			_score_diff_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4))
+		elif diff < 0:
+			_score_diff_label.text = "%s점" % FormatUtils.format_number(diff)
+			_score_diff_label.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4, 0.6))
+		else:
+			_score_diff_label.text = "동점!"
+			_score_diff_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.4))
+		_score_diff_label.visible = true
+	else:
+		_score_diff_label.visible = false
+
+	# Play streak
+	var play_streak: int = SaveManager.get_play_streak()
+	if SaveManager.is_streak_alive() and play_streak >= 2:
+		_streak_label.text = "🔥 x%d 스트릭 유지!" % play_streak
+		_streak_label.visible = true
+	else:
+		_streak_label.visible = false
 
 	# Initial hidden states
 	_grade_hex.modulate.a = 0.0
 	_grade_hex.scale = Vector2(0.3, 0.3)
 	_score_label.modulate.a = 0.0
 	_best_score_row.modulate.a = 0.0
+	_next_grade_label.modulate.a = 0.0
+	_score_diff_label.modulate.a = 0.0
+	_streak_label.modulate.a = 0.0
 	for chip in _stat_chips:
 		chip.modulate.a = 0.0
 	_mission_container.modulate.a = 0.0
@@ -159,6 +208,29 @@ func show_result(state: GameState) -> void:
 	bt.tween_property(_best_score_row, "modulate:a", 1.0, 0.25).set_ease(Tween.EASE_OUT)
 	if is_new_best:
 		_animate_new_best_glow(speed_scale)
+
+	# 5b) Next grade + score diff + streak (stagger after best score)
+	var info_delay: float = 1.3
+	if _next_grade_label.visible:
+		var ngt := create_tween()
+		ngt.set_speed_scale(speed_scale)
+		ngt.tween_interval(info_delay)
+		ngt.tween_property(_next_grade_label, "modulate:a", 1.0, 0.25).set_ease(Tween.EASE_OUT)
+		info_delay += 0.1
+	if _score_diff_label.visible:
+		var sdt := create_tween()
+		sdt.set_speed_scale(speed_scale)
+		sdt.tween_interval(info_delay)
+		sdt.tween_property(_score_diff_label, "modulate:a", 1.0, 0.25).set_ease(Tween.EASE_OUT)
+		info_delay += 0.1
+	if _streak_label.visible:
+		var slt := create_tween()
+		slt.set_speed_scale(speed_scale)
+		slt.tween_interval(info_delay)
+		slt.tween_property(_streak_label, "modulate:a", 1.0, 0.2).set_ease(Tween.EASE_OUT)
+		# Streak bounce
+		slt.tween_property(_streak_label, "scale", Vector2(1.15, 1.15), 0.08).set_ease(Tween.EASE_OUT)
+		slt.tween_property(_streak_label, "scale", Vector2.ONE, 0.1).set_ease(Tween.EASE_IN_OUT)
 
 	# 6) Stat chips stagger slide-in
 	var stat_values: Array = [
@@ -336,6 +408,34 @@ func _build_ui() -> void:
 	_new_best_label.add_theme_font_size_override("font_size", 14)
 	_new_best_label.add_theme_color_override("font_color", Color(1, 0.84, 0))
 	_best_score_row.add_child(_new_best_label)
+
+	# ── Next grade hint ──
+	_next_grade_label = Label.new()
+	_next_grade_label.text = ""
+	_next_grade_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_next_grade_label.add_theme_font_size_override("font_size", 13)
+	_next_grade_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.45))
+	_content.add_child(_next_grade_label)
+
+	# ── Score diff vs previous game ──
+	_score_diff_label = Label.new()
+	_score_diff_label.text = ""
+	_score_diff_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if _fredoka:
+		_score_diff_label.add_theme_font_override("font", _fredoka)
+	_score_diff_label.add_theme_font_size_override("font_size", 14)
+	_content.add_child(_score_diff_label)
+
+	# ── Streak display ──
+	_streak_label = Label.new()
+	_streak_label.text = ""
+	_streak_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if _fredoka:
+		_streak_label.add_theme_font_override("font", _fredoka)
+	_streak_label.add_theme_font_size_override("font_size", 15)
+	_streak_label.add_theme_color_override("font_color", Color(1.0, 0.6, 0.2))
+	_streak_label.pivot_offset = Vector2(165, 10)
+	_content.add_child(_streak_label)
 
 	# ── Stat chips (glass style) ──
 	var stat_margin := MarginContainer.new()
@@ -697,13 +797,31 @@ func _ad_btn_style() -> StyleBoxFlat:
 #  ANIMATIONS
 # ══════════════════════════════════════════════════════════════════
 func _get_grade(score: int) -> String:
-	if score >= GRADE_THRESHOLDS["S"]:
+	if score >= GRADE_THRESHOLDS["S+"]:
+		return "S+"
+	elif score >= GRADE_THRESHOLDS["S"]:
 		return "S"
+	elif score >= GRADE_THRESHOLDS["A+"]:
+		return "A+"
 	elif score >= GRADE_THRESHOLDS["A"]:
 		return "A"
+	elif score >= GRADE_THRESHOLDS["B+"]:
+		return "B+"
 	elif score >= GRADE_THRESHOLDS["B"]:
 		return "B"
+	elif score >= GRADE_THRESHOLDS["C+"]:
+		return "C+"
 	return "C"
+
+
+## Get the next grade threshold above the current score
+func _get_next_grade_info(score: int) -> Dictionary:
+	var ordered_grades: Array = ["C+", "B", "B+", "A", "A+", "S", "S+"]
+	var ordered_thresholds: Array = [1000, 2000, 3000, 5000, 7000, 10000, 15000]
+	for i in ordered_grades.size():
+		if score < ordered_thresholds[i]:
+			return {"grade": ordered_grades[i], "threshold": ordered_thresholds[i], "gap": ordered_thresholds[i] - score}
+	return {}
 
 
 func _start_title_glow(speed_scale: float) -> void:

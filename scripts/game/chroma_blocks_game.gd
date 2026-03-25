@@ -153,7 +153,8 @@ func _start_new_game(daily: bool, mission_run: bool = false, missions: Array = [
 			_piece_gen.set_seed(DailyChallengeSystem.get_today_seed())
 		_state.high_score = SaveManager.get_high_score()
 		_state.status = Enums.GameStatus.PLAYING
-		_prefill_board(_state.board)
+		# _prefill_board disabled — empty board start (addiction improvement)
+		# _prefill_board(_state.board)
 		SaveManager.increment_games_played()
 		game_over_screen.reset_ad_state()
 		hud.reset_new_best()
@@ -583,6 +584,15 @@ func _play_effects_sequence(ed: Dictionary) -> void:
 	if ed["score"] > 0:
 		_spawn_score_popup(ed["score"], ed["gx"], ed["gy"])
 
+	# 0ms: Anticipation phase — brief dim + pulse before clear
+	if ed["has_clear"]:
+		board_renderer.play_clear_anticipation(ed["clear_rows"], ed["clear_cols"])
+		# Camera zoom pulse for multi-line clears
+		var lines_for_zoom: int = ed["lines_cleared"]
+		if lines_for_zoom >= 2:
+			var zoom_amount: float = 1.02 if lines_for_zoom >= 3 else 1.01
+			board_renderer.play_camera_zoom(zoom_amount, 0.3)
+
 	# 100ms: Line clear + haptic + shake (the core feel)
 	if ed["has_clear"] or ed["has_color_match"]:
 		get_tree().create_timer(0.1, true, false, true).timeout.connect(func():
@@ -781,6 +791,8 @@ func _check_game_over() -> void:
 		board_renderer.scale = Vector2.ONE
 		_state.status = Enums.GameStatus.GAME_OVER
 		SaveManager.clear_active_game()
+		SaveManager.save_previous_score(_state.score)
+		SaveManager.update_play_streak()
 		SaveManager.save_end_of_game(_state.score)
 		# 일일 챌린지 모드 시 결과 저장
 		if _is_daily_mode:
