@@ -1,1 +1,5 @@
-{}
+{
+  "pluginDirs": [
+    ".claude/plugins/chromablocks-dev"
+  ]
+}
