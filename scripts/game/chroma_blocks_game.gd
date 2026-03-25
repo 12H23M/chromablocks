@@ -615,6 +615,8 @@ func _play_effects_sequence(ed: Dictionary) -> void:
 				board_renderer.play_color_match_effect(ed["color_groups"])
 				SoundManager.play_sfx("color_match")
 				HapticManager.color_match()
+			# End anticipation dim
+			board_renderer.end_clear_anticipation()
 		)
 		delay = 0.35
 
@@ -674,6 +676,12 @@ func _play_effects_sequence(ed: Dictionary) -> void:
 			board_renderer.play_screen_shake(10.0, 0.25)
 		)
 		delay = blast_start + 0.3
+
+	# Score cascade breakdown (for complex scoring events)
+	if ed["has_clear"] and (ed.get("chain_bonus", 0) > 0 or ed.get("blast_bonus", 0) > 0 or ed.get("combo_mult", 1.0) > 1.0 or ed.get("is_perfect", false)):
+		get_tree().create_timer(delay + 0.1, true, false, true).timeout.connect(func():
+			_spawn_score_cascade(ed)
+		)
 
 	# Perfect clear
 	if ed["is_perfect"]:
