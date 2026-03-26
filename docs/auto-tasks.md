@@ -8,17 +8,20 @@
 
 ## 🔴 Tier 1 — 즉시 (출시 블로커)
 
+- [x] **Performance Quick Wins 구현** ✅ 2026-03-27
+  - StyleBoxFlat 캐시, Rounded rect polygon 캐시
+  - GameOrb _process 최적화, Pulse tween 30fps 쓰로틀링
+  - commit: 6f71cea, 715faa3
+
+- [x] **BGM 볼륨 조정** ✅ (이미 -6dB로 설정됨)
+  - MUSIC_VOLUME_DB: -6dB (확인 완료)
+
 - [ ] **미커밋 변경사항 커밋+push**
   - icon.png, icon_192.png, icon_foreground.png, export_presets.cfg, project.godot
   - cell_view.gd (_clearing 플래그, glow 제거, inset 3.0)
   - draw_utils.gd (shadow 블록 내부로)
   - music_manager.gd (디버그 로그 정리)
   - generated/ 폴더 제거 확인
-
-- [ ] **BGM 볼륨 조정**
-  - MUSIC_VOLUME_DB: -12dB → -6dB
-  - 효과음과 밸런스 맞추기
-  - 설정에서 음악 토글 동작 확인
 
 - [ ] **게임오버 화면 Design D2 구현**
   - 목업: gameover-d2.html (이미 완성)
