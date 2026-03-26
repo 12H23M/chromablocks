@@ -186,19 +186,21 @@ Download now and dive into the world of ChromaBlocks! 🌈
 
 ---
 
-## 스크린샷
+## 스크린샷 (최종 선택 5장)
 
 | # | 파일명 | 설명 |
 |---|--------|------|
 | 1 | `screenshots/screenshot_home.png` | 홈 화면 — 메인 메뉴 |
 | 2 | `screenshots/screenshot_play.png` | 게임 플레이 중 — 블록 배치 & 점수 획득 |
 | 3 | `screenshots/screenshot_gameover.png` | 게임 오버 — 등급 & 통계 |
+| 4 | `screenshots/store_screenshot_2.png` | 플레이 화면 — 다양한 블록 배치 |
+| 5 | `screenshots/store_screenshot_4.png` | 플레이 화면 — 콤보 진행 중 |
 
 > 참고: Google Play 스크린샷 권장 사양
-> - 최소 2장, 최대 8장
-> - 16:9 또는 9:16 비율
-> - JPEG 또는 24비트 PNG
-> - 최소 320px, 최대 3840px
+> - 최소 2장, 최대 8장 ✅
+> - 16:9 또는 9:16 비율 ✅
+> - JPEG 또는 24비트 PNG ✅
+> - 최소 320px, 최대 3840px ✅
 
 ---
 
