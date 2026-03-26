@@ -7,6 +7,9 @@ extends VBoxContainer
 
 var _prev_combo := 0
 var _combo_tween: Tween
+var _combo_badge: PanelContainer = null  # Combo badge in InfoRow
+var _combo_label: Label = null
+var _combo_glow: Control = null
 var _displayed_score: int = 0
 var _score_tween: Tween
 var _color_flash_tween: Tween
@@ -23,6 +26,7 @@ var _timer_was_urgent := false
 
 func _ready() -> void:
 	_create_timer_label()
+	_create_combo_badge()
 
 
 func _create_timer_label() -> void:
@@ -226,5 +230,138 @@ func reset_new_best() -> void:
 
 
 func _update_combo(combo: int) -> void:
-	# Combo display is handled by the full-screen overlay popup in combo_popup.gd
+	# Update combo badge visibility and animation
+	if _combo_badge == null:
+		_prev_combo = combo
+		return
+
+	var was_zero := _prev_combo < 2
+	var is_active := combo >= 2
+
+	# Update combo badge
+	if is_active:
+		_combo_label.text = "x%d COMBO" % combo
+		# Color based on combo level
+		var combo_color: Color
+		match combo:
+			2: combo_color = Color(1.0, 0.95, 0.3)
+			3: combo_color = Color(1.0, 0.7, 0.2)
+			4: combo_color = Color(1.0, 0.4, 0.3)
+			5: combo_color = Color(1.0, 0.2, 0.4)
+			_: combo_color = Color(1.0, 0.15, 0.4)
+		_combo_label.add_theme_color_override("font_color", combo_color)
+
+		# Show badge with animation if newly active
+		if was_zero:
+			_combo_badge.modulate.a = 0.0
+			_combo_badge.scale = Vector2(0.5, 0.5)
+			_combo_badge.visible = true
+			if _combo_tween and _combo_tween.is_valid():
+				_combo_tween.kill()
+			_combo_tween = create_tween()
+			_combo_tween.tween_property(_combo_badge, "modulate:a", 1.0, 0.2).set_ease(Tween.EASE_OUT)
+			_combo_tween.parallel().tween_property(_combo_badge, "scale", Vector2(1.1, 1.1), 0.15).set_ease(Tween.EASE_OUT)
+			_combo_tween.tween_property(_combo_badge, "scale", Vector2.ONE, 0.1).set_ease(Tween.EASE_IN_OUT)
+			# Start glow pulse
+			_start_combo_glow(combo_color)
+		elif combo > _prev_combo:
+			# Combo increased - bounce animation
+			if _combo_tween and _combo_tween.is_valid():
+				_combo_tween.kill()
+			_combo_tween = create_tween()
+			_combo_tween.tween_property(_combo_badge, "scale", Vector2(1.2, 1.2), 0.1).set_ease(Tween.EASE_OUT)
+			_combo_tween.tween_property(_combo_badge, "scale", Vector2.ONE, 0.1).set_ease(Tween.EASE_IN_OUT)
+	else:
+		# Hide badge when combo ends
+		if not was_zero:
+			if _combo_tween and _combo_tween.is_valid():
+				_combo_tween.kill()
+			_combo_tween = create_tween()
+			_combo_tween.tween_property(_combo_badge, "modulate:a", 0.0, 0.2)
+			_combo_tween.tween_callback(func(): _combo_badge.visible = false)
+			_stop_combo_glow()
+
 	_prev_combo = combo
+
+
+func _create_combo_badge() -> void:
+	_combo_badge = PanelContainer.new()
+	_combo_badge.visible = false
+
+	# Style the badge
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.15, 0.1, 0.25, 0.9)
+	style.corner_radius_top_left = 12
+	style.corner_radius_top_right = 12
+	style.corner_radius_bottom_left = 12
+	style.corner_radius_bottom_right = 12
+	style.content_margin_left = 12.0
+	style.content_margin_right = 12.0
+	style.content_margin_top = 6.0
+	style.content_margin_bottom = 6.0
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(1.0, 0.6, 0.3, 0.6)
+	_combo_badge.add_theme_stylebox_override("panel", style)
+
+	# Glow effect behind badge
+	_combo_glow = Control.new()
+	_combo_glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_combo_glow.set_anchors_preset(PRESET_FULL_RECT)
+	_combo_glow.z_index = -1
+	_combo_glow.modulate.a = 0.0
+	_combo_glow.draw.connect(func():
+		var rect := _combo_glow.get_rect()
+		var center := rect.size / 2.0
+		var glow_color: Color = _combo_glow.get_meta("glow_color", Color(1.0, 0.6, 0.3, 0.3))
+		for i in range(3):
+			var alpha := glow_color.a * (1.0 - float(i) / 3.0)
+			_combo_glow.draw_circle(center, 30.0 + i * 10.0, Color(glow_color.r, glow_color.g, glow_color.b, alpha))
+	)
+	_combo_badge.add_child(_combo_glow)
+
+	# Combo label
+	_combo_label = Label.new()
+	_combo_label.text = "x2 COMBO"
+	var fredoka: Font = load("res://assets/fonts/Fredoka-Bold.ttf")
+	if fredoka:
+		_combo_label.add_theme_font_override("font", fredoka)
+	_combo_label.add_theme_font_size_override("font_size", 16)
+	_combo_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.3))
+	_combo_label.add_theme_color_override("font_outline_color", Color(0.1, 0.05, 0.2))
+	_combo_label.add_theme_constant_override("outline_size", 2)
+	_combo_badge.add_child(_combo_label)
+
+	# Set pivot for center-based scaling
+	_combo_badge.pivot_offset = Vector2(40, 14)
+
+	# Insert into InfoRow
+	var info_row := get_node_or_null("InfoRow")
+	if info_row:
+		# Insert after BestChip
+		info_row.add_child(_combo_badge)
+		info_row.move_child(_combo_badge, 2)  # After XPBar
+	else:
+		add_child(_combo_badge)
+
+
+func _start_combo_glow(color: Color) -> void:
+	if _combo_glow == null:
+		return
+	_combo_glow.set_meta("glow_color", Color(color.r, color.g, color.b, 0.3))
+	_combo_glow.modulate.a = 1.0
+	var tw := create_tween().set_loops()
+	tw.tween_property(_combo_glow, "modulate:a", 0.5, 0.5).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(_combo_glow, "modulate:a", 1.0, 0.5).set_ease(Tween.EASE_IN_OUT)
+	_combo_glow.set_meta("glow_tween", tw)
+
+
+func _stop_combo_glow() -> void:
+	if _combo_glow == null:
+		return
+	var tw: Variant = _combo_glow.get_meta("glow_tween")
+	if tw and tw is Tween and tw.is_valid():
+		tw.kill()
+	_combo_glow.modulate.a = 0.0
