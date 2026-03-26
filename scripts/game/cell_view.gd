@@ -25,6 +25,16 @@ var _special_type: int = GameConstants.SPECIAL_TILE_NONE
 var _special_glow_alpha: float = 0.5
 var _special_pulse_tween: Tween = null
 
+# Pulse redraw throttle: limit ambient pulse redraws to ~30fps (33ms)
+var _last_pulse_redraw_msec: int = 0
+const _PULSE_REDRAW_INTERVAL_MS := 33
+
+func _throttled_pulse_redraw() -> void:
+	var now := Time.get_ticks_msec()
+	if now - _last_pulse_redraw_msec >= _PULSE_REDRAW_INTERVAL_MS:
+		_last_pulse_redraw_msec = now
+		queue_redraw()
+
 func set_empty() -> void:
 	# Kill any running clear animation
 	if _clear_tween and _clear_tween.is_valid():
@@ -108,11 +118,11 @@ func _start_special_pulse() -> void:
 	_special_pulse_tween.set_loops()
 	_special_pulse_tween.tween_method(func(t: float):
 		_special_glow_alpha = lerpf(0.3, 0.8, t)
-		queue_redraw()
+		_throttled_pulse_redraw()
 	, 0.0, 1.0, 0.6).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
 	_special_pulse_tween.tween_method(func(t: float):
 		_special_glow_alpha = lerpf(0.3, 0.8, t)
-		queue_redraw()
+		_throttled_pulse_redraw()
 	, 1.0, 0.0, 0.6).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
 
 
@@ -359,7 +369,7 @@ func _set_line_pulse_alpha(t: float) -> void:
 	# t goes 1→0→1 in the loop; interpolate alpha between min and max
 	_line_prediction_overlay.a = lerpf(_LINE_PULSE_ALPHA_MIN, _LINE_PULSE_ALPHA_MAX, t)
 	_line_prediction_border.a = lerpf(_LINE_PULSE_BORDER_MIN, _LINE_PULSE_BORDER_MAX, t)
-	queue_redraw()
+	_throttled_pulse_redraw()
 
 ## Blast proximity hint overlay (gold/orange, separate from line prediction)
 var _blast_hint_active: bool = false
@@ -403,7 +413,7 @@ func _stop_blast_pulse() -> void:
 func _set_blast_pulse_alpha(t: float) -> void:
 	_blast_hint_overlay.a = lerpf(_BLAST_PULSE_ALPHA_MIN, _BLAST_PULSE_ALPHA_MAX, t)
 	_blast_hint_border.a = lerpf(_BLAST_PULSE_BORDER_MIN, _BLAST_PULSE_BORDER_MAX, t)
-	queue_redraw()
+	_throttled_pulse_redraw()
 
 
 ## Near-miss line hint overlay (white pulse for 7/8 filled rows/cols)
@@ -443,7 +453,7 @@ func _stop_near_line_pulse() -> void:
 
 func _set_near_line_alpha(t: float) -> void:
 	_near_line_hint_overlay.a = lerpf(_NEAR_LINE_ALPHA_MIN, _NEAR_LINE_ALPHA_MAX, t)
-	queue_redraw()
+	_throttled_pulse_redraw()
 
 
 ## Near-miss color cluster hint overlay (colored glow for 4+ connected same-color)
@@ -484,7 +494,7 @@ func _stop_cluster_pulse() -> void:
 
 func _set_cluster_alpha(t: float) -> void:
 	_cluster_hint_overlay.a = lerpf(_CLUSTER_ALPHA_MIN, _CLUSTER_ALPHA_MAX, t)
-	queue_redraw()
+	_throttled_pulse_redraw()
 
 
 func _tween_to_empty(t: float) -> void:

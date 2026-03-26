@@ -658,6 +658,12 @@ func _create_deco_blocks() -> void:
 		_deco_blocks.append(block)
 
 
+func _notification(what: int) -> void:
+	# Auto-disable _process when home screen is hidden (during gameplay)
+	if what == NOTIFICATION_VISIBILITY_CHANGED:
+		set_process(visible)
+
+
 func _process(_delta: float) -> void:
 	var t: float = float(Time.get_ticks_msec()) / 1000.0
 

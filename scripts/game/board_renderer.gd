@@ -33,6 +33,7 @@ var _bounce_offset: Vector2 = Vector2.ZERO:
 		_apply_offsets()
 var _crisis_pulse_tween: Tween
 var _crisis_active: bool = false
+var _border_style_cache: StyleBoxFlat  # Cached outer border style (avoid per-frame allocation)
 var _shockwaves: Array = []
 var _highlighted_cells: Array = []
 var _predicted_cells: Array = []
@@ -565,20 +566,21 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	# Single subtle outer border
+	# Single subtle outer border (cached to avoid per-frame allocation)
 	var border_rect := Rect2(Vector2(-2, -2), size + Vector2(4, 4))
-	var border_style := StyleBoxFlat.new()
-	border_style.bg_color = Color.TRANSPARENT
-	border_style.border_width_left = 2
-	border_style.border_width_top = 2
-	border_style.border_width_right = 2
-	border_style.border_width_bottom = 2
-	border_style.border_color = Color("3D3D5C")
-	border_style.corner_radius_top_left = CORNER_RADIUS + 2
-	border_style.corner_radius_top_right = CORNER_RADIUS + 2
-	border_style.corner_radius_bottom_left = CORNER_RADIUS + 2
-	border_style.corner_radius_bottom_right = CORNER_RADIUS + 2
-	draw_style_box(border_style, border_rect)
+	if _border_style_cache == null:
+		_border_style_cache = StyleBoxFlat.new()
+		_border_style_cache.bg_color = Color.TRANSPARENT
+		_border_style_cache.border_width_left = 2
+		_border_style_cache.border_width_top = 2
+		_border_style_cache.border_width_right = 2
+		_border_style_cache.border_width_bottom = 2
+		_border_style_cache.border_color = Color("3D3D5C")
+		_border_style_cache.corner_radius_top_left = CORNER_RADIUS + 2
+		_border_style_cache.corner_radius_top_right = CORNER_RADIUS + 2
+		_border_style_cache.corner_radius_bottom_left = CORNER_RADIUS + 2
+		_border_style_cache.corner_radius_bottom_right = CORNER_RADIUS + 2
+	draw_style_box(_border_style_cache, border_rect)
 
 	# Draw dark rounded background with border
 	if _bg_style:

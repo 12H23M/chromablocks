@@ -1,20 +1,32 @@
 class_name DrawUtils
 ## Shared drawing helpers for bubble-style UI elements
 
+## Polygon cache: avoids recomputing trig for identical rounded rect dimensions.
+## Key = "w,h,ratio" → value = PackedVector2Array (origin-relative points)
+static var _poly_cache: Dictionary = {}
+const _POLY_CACHE_MAX := 64  # Limit cache size to avoid unbounded growth
 
-## Draw a rounded rectangle using polygon approximation
-static func draw_rounded_rect(canvas: CanvasItem, rect: Rect2, color: Color, filled: bool = true, line_width: float = 1.0, radius_ratio: float = 0.2) -> void:
-	if rect.size.x < 1.0 or rect.size.y < 1.0 or color.a < 0.005:
-		return
-	var r := minf(minf(rect.size.x, rect.size.y) * radius_ratio, minf(rect.size.x, rect.size.y) * 0.5)
+
+## Build (or retrieve from cache) origin-relative rounded-rect points.
+static func _get_rounded_rect_points(w: float, h: float, radius_ratio: float) -> PackedVector2Array:
+	# Quantize dimensions to 0.5px to increase cache hits
+	var qw := snappedf(w, 0.5)
+	var qh := snappedf(h, 0.5)
+	var key := "%s,%s,%s" % [qw, qh, radius_ratio]
+
+	if _poly_cache.has(key):
+		return _poly_cache[key]
+
+	var r := minf(minf(qw, qh) * radius_ratio, minf(qw, qh) * 0.5)
 	var points := PackedVector2Array()
 	var segments := 8
 
+	# Origin-relative corners (rect at 0,0)
 	var corners := [
-		[rect.position.x + r, rect.position.y + r, PI],                          # top-left
-		[rect.position.x + rect.size.x - r, rect.position.y + r, -PI / 2.0],    # top-right
-		[rect.position.x + rect.size.x - r, rect.position.y + rect.size.y - r, 0.0],  # bottom-right
-		[rect.position.x + r, rect.position.y + rect.size.y - r, PI / 2.0],     # bottom-left
+		[r, r, PI],                 # top-left
+		[qw - r, r, -PI / 2.0],    # top-right
+		[qw - r, qh - r, 0.0],     # bottom-right
+		[r, qh - r, PI / 2.0],     # bottom-left
 	]
 
 	for corner in corners:
@@ -25,11 +37,42 @@ static func draw_rounded_rect(canvas: CanvasItem, rect: Rect2, color: Color, fil
 			var angle := base_angle + float(i) / segments * (PI / 2.0)
 			points.append(Vector2(cx + cos(angle) * r, cy + sin(angle) * r))
 
-	if filled:
-		canvas.draw_colored_polygon(points, color)
+	# Evict oldest if cache full
+	if _poly_cache.size() >= _POLY_CACHE_MAX:
+		var first_key = _poly_cache.keys()[0]
+		_poly_cache.erase(first_key)
+
+	_poly_cache[key] = points
+	return points
+
+
+## Draw a rounded rectangle using polygon approximation (cached)
+static func draw_rounded_rect(canvas: CanvasItem, rect: Rect2, color: Color, filled: bool = true, line_width: float = 1.0, radius_ratio: float = 0.2) -> void:
+	if rect.size.x < 1.0 or rect.size.y < 1.0 or color.a < 0.005:
+		return
+
+	var base_points := _get_rounded_rect_points(rect.size.x, rect.size.y, radius_ratio)
+
+	# Translate cached points to actual position
+	var offset := rect.position
+	if offset == Vector2.ZERO:
+		# No offset needed — use cached points directly
+		if filled:
+			canvas.draw_colored_polygon(base_points, color)
+		else:
+			var closed := PackedVector2Array(base_points)
+			closed.append(closed[0])
+			canvas.draw_polyline(closed, color, line_width, true)
 	else:
-		points.append(points[0])
-		canvas.draw_polyline(points, color, line_width, true)
+		var points := PackedVector2Array()
+		points.resize(base_points.size())
+		for i in base_points.size():
+			points[i] = base_points[i] + offset
+		if filled:
+			canvas.draw_colored_polygon(points, color)
+		else:
+			points.append(points[0])
+			canvas.draw_polyline(points, color, line_width, true)
 
 
 ## Draw an ellipse (for specular highlight dots)
