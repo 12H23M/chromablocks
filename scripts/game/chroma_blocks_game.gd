@@ -869,6 +869,10 @@ func _check_game_over() -> void:
 			_mission_hud.hide_hud()
 		AdManager.on_game_ended()
 		SoundManager.play_sfx("game_over")
+		# Slow motion effect
+		Engine.time_scale = 0.3
+		await get_tree().create_timer(0.5, true).timeout
+		Engine.time_scale = 1.0
 		HapticManager.game_over()
 		game_over_screen.show_result(_state)
 		game_over_triggered.emit()
@@ -1511,6 +1515,10 @@ func _trigger_time_attack_game_over() -> void:
 	hud.show_timer(false)
 	AdManager.on_game_ended()
 	SoundManager.play_sfx("game_over")
+		# Slow motion effect
+		Engine.time_scale = 0.3
+		await get_tree().create_timer(0.5, true).timeout
+		Engine.time_scale = 1.0
 	HapticManager.game_over()
 	game_over_screen.show_time_attack_result(_state)
 	game_over_triggered.emit()
