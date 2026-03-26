@@ -1447,7 +1447,8 @@ func _process(_delta: float) -> void:
 			_time_attack_active = false
 			_trigger_time_attack_game_over()
 
-	if _game_orbs.is_empty():
+	# Skip GameOrb animation when not playing (performance optimization)
+	if _game_orbs.is_empty() or _state.status != Enums.GameStatus.PLAYING:
 		return
 	var t: float = float(Time.get_ticks_msec()) / 1000.0
 	var viewport_size := get_viewport().get_visible_rect().size

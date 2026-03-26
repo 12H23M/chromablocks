@@ -15,6 +15,25 @@ func _get_clear_particles_script() -> GDScript:
 	if _ClearParticlesScript == null:
 		_ClearParticlesScript = load("res://scripts/game/clear_particles.gd")
 	return _ClearParticlesScript
+
+## Get a particle system from pool (or create if pool empty)
+func _get_particle_system() -> Control:
+	if _particle_pool.size() > 0:
+		var p: Control = _particle_pool.pop_back()
+		p.set_script(_get_clear_particles_script())
+		return p
+	var p := Control.new()
+	p.set_script(_get_clear_particles_script())
+	return p
+
+## Return a particle system to pool for reuse
+func _return_particle_system(p: Control) -> void:
+	if _particle_pool.size() < PARTICLE_POOL_SIZE:
+		p.get_parent().remove_child(p)
+		p.set_script(null)  # Clear script to reset state
+		_particle_pool.append(p)
+	else:
+		p.queue_free()  # Pool full, discard
 const CORNER_RADIUS := 20
 const BORDER_WIDTH := 2.5
 
@@ -34,6 +53,8 @@ var _bounce_offset: Vector2 = Vector2.ZERO:
 var _crisis_pulse_tween: Tween
 var _crisis_active: bool = false
 var _border_style_cache: StyleBoxFlat  # Cached outer border style (avoid per-frame allocation)
+var _particle_pool: Array = []  # Pool of reusable particle systems
+const PARTICLE_POOL_SIZE := 3  # Max concurrent particle systems
 var _shockwaves: Array = []
 var _highlighted_cells: Array = []
 var _predicted_cells: Array = []
@@ -330,9 +351,8 @@ func _get_cell_light_color(x: int, y: int) -> Color:
 func _emit_particles_and_shockwave(positions: Array, colors: Array, intensity: float, shockwave_radius: float) -> void:
 	if positions.is_empty():
 		return
-	# Particle burst — add to parent to avoid board's clip_children clipping
-	var particles := Control.new()
-	particles.set_script(_get_clear_particles_script())
+	# Particle burst — use pooled system to avoid allocation churn
+	var particles := _get_particle_system()
 	particles.top_level = true
 	var effect_parent := get_parent() if get_parent() != null else self
 	effect_parent.add_child(particles)
