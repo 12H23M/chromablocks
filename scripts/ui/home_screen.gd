@@ -33,6 +33,9 @@ var _hero_section: Control
 var _btn_section: Control
 var _bottom_section: Control
 
+var _daily_bonus_badge: PanelContainer = null
+var _daily_bonus_label: Label = null
+
 var _fredoka_bold: Font = null
 
 # ─── Nav state ───
@@ -338,6 +341,30 @@ func _build_buttons() -> VBoxContainer:
 	_play_btn.add_theme_stylebox_override("pressed", pp)
 	_play_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	v.add_child(_play_btn)
+
+	# Daily Bonus Badge (above MISSION, below PLAY)
+	_daily_bonus_badge = PanelContainer.new()
+	_daily_bonus_badge.visible = false
+	var db_style := StyleBoxFlat.new()
+	db_style.bg_color = Color(1.0, 0.84, 0.0, 0.15)
+	_r(db_style, 12)
+	_b(db_style, 1, Color(1.0, 0.84, 0.0, 0.4))
+	db_style.content_margin_left = 12
+	db_style.content_margin_right = 12
+	db_style.content_margin_top = 6
+	db_style.content_margin_bottom = 6
+	_daily_bonus_badge.add_theme_stylebox_override("panel", db_style)
+	_daily_bonus_label = Label.new()
+	_daily_bonus_label.text = "🎁 데일리 보너스! 점수 x2"
+	_daily_bonus_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if _fredoka_bold:
+		_daily_bonus_label.add_theme_font_override("font", _fredoka_bold)
+	_daily_bonus_label.add_theme_font_size_override("font_size", 13)
+	_daily_bonus_label.add_theme_color_override("font_color", Color("#FFD93D"))
+	_daily_bonus_badge.add_child(_daily_bonus_label)
+	var db_center := CenterContainer.new()
+	db_center.add_child(_daily_bonus_badge)
+	v.add_child(db_center)
 
 	# MISSION
 	_mission_btn = Button.new()
@@ -785,6 +812,12 @@ func refresh_stats() -> void:
 	_update_daily_button()
 	_try_daily_reward()
 	_update_sound_label()
+	_update_daily_bonus_badge()
+
+
+func _update_daily_bonus_badge() -> void:
+	if _daily_bonus_badge:
+		_daily_bonus_badge.visible = SaveManager.is_daily_bonus_available()
 
 
 func _toggle_sound() -> void:

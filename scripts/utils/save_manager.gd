@@ -279,3 +279,27 @@ func get_previous_score() -> int:
 func save_previous_score(score: int) -> void:
 	_config.set_value("game", "previous_score", score)
 	_mark_dirty()
+
+
+# --- Daily Bonus (first game of the day = score x2) ----------------------
+
+func get_last_daily_bonus_date() -> int:
+	return _config.get_value("daily_bonus", "last_date", 0)
+
+
+func set_last_daily_bonus_date(date_seed: int) -> void:
+	_config.set_value("daily_bonus", "last_date", date_seed)
+	_mark_dirty()
+	flush()
+
+
+func is_daily_bonus_available() -> bool:
+	var now := Time.get_date_dict_from_system()
+	var today := now["year"] * 10000 + now["month"] * 100 + now["day"]
+	return get_last_daily_bonus_date() != today
+
+
+func consume_daily_bonus() -> void:
+	var now := Time.get_date_dict_from_system()
+	var today := now["year"] * 10000 + now["month"] * 100 + now["day"]
+	set_last_daily_bonus_date(today)

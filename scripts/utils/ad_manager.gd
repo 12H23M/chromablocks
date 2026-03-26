@@ -86,3 +86,9 @@ func show_rewarded(reward_type: String) -> void:
 func is_rewarded_available() -> bool:
 	# TODO: Check if a rewarded ad is loaded
 	return true
+
+
+## Convenience wrapper for "continue after ad" flow.
+## Call from game code; internally triggers rewarded ad with type "continue".
+func continue_after_ad() -> void:
+	show_rewarded("continue")

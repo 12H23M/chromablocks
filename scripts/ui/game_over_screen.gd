@@ -187,15 +187,13 @@ func show_result(state: GameState) -> void:
 	gt.tween_property(_grade_hex, "scale", Vector2(1.0, 1.0), 0.15) \
 		.set_ease(Tween.EASE_IN_OUT)
 
-	# 4) Score count-up
+	# 4) Score count-up — dramatic pacing: fast bulk, slow finish
 	var st := create_tween()
 	st.set_speed_scale(speed_scale)
 	st.tween_interval(0.35)
 	st.tween_property(_score_label, "modulate:a", 1.0, 0.15)
 	if state.score > 0:
-		st.tween_method(func(v: int) -> void:
-			_score_label.text = FormatUtils.format_number(v)
-		, 0, state.score, 0.8).set_ease(Tween.EASE_OUT)
+		_animate_score(st, state.score)
 	# Score bounce at end
 	st.tween_property(_score_label, "scale", Vector2(1.12, 1.12), 0.08) \
 		.set_ease(Tween.EASE_OUT)
@@ -947,6 +945,23 @@ func _get_next_grade_info(score: int) -> Dictionary:
 		if score < ordered_thresholds[i]:
 			return {"grade": ordered_grades[i], "threshold": ordered_thresholds[i], "gap": ordered_thresholds[i] - score}
 	return {}
+
+
+## Dramatic score count-up: fast for the first 90%, slow for the last 10%.
+## Bigger scores count faster overall so the animation doesn't drag.
+func _animate_score(tween: Tween, target: int) -> void:
+	var threshold := int(target * 0.9)
+	# Phase 1: Fast count — 90% of score in ~0.5s (logarithmic speed for big scores)
+	var fast_duration: float = 0.5
+	if threshold > 0:
+		tween.tween_method(func(v: int) -> void:
+			_score_label.text = FormatUtils.format_number(v)
+		, 0, threshold, fast_duration).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	# Phase 2: Slow dramatic finish — last 10% in 0.6s
+	var slow_duration: float = 0.6
+	tween.tween_method(func(v: int) -> void:
+		_score_label.text = FormatUtils.format_number(v)
+	, threshold, target, slow_duration).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
 
 
 func _start_title_glow(speed_scale: float) -> void:

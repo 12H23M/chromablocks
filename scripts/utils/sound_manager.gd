@@ -137,7 +137,16 @@ func play_combo_sfx(combo: int) -> void:
 	if not SaveManager.is_sound_enabled():
 		return
 	var level := clampi(combo, 1, 7)
+	# Apply sequential pitch-up: x2=1.0, x3=1.1, x4=1.2, ...
+	var pitch: float = 1.0 + maxf(0.0, float(combo - 2)) * 0.1
+	_combo_players[level].pitch_scale = clampf(pitch, 1.0, 2.0)
 	_combo_players[level].play()
+
+
+## Play combo sound with explicit combo_level pitch scaling.
+## combo_level: 2=x2, 3=x3, etc. Pitch: 1.0, 1.1, 1.2, 1.3...
+func play_combo_sound(combo_level: int) -> void:
+	play_combo_sfx(combo_level)
 
 
 func play_chain_sound(cascade_level: int) -> void:

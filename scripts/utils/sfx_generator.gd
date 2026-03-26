@@ -362,6 +362,38 @@ static func generate_blast_sound() -> AudioStreamWAV:
 	return _make_wav(samples)
 
 
+## Generate a combo sound with sequential pitch-up based on combo level.
+## Combo x2 = pitch 1.0, x3 = 1.1, x4 = 1.2, etc.
+static func generate_combo_sound(combo_level: int) -> AudioStreamWAV:
+	var base_pitch: float = 1.0 + maxf(0.0, float(combo_level - 2)) * 0.1
+	# Reuse combo_clear generation with pitch applied via frequency scaling
+	var samples := PackedByteArray()
+	var duration := 0.20
+	var total := int(SAMPLE_RATE * duration)
+	var notes := [NOTE_C5 * base_pitch, NOTE_E5 * base_pitch, NOTE_G5 * base_pitch]
+	var gap := 0.045
+	for i in total:
+		var t := float(i) / SAMPLE_RATE
+		var s := 0.0
+		for n in notes.size():
+			var nt := t - float(n) * gap
+			if nt < 0.0:
+				continue
+			var env := _attack(nt, 0.003) * _exp_decay(nt, 10.0) * 0.22
+			s += _square(nt, notes[n]) * env * 0.6
+			s += _triangle(nt, notes[n]) * env * 0.4
+		# Sparkle on high combos
+		if combo_level >= 4:
+			var sp_t := maxf(0.0, t - 0.10)
+			if sp_t > 0.0:
+				var sp_freq := lerpf(NOTE_C6, NOTE_C7, minf(sp_t / 0.08, 1.0)) * base_pitch
+				var sp_env := _attack(sp_t, 0.005) * _exp_decay(sp_t, 8.0) * 0.08
+				s += _square(sp_t, sp_freq) * sp_env
+		s *= _fade_out(t, duration, 0.03)
+		_write_sample(samples, s)
+	return _make_wav(samples)
+
+
 # ── Helpers ──
 
 static func _write_sample(buffer: PackedByteArray, sample: float) -> void:
