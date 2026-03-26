@@ -31,6 +31,7 @@ var _hit_stop_id := 0  # Monotonic counter to track the active hit stop
 var _game_orbs: Array = []
 var _next_tray_pieces: Array = []
 var _daily_bonus_active := false  # 데일리 보너스 (첫 게임 점수 x2)
+var _bomb_reward_pending := false  # 폭탄 블록 보상 대기 중 (10콤보 달성 시)
 
 # ── Auto-play ──
 var _auto_player := AutoPlayer.new()
@@ -307,6 +308,14 @@ func _on_drag_moved(piece_node: Control, global_pos: Vector2) -> void:
 	if grid_pos != _last_grid_pos:
 		_last_grid_pos = grid_pos
 		HapticManager.grid_snap()
+
+		# Bomb piece: show 3x3 explosion preview
+		if _dragging_piece.type == Enums.PieceType.BOMB:
+			var in_bounds := grid_pos.x >= 0 and grid_pos.x < _state.board.columns \
+					and grid_pos.y >= 0 and grid_pos.y < _state.board.rows
+			board_renderer.show_bomb_highlight(grid_pos.x, grid_pos.y, in_bounds)
+			return
+
 		var can_place := PlacementSystem.can_place(
 			_state.board, _dragging_piece, grid_pos.x, grid_pos.y)
 		board_renderer.show_highlight(grid_pos.x, grid_pos.y, _dragging_piece, can_place)
@@ -346,8 +355,14 @@ func _on_drag_ended(piece_node: Control, global_pos: Vector2) -> void:
 	board_renderer.clear_blast_hint()
 	var grid_pos := _piece_to_grid(piece_node)
 
-	var can_place := PlacementSystem.can_place(
-		_state.board, _dragging_piece, grid_pos.x, grid_pos.y)
+	# Bombs can be placed anywhere within bounds (they explode)
+	var can_place := false
+	if _dragging_piece.type == Enums.PieceType.BOMB:
+		can_place = grid_pos.x >= 0 and grid_pos.x < _state.board.columns \
+				and grid_pos.y >= 0 and grid_pos.y < _state.board.rows
+	else:
+		can_place = PlacementSystem.can_place(
+			_state.board, _dragging_piece, grid_pos.x, grid_pos.y)
 
 	if can_place:
 		piece_node.remove_from_tray()
@@ -398,6 +413,11 @@ func _piece_to_grid(piece_node: Control) -> Vector2i:
 # ── Core Game Logic ──
 
 func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
+	# Bomb piece: special handling (3x3 explosion, no placement)
+	if piece.type == Enums.PieceType.BOMB:
+		_handle_bomb_placement(gx, gy)
+		return
+
 	SoundManager.play_sfx("block_place")
 	HapticManager.placement(piece.cells.size())
 
@@ -458,6 +478,11 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	# 8. Scoring (base + chroma bonus)
 	var did_clear: bool = clear_result["lines_cleared"] > 0 or color_result["has_matches"] or blast_executed["cells_removed"] > 0 or chain_result["total_cells_cleared"] > 0
 	var new_combo: int = (_state.combo + 1) if did_clear else 0
+
+	# 8.1. Bomb reward: trigger at 10 combo
+	if new_combo >= GameConstants.BOMB_REWARD_COMBO_THRESHOLD and not _bomb_reward_pending:
+		_bomb_reward_pending = true
+		print("[Bomb] Combo %d reached — bomb reward pending!" % new_combo)
 
 	var score_result := ScoringSystem.calculate(
 		piece.cell_count, clear_result, color_result, new_combo, _state.level)
@@ -819,14 +844,94 @@ func _on_hold_pressed() -> void:
 	piece_tray.populate_tray(_state.tray_pieces)
 	piece_tray.update_hold_display(_state.held_piece, false, true)
 	SoundManager.play_sfx("block_place")
-	HapticManager.placement(piece.cells.size())
+	HapticManager.placement(tray_piece.cell_count)
 	_check_game_over()
 	state_changed.emit(_state)
+
+## Handle bomb piece placement: 3x3 explosion centered at (gx, gy)
+func _handle_bomb_placement(gx: int, gy: int) -> void:
+	SoundManager.play_sfx("block_place")
+	HapticManager.placement(9)  # 9 cells in 3x3
+
+	# Remove bomb from tray state (visual already removed by drag handler)
+	for i in _state.tray_pieces.size():
+		var p: BlockPiece = _state.tray_pieces[i]
+		if p.type == Enums.PieceType.BOMB:
+			_state.tray_pieces.remove_at(i)
+			break
+
+	# Calculate 3x3 area bounds and collect cells to clear
+	var radius := GameConstants.BOMB_EXPLOSION_RADIUS
+	var cells_to_clear: Array = []
+	var board := _state.board
+
+	for dy in range(-radius, radius + 1):
+		for dx in range(-radius, radius + 1):
+			var cx := gx + dx
+			var cy := gy + dy
+			# Check bounds
+			if cx >= 0 and cx < board.columns and cy >= 0 and cy < board.rows:
+				if board.is_cell_occupied(cx, cy):
+					cells_to_clear.append(Vector2i(cx, cy))
+
+	# Remove cells from board
+	if not cells_to_clear.is_empty():
+		board = board.remove_cells(cells_to_clear)
+		_state.board = board
+
+	# Award points for cleared cells
+	var cells_cleared := cells_to_clear.size()
+	var bomb_score := cells_cleared * GameConstants.BOMB_POINTS_PER_CELL
+	_state.score += bomb_score
+	_state.blocks_placed += 1
+
+	# Cache cleared cell colors for animation
+	for pos in cells_to_clear:
+		board_renderer.cache_extra_cell_color(pos)
+
+	# Update visuals
+	board_renderer.update_from_state(board)
+	hud.update_from_state(_state)
+
+	# Play explosion effect
+	_play_bomb_explosion(gx, gy, cells_to_clear)
+
+	# Score popup
+	if bomb_score > 0:
+		_spawn_score_popup(bomb_score, gx, gy)
+
+	print("[Bomb] Exploded at (%d, %d), cleared %d cells, +%d points" % [gx, gy, cells_cleared, bomb_score])
+
+	# Continue combo (bomb clear counts as clear)
+	_state.combo += 1
+	if _state.combo > _state.max_combo:
+		_state.max_combo = _state.combo
+
+	# Check game over
+	_check_game_over()
+	state_changed.emit(_state)
+
+## Play bomb explosion visual effect
+func _play_bomb_explosion(gx: int, gy: int, cleared_positions: Array) -> void:
+	# Use existing bomb effect for cleared cells
+	board_renderer.play_bomb_effect(cleared_positions)
 
 func _refill_tray() -> void:
 	_state.hold_used_this_tray = false
 	# Use pre-generated next tray, then generate a new preview
 	var new_tray: Array = _next_tray_pieces if not _next_tray_pieces.is_empty() else _piece_gen.generate_tray(_state.level, _state.board)
+
+	# Bomb reward: add bomb piece to tray if pending
+	if _bomb_reward_pending:
+		var bomb_piece := BlockPiece.new(
+			Enums.PieceType.BOMB,
+			Enums.BlockColor.SPECIAL,
+			PieceDefinitions.SHAPES[Enums.PieceType.BOMB]
+		)
+		new_tray.append(bomb_piece)
+		_bomb_reward_pending = false
+		print("[Bomb] Bomb piece added to tray!")
+
 	_state.tray_pieces = new_tray
 	_next_tray_pieces = _piece_gen.generate_tray(_state.level, _state.board)
 	piece_tray.populate_tray(new_tray, true)

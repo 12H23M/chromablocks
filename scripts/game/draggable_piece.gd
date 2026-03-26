@@ -38,6 +38,11 @@ func _draw() -> void:
 	var light_color := AppColors.get_block_light_color(piece_data.color)
 	var glow_color := AppColors.get_block_glow_color(piece_data.color)
 
+	# Special rendering for BOMB piece
+	if piece_data.type == Enums.PieceType.BOMB:
+		_draw_bomb_piece(offset_x, offset_y, piece_pixel_w, piece_pixel_h)
+		return
+
 	for row_idx in piece_data.shape.size():
 		for col_idx in piece_data.shape[row_idx].size():
 			if piece_data.shape[row_idx][col_idx] == 1:
@@ -56,6 +61,52 @@ func _draw() -> void:
 				var shadow_strength := 0.20 if _is_lifted else 0.12
 				var shadow_y := 3.0 if _is_lifted else 2.0
 				DrawUtils.draw_bubble_block(self, bg_rect, base_color, shadow_strength, shadow_y)
+
+
+## Special rendering for bomb piece: red bomb with fuse
+func _draw_bomb_piece(offset_x: float, offset_y: float, piece_w: float, piece_h: float) -> void:
+	var inset := 2.5
+	var cell_rect := Rect2(
+		Vector2(offset_x + inset, offset_y + inset),
+		Vector2(_cell_size - inset * 2, _cell_size - inset * 2))
+
+	# Pulsing glow effect for bomb
+	var time := Time.get_ticks_msec() / 1000.0
+	var pulse := 0.5 + 0.5 * sin(time * 4.0)  # 2Hz pulse
+	var glow_color := Color(1.0, 0.3, 0.1, 0.4 + 0.3 * pulse)
+
+	# Outer glow
+	var glow_rect := Rect2(cell_rect.position - Vector2(4, 4), cell_rect.size + Vector2(8, 8))
+	DrawUtils.draw_rounded_rect(self, glow_rect, glow_color, 8.0)
+
+	# Bomb body (dark red/black gradient)
+	var body_color := Color(0.6, 0.15, 0.1)  # Dark red
+	var highlight_color := Color(0.9, 0.35, 0.2)  # Bright red highlight
+
+	# Shadow
+	var shadow_rect := Rect2(cell_rect.position + Vector2(2, 2), cell_rect.size)
+	DrawUtils.draw_rounded_rect(self, shadow_rect, Color(0, 0, 0, 0.3), 6.0)
+
+	# Main body
+	DrawUtils.draw_rounded_rect(self, cell_rect, body_color, 6.0)
+
+	# Highlight (top-left)
+	var highlight_rect := Rect2(cell_rect.position + Vector2(3, 3), cell_rect.size * 0.5)
+	DrawUtils.draw_rounded_rect(self, highlight_rect, highlight_color, 4.0)
+
+	# Fuse icon (simple triangle pointing up)
+	var center_x := cell_rect.position.x + cell_rect.size.x / 2.0
+	var center_y := cell_rect.position.y + cell_rect.size.y / 2.0
+	var fuse_size := _cell_size * 0.25
+
+	# Draw spark effect
+	var spark_color := Color(1.0, 0.9, 0.3, 0.8 + 0.2 * pulse)
+	var spark_radius := fuse_size * (0.6 + 0.4 * pulse)
+	draw_circle(Vector2(center_x, center_y - fuse_size * 0.3), spark_radius, spark_color)
+
+	# Inner dark circle (bomb center)
+	var inner_radius := _cell_size * 0.2
+	draw_circle(Vector2(center_x, center_y), inner_radius, Color(0.2, 0.05, 0.05))
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:

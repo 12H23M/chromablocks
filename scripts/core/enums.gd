@@ -13,7 +13,8 @@ enum PieceType {
 	PENT_PLUS, PENT_U, PENT_T, PENT_LINE, PENT_LINE_V,
 	PENT_L3, PENT_J3, PENT_L3_R, PENT_J3_R,
 	RECT_2x3, SQ_3x3, RECT_3x2,
-	PENT_N, PENT_N_R, PENT_N_V, PENT_N_V2
+	PENT_N, PENT_N_R, PENT_N_V, PENT_N_V2,
+	BOMB  # Special reward piece at 10 combo
 }
 
 enum GameStatus { READY, PLAYING, PAUSED, CLEARING, GAME_OVER }

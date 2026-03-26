@@ -220,6 +220,20 @@ func clear_highlights() -> void:
 		_cells[pos.y][pos.x].clear_highlight()
 	_highlighted_cells.clear()
 
+
+## Show 3x3 bomb explosion preview area
+func show_bomb_highlight(gx: int, gy: int, in_bounds: bool) -> void:
+	clear_highlights()
+	var radius := GameConstants.BOMB_EXPLOSION_RADIUS
+	for dy in range(-radius, radius + 1):
+		for dx in range(-radius, radius + 1):
+			var cx := gx + dx
+			var cy := gy + dy
+			if cx >= 0 and cx < GameConstants.BOARD_COLUMNS \
+			   and cy >= 0 and cy < GameConstants.BOARD_ROWS:
+				_cells[cy][cx].set_highlight(in_bounds)
+				_highlighted_cells.append(Vector2i(cx, cy))
+
 func play_place_effect(cells: Array) -> void:
 	var delay := 0.0
 	var placed_set: Dictionary = {}

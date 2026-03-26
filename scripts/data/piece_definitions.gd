@@ -46,6 +46,8 @@ const SHAPES: Dictionary = {
 	Enums.PieceType.PENT_N_R: [[0, 1], [1, 1], [1, 0], [1, 0]],     # ⌐ 세로 N 반전
 	Enums.PieceType.PENT_N_V: [[1, 1, 0], [0, 1, 1], [0, 0, 1]],    # 가로 N
 	Enums.PieceType.PENT_N_V2: [[0, 0, 1], [0, 1, 1], [1, 1, 0]],   # 가로 N 반전
+	# Special reward pieces
+	Enums.PieceType.BOMB: [[1]],  # Single cell, explodes 3x3 on placement
 }
 
 const PIECE_COLORS: Dictionary = {
@@ -87,4 +89,6 @@ const PIECE_COLORS: Dictionary = {
 	Enums.PieceType.PENT_N_R: Enums.BlockColor.CORAL,
 	Enums.PieceType.PENT_N_V: Enums.BlockColor.CORAL,
 	Enums.PieceType.PENT_N_V2: Enums.BlockColor.CORAL,
+	# Special reward pieces
+	Enums.PieceType.BOMB: Enums.BlockColor.SPECIAL,  # Red/fire color for bomb
 }

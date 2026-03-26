@@ -76,6 +76,11 @@ const MISSION_ALL_COMPLETE_BONUS: int = 500     # bonus score for completing all
 # Time Attack
 const TIME_ATTACK_DURATION: float = 60.0  # seconds
 
+# Bomb Block Reward
+const BOMB_REWARD_COMBO_THRESHOLD: int = 10  # combo needed to spawn bomb
+const BOMB_EXPLOSION_RADIUS: int = 1  # 1 = 3x3 area (center + 1 in each direction)
+const BOMB_POINTS_PER_CELL: int = 20  # points per cleared cell
+
 # Cell Aging — disabled (visual-only, no gameplay impact)
 const CELL_AGE_ENABLED: bool = false
 const CELL_AGE_STAGE1: int = 5
