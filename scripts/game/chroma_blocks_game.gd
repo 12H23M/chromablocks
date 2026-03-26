@@ -543,6 +543,13 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	if _is_mission_run and not _state.active_missions.is_empty():
 		_update_mission_progress(clear_result, chain_result, blast_executed, new_combo)
 
+	# 10.6 Time Attack: 라인 클리어 시 +3초 보너스
+	if _is_time_attack and clear_result["lines_cleared"] > 0:
+		var bonus_seconds: float = clear_result["lines_cleared"] * 3.0
+		_time_remaining = mini(_time_remaining + bonus_seconds, 120.0)  # 최대 120초 캡
+		hud.update_timer(_time_remaining)
+		_spawn_time_bonus_popup(bonus_seconds)
+
 	# 11. Cache cell colors for clear animations BEFORE state update
 	if clear_result["has_clears"]:
 		board_renderer.cache_cell_colors_for_clear(clear_result["rows"], clear_result["cols"])
@@ -1130,6 +1137,20 @@ func _spawn_blast_popup(blast_color_idx: int) -> void:
 	var board_center := board_renderer.global_position + board_renderer.size / 2.0
 	popup.show_blast(blast_color_idx, board_center)
 	popup.tree_exited.connect(overlay_layer.queue_free)
+
+
+func _spawn_time_bonus_popup(seconds: float) -> void:
+	# 타임어택 모드에서 라인 클리어 시 +N초 팝업
+	var popup := Control.new()
+	popup.set_script(preload("res://scripts/game/time_bonus_popup.gd"))
+	var overlay_layer := CanvasLayer.new()
+	overlay_layer.layer = 19  # Behind combo but visible
+	add_child(overlay_layer)
+	overlay_layer.add_child(popup)
+	var board_center := board_renderer.global_position + board_renderer.size / 2.0
+	popup.show_time_bonus(seconds, board_center)
+	popup.tree_exited.connect(overlay_layer.queue_free)
+
 
 func _check_milestones() -> void:
 	for milestone in GameConstants.SCORE_MILESTONES:

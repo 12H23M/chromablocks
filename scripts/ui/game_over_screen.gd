@@ -307,6 +307,16 @@ func mark_ad_used() -> void:
 	_ad_section.visible = false
 
 
+## 타임어택 모드 전용 결과 화면
+func show_time_attack_result(state: GameState) -> void:
+	# 기본 show_result 호출 (등급, 점수 등)
+	show_result(state)
+
+	# 타이틀을 "TIME'S UP"으로 변경
+	_title_label.text = "TIME'S UP!"
+	_title_label.add_theme_color_override("font_color", Color(1.0, 0.4, 0.3))  # 빨간-주황
+
+
 func reset_ad_state() -> void:
 	_used_ad_this_game = false
 
