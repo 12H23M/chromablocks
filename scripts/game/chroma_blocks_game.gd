@@ -177,6 +177,13 @@ func _start_new_game(daily: bool, mission_run: bool = false, missions: Array = [
 		hud.reset_new_best()
 
 		var tray := _piece_gen.generate_tray(_state.level, _state.board)
+
+		# First game gift: add a special gift piece to tray
+		if SaveManager.is_first_gift_available():
+			var gift_piece := _create_gift_piece()
+			tray.append(gift_piece)
+			print("[Gift] First game gift piece added to tray!")
+
 		_state.tray_pieces = tray
 		_next_tray_pieces = _piece_gen.generate_tray(_state.level, _state.board)
 
@@ -421,6 +428,14 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 		_handle_bomb_placement(gx, gy)
 		return
 
+	# Gift piece: award bonus score on first placement
+	var gift_bonus: int = 0
+	if piece.is_gift:
+		gift_bonus = GameConstants.FIRST_GIFT_BONUS
+		SaveManager.consume_first_gift()
+		SoundManager.play_sfx("milestone")  # 특별 사운드
+		print("[Gift] Gift piece placed! Bonus: +%d" % gift_bonus)
+
 	SoundManager.play_sfx("block_place")
 	HapticManager.placement(piece.cells.size())
 
@@ -509,7 +524,7 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 		blast_bonus += blast_result["blast_colors"].size() * GameConstants.CHROMA_BLAST_TRIGGER_BONUS
 
 	var chroma_bonus: int = chain_bonus + blast_bonus
-	score_result["total"] += chroma_bonus
+	score_result["total"] += chroma_bonus + gift_bonus  # 선물 피스 보너스 추가
 
 	# Daily bonus: double score for first game of the day
 	if _daily_bonus_active:
@@ -850,6 +865,17 @@ func _on_hold_pressed() -> void:
 	HapticManager.placement(tray_piece.cell_count)
 	_check_game_over()
 	state_changed.emit(_state)
+
+## Create a gift piece for first-time players
+func _create_gift_piece() -> BlockPiece:
+	# 선물 피스: 2x2 블록 (사용하기 쉬운 모양)
+	var gift := BlockPiece.new(
+		Enums.PieceType.SQUARE,
+		Enums.BlockColor.RED,  # 빨간색 (눈에 띄게)
+		PieceDefinitions.SHAPES[Enums.PieceType.SQUARE]
+	)
+	gift.is_gift = true
+	return gift
 
 ## Handle bomb piece placement: 3x3 explosion centered at (gx, gy)
 func _handle_bomb_placement(gx: int, gy: int) -> void:

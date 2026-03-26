@@ -43,6 +43,10 @@ func _draw() -> void:
 		_draw_bomb_piece(offset_x, offset_y, piece_pixel_w, piece_pixel_h)
 		return
 
+	# Gift piece: golden glow effect
+	if piece_data.is_gift:
+		_draw_gift_effect(offset_x, offset_y, piece_pixel_w, piece_pixel_h)
+
 	for row_idx in piece_data.shape.size():
 		for col_idx in piece_data.shape[row_idx].size():
 			if piece_data.shape[row_idx][col_idx] == 1:
@@ -107,6 +111,33 @@ func _draw_bomb_piece(offset_x: float, offset_y: float, piece_w: float, piece_h:
 	# Inner dark circle (bomb center)
 	var inner_radius := _cell_size * 0.2
 	draw_circle(Vector2(center_x, center_y), inner_radius, Color(0.2, 0.05, 0.05))
+
+## Gift piece effect: golden border + sparkle
+func _draw_gift_effect(offset_x: float, offset_y: float, piece_w: float, piece_h: float) -> void:
+	var time := Time.get_ticks_msec() / 1000.0
+	var pulse := 0.5 + 0.5 * sin(time * 3.0)  # 1.5Hz pulse
+
+	# Golden glow (pulsing)
+	var gold_color := Color(1.0, 0.84, 0.0, 0.4 + 0.3 * pulse)  # Gold #FFD700
+	var glow_rect := Rect2(
+		Vector2(offset_x - 4, offset_y - 4),
+		Vector2(piece_w + 8, piece_h + 8))
+	DrawUtils.draw_rounded_rect(self, glow_rect, gold_color, 10.0)
+
+	# Sparkle stars (3 small stars)
+	for i in 3:
+		var star_phase := time * 2.0 + i * 2.094  # 120° offset
+		var star_alpha := 0.5 + 0.5 * sin(star_phase)
+		var star_x := offset_x + piece_w * (0.2 + i * 0.3)
+		var star_y := offset_y + piece_h * 0.5 + sin(time * 4.0 + i) * 5.0
+		var star_color := Color(1.0, 0.95, 0.7, star_alpha * 0.8)
+		var star_size := 3.0 + 2.0 * pulse
+		draw_circle(Vector2(star_x, star_y), star_size, star_color)
+
+func _process(_delta: float) -> void:
+	# Gift piece animation (sparkle effect)
+	if piece_data != null and piece_data.is_gift:
+		queue_redraw()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:

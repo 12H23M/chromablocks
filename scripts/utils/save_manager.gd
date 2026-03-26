@@ -303,3 +303,19 @@ func consume_daily_bonus() -> void:
 	var now := Time.get_date_dict_from_system()
 	var today: int = now["year"] * 10000 + now["month"] * 100 + now["day"]
 	set_last_daily_bonus_date(today)
+
+
+# --- First Game Gift Piece ------------------------------------------------
+
+## 첫 게임 선물 피스 사용 가능 여부 (첫 게임이고 아직 사용 안 함)
+func is_first_gift_available() -> bool:
+	var games_played: int = get_games_played()
+	var gift_used: bool = _config.get_value("first_gift", "used", false)
+	return games_played == 0 and not gift_used
+
+
+## 첫 게임 선물 피스 사용 처리
+func consume_first_gift() -> void:
+	_config.set_value("first_gift", "used", true)
+	_mark_dirty()
+	flush()

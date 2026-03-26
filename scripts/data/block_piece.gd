@@ -3,6 +3,7 @@ class_name BlockPiece
 var type: int  # Enums.PieceType
 var color: int  # Enums.BlockColor
 var shape: Array  # Array of Array of int (0/1)
+var is_gift: bool = false  # 첫 게임 선물 피스 여부
 
 
 func _init(p_type: int = 0, p_color: int = 0, p_shape: Array = []) -> void:
