@@ -661,6 +661,7 @@ func _play_effects_sequence(ed: Dictionary) -> void:
 			_spawn_combo_popup(combo)
 			if combo >= 3:
 				_apply_hit_stop(0.03)
+				board_renderer.play_zoom_effect(combo)
 		)
 		delay += 0.15  # short gap, not full wait
 

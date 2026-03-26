@@ -915,3 +915,10 @@ func play_screen_flash(color: Color, duration: float = 0.08) -> void:
 	tw.tween_callback(func():
 		layer.queue_free()
 	)
+
+## Play a brief zoom effect for big clears
+func play_zoom_effect(magnitude: float, duration: float = 0.15) -> void:
+    var target_scale := 1.0 + magnitude * 0.02
+    var tw := create_tween().set_parallel(true)
+    tw.tween_property(self, "scale", Vector2(target_scale, target_scale), duration * 0.5).set_ease(Tween.EASE_OUT)
+    tw.chain().tween_property(self, "scale", Vector2.ONE, duration * 0.5).set_ease(Tween.EASE_IN)
