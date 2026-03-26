@@ -1038,3 +1038,24 @@ func _spawn_particle() -> void:
 		"alpha": randf_range(0.15, 0.40),
 	}
 	_particles.append(p)
+
+func _show_play_again_hint() -> void:
+    var hint := Label.new()
+    var messages := [
+        "조금만 더 하면 됐는데!",
+        "이번엔 더 잘할 수 있어!",
+        "한판만 더?",
+        "기록 갱신 도전!",
+    ]
+    hint.text = messages[randi() % messages.size()]
+    hint.add_theme_font_size_override("font_size", 18)
+    hint.add_theme_color_override("font_color", Color(0.9, 0.9, 1.0, 0.7))
+    hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    hint.position = Vector2(0, size.y - 180)
+    hint.size = Vector2(size.x, 24)
+    add_child(hint)
+    
+    var tw := create_tween()
+    tw.tween_interval(2.5)
+    tw.tween_property(hint, "modulate:a", 0.0, 0.5)
+    tw.tween_callback(hint.queue_free)
