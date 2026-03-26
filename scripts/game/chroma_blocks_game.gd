@@ -52,7 +52,7 @@ func _ready() -> void:
 	home_screen.continue_pressed.connect(continue_game)
 	home_screen.daily_pressed.connect(start_daily_challenge)
 	home_screen.mission_pressed.connect(_show_mission_select)
-	game_over_screen.play_again_pressed.connect(start_game)
+	game_over_screen.play_again_pressed.connect(_on_restart_from_game_over)
 	game_over_screen.go_home_pressed.connect(_on_go_home)
 	game_over_screen.continue_ad_pressed.connect(_on_continue_ad)
 	game_over_screen.double_score_ad_pressed.connect(_on_double_score_ad)
@@ -182,18 +182,23 @@ func _start_new_game(daily: bool, mission_run: bool = false, missions: Array = [
 		_color_match_count = 0
 		_had_perfect_clear = false
 
-		# Mission run setup
-		_is_mission_run = mission_run
+		# Mission run setup — missions activate in ALL modes when MISSION_ALWAYS_ACTIVE
+		var effective_mission_run: bool = mission_run
+		var effective_missions: Array = missions
+		if not effective_mission_run and GameConstants.MISSION_ALWAYS_ACTIVE:
+			effective_mission_run = true
+			effective_missions = MissionSystem.generate_missions()
+		_is_mission_run = effective_mission_run
 		_all_missions_completed_shown = false
-		_state.is_mission_run = mission_run
-		if mission_run and not missions.is_empty():
-			_state.active_missions = missions
-			_mission_hud.setup(missions)
+		_state.is_mission_run = effective_mission_run
+		if effective_mission_run and not effective_missions.is_empty():
+			_state.active_missions = effective_missions
+			_mission_hud.setup(effective_missions)
 		else:
 			_state.active_missions = []
 			_mission_hud.hide_hud()
 
-		var mode := "daily" if daily else ("mission" if mission_run else "normal")
+		var mode := "daily" if daily else ("mission" if mission_run else ("normal+mission" if effective_mission_run else "normal"))
 		AnalyticsManager.game_start(mode)
 		if daily:
 			AnalyticsManager.daily_challenge_start()
@@ -852,9 +857,12 @@ func _update_mission_progress(clear_result: Dictionary, chain_result: Dictionary
 	# Refresh HUD
 	_mission_hud.refresh()
 
-	# Check all completed
+	# Check all completed — award bonus score and show popup
 	if not _all_missions_completed_shown and MissionSystem.all_completed(missions):
 		_all_missions_completed_shown = true
+		if GameConstants.MISSION_ALL_COMPLETE_BONUS > 0:
+			_state.score += GameConstants.MISSION_ALL_COMPLETE_BONUS
+			hud.update_from_state(_state)
 		var popup := Control.new()
 		popup.set_script(load("res://scripts/ui/mission_complete_popup.gd"))
 		popup.show_popup(self)
@@ -1030,6 +1038,183 @@ func _show_home_initial() -> void:
 	board_renderer.disable_gems()
 	home_screen.refresh_stats()
 	ScreenTransition.fade_in(home_screen)
+
+
+# ── Restart Transition: Game Over → New Game ──
+
+var _last_game_score: int = 0
+
+func _on_restart_from_game_over() -> void:
+	_last_game_score = _state.score
+	# Phase 1: Shrink game-over screen + board
+	var speed_scale: float = 1.0 / maxf(Engine.time_scale, 0.01)
+	var tw := create_tween()
+	tw.set_speed_scale(speed_scale)
+	tw.set_parallel(true)
+	# Shrink board
+	board_renderer.pivot_offset = board_renderer.size / 2.0
+	tw.tween_property(board_renderer, "scale", Vector2(0.85, 0.85), 0.25) \
+		.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BACK)
+	tw.tween_property(board_renderer, "modulate:a", 0.0, 0.2) \
+		.set_ease(Tween.EASE_IN)
+	# Fade out game over screen
+	tw.tween_property(game_over_screen, "modulate:a", 0.0, 0.2) \
+		.set_ease(Tween.EASE_IN)
+	# Fade out piece tray
+	tw.tween_property(piece_tray, "modulate:a", 0.0, 0.15) \
+		.set_ease(Tween.EASE_IN)
+	# Phase 2: Reset game state mid-transition, then expand
+	tw.chain().tween_callback(_restart_game_mid_transition)
+
+
+func _restart_game_mid_transition() -> void:
+	Engine.time_scale = 1.0
+	_hit_stop_duration = 0.0
+	_is_daily_mode = false
+	MusicManager.set_intensity(0)
+	SaveManager.clear_active_game()
+	_state.reset()
+	_piece_gen.reset()
+	_state.high_score = SaveManager.get_high_score()
+	_state.status = Enums.GameStatus.PLAYING
+	SaveManager.increment_games_played()
+	game_over_screen.reset_ad_state()
+	hud.reset_new_best()
+
+	var tray := _piece_gen.generate_tray(_state.level, _state.board)
+	_state.tray_pieces = tray
+	_next_tray_pieces = _piece_gen.generate_tray(_state.level, _state.board)
+
+	board_renderer.enable_gems()
+	board_renderer.update_from_state(_state.board)
+	board_renderer.update_crisis_state(_state.board)
+	piece_tray.populate_tray(tray)
+	piece_tray.update_hold_display(_state.held_piece, not _state.hold_used_this_tray)
+	piece_tray.update_next_preview(_next_tray_pieces)
+	hud.update_from_state(_state)
+
+	game_over_screen.visible = false
+	game_over_screen.modulate.a = 1.0
+	pause_screen.visible = false
+	pause_screen.modulate.a = 1.0
+	home_screen.visible = false
+	home_screen.modulate.a = 1.0
+
+	_color_match_count = 0
+	_had_perfect_clear = false
+
+	# Mission reset
+	_is_mission_run = false
+	_all_missions_completed_shown = false
+	_state.is_mission_run = false
+	_state.active_missions = []
+	_mission_hud.hide_hud()
+
+	AnalyticsManager.game_start("normal")
+
+	# Auto-play
+	if _auto_play_enabled:
+		_auto_player.reset_stats()
+		_auto_play_timer.start()
+
+	state_changed.emit(_state)
+
+	# Phase 3: Expand board + fade in
+	_play_restart_expand_animation()
+
+
+func _play_restart_expand_animation() -> void:
+	var speed_scale: float = 1.0 / maxf(Engine.time_scale, 0.01)
+	board_renderer.pivot_offset = board_renderer.size / 2.0
+	board_renderer.scale = Vector2(0.85, 0.85)
+	board_renderer.modulate.a = 0.0
+	piece_tray.modulate.a = 0.0
+
+	var tw := create_tween()
+	tw.set_speed_scale(speed_scale)
+	tw.set_parallel(true)
+	# Board expands from small to normal
+	tw.tween_property(board_renderer, "scale", Vector2(1.0, 1.0), 0.3) \
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tw.tween_property(board_renderer, "modulate:a", 1.0, 0.25) \
+		.set_ease(Tween.EASE_OUT)
+	# Piece tray fades in slightly later
+	tw.tween_property(piece_tray, "modulate:a", 1.0, 0.25) \
+		.set_ease(Tween.EASE_OUT).set_delay(0.1)
+
+	# Show "previous score" toast after board appears
+	tw.chain().tween_callback(_show_previous_score_toast)
+
+
+func _show_previous_score_toast() -> void:
+	if _last_game_score <= 0:
+		return
+	var formatted := FormatUtils.format_number(_last_game_score)
+	var toast_text := "저번 판: %s점 → 이번엔?" % formatted
+
+	# Create toast label overlay
+	var toast_layer := CanvasLayer.new()
+	toast_layer.layer = 15
+	add_child(toast_layer)
+
+	var toast := Label.new()
+	var fredoka := load("res://assets/fonts/Fredoka-Bold.ttf") as Font
+	if fredoka:
+		toast.add_theme_font_override("font", fredoka)
+	toast.add_theme_font_size_override("font_size", 15)
+	toast.add_theme_color_override("font_color", Color(1, 1, 1, 0.85))
+	toast.text = toast_text
+	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	toast.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	toast.grow_horizontal = Control.GROW_DIRECTION_BOTH
+
+	# Background panel
+	var panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.15, 0.10, 0.35, 0.85)
+	style.corner_radius_top_left = 16
+	style.corner_radius_top_right = 16
+	style.corner_radius_bottom_left = 16
+	style.corner_radius_bottom_right = 16
+	style.content_margin_left = 20.0
+	style.content_margin_right = 20.0
+	style.content_margin_top = 10.0
+	style.content_margin_bottom = 10.0
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.border_color = Color(0.5, 0.35, 0.9, 0.3)
+	panel.add_theme_stylebox_override("panel", style)
+	panel.add_child(toast)
+
+	# Center the panel
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	center.offset_top = 100
+	center.custom_minimum_size = Vector2(0, 50)
+	center.add_child(panel)
+	toast_layer.add_child(center)
+
+	# Animate: slide in from top + fade, hold, then fade out
+	center.modulate.a = 0.0
+	center.offset_top = 80
+	var tw := center.create_tween()
+	# Slide down + fade in
+	tw.set_parallel(true)
+	tw.tween_property(center, "modulate:a", 1.0, 0.3) \
+		.set_ease(Tween.EASE_OUT)
+	tw.tween_property(center, "offset_top", 100.0, 0.3) \
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	# Hold
+	tw.chain().tween_interval(2.0)
+	# Fade out + slide up
+	tw.tween_property(center, "modulate:a", 0.0, 0.4) \
+		.set_ease(Tween.EASE_IN)
+	tw.parallel().tween_property(center, "offset_top", 85.0, 0.4) \
+		.set_ease(Tween.EASE_IN)
+	# Cleanup
+	tw.tween_callback(toast_layer.queue_free)
 
 
 func _show_home() -> void:

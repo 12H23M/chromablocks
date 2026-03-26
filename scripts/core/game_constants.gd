@@ -66,6 +66,13 @@ const CHROMA_BLAST_LINE_BONUS: int = 200
 # Score Milestones
 const SCORE_MILESTONES: Array = [500, 1000, 2000, 3000, 5000, 7500, 10000, 15000, 20000, 30000]
 
+# Mission Policy — micro-missions active in ALL game modes (psychology doc §8.4)
+# When true, every game auto-generates 3 missions (easy/med/hard) and shows HUD.
+# Mission XP is awarded on completion; bonus score is added to the running total.
+const MISSION_ALWAYS_ACTIVE: bool = true
+const MISSION_COMPLETION_BONUS_SCORE: int = 0  # bonus score on each mission complete (0 = XP only)
+const MISSION_ALL_COMPLETE_BONUS: int = 500     # bonus score for completing all 3
+
 # Cell Aging — disabled (visual-only, no gameplay impact)
 const CELL_AGE_ENABLED: bool = false
 const CELL_AGE_STAGE1: int = 5
