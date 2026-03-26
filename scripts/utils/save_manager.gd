@@ -295,11 +295,11 @@ func set_last_daily_bonus_date(date_seed: int) -> void:
 
 func is_daily_bonus_available() -> bool:
 	var now := Time.get_date_dict_from_system()
-	var today := now["year"] * 10000 + now["month"] * 100 + now["day"]
+	var today: int = now["year"] * 10000 + now["month"] * 100 + now["day"]
 	return get_last_daily_bonus_date() != today
 
 
 func consume_daily_bonus() -> void:
 	var now := Time.get_date_dict_from_system()
-	var today := now["year"] * 10000 + now["month"] * 100 + now["day"]
+	var today: int = now["year"] * 10000 + now["month"] * 100 + now["day"]
 	set_last_daily_bonus_date(today)

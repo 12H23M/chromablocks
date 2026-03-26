@@ -125,8 +125,8 @@ static func _check_piece_fit(board: BoardState, piece: BlockPiece, gx: int, gy: 
 	var blocked_count := 0
 
 	for cell in piece.cells:
-		var cx := gx + cell.x
-		var cy := gy + cell.y
+		var cx: int = gx + cell.x
+		var cy: int = gy + cell.y
 
 		if cx < 0 or cx >= board.columns or cy < 0 or cy >= board.rows:
 			blocked_count += 1

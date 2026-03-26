@@ -127,9 +127,9 @@ static func chroma_blast() -> void:
 
 ## Haptic feedback for piece placement based on size
 static func placement(piece_cells: int) -> void:
-    if piece_cells >= 10:
-        heavy()
-    elif piece_cells >= 5:
-        medium()
-    else:
-        light()
+	if piece_cells >= 10:
+		_vibrate(80)
+	elif piece_cells >= 5:
+		medium()
+	else:
+		light()

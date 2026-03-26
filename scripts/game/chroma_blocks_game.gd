@@ -3,6 +3,9 @@ extends Node
 signal state_changed(state: GameState)
 signal game_over_triggered()
 
+# Preload systems to ensure class_name resolution
+const NearMissAnalyzerScript := preload("res://scripts/systems/near_miss_analyzer.gd")
+
 @onready var board_renderer: Control = %Board
 @onready var piece_tray: VBoxContainer = %PieceTray
 @onready var hud: Control = %HUD
@@ -949,7 +952,7 @@ func _check_game_over() -> void:
 		board_renderer.scale = Vector2.ONE
 		_state.status = Enums.GameStatus.GAME_OVER
 		# Analyze near-miss situations for "what could have been" display
-		_state.near_miss_result = NearMissAnalyzer.analyze(_state.board, _state.tray_pieces)
+		_state.near_miss_result = NearMissAnalyzerScript.analyze(_state.board, _state.tray_pieces)
 		_time_attack_active = false
 		hud.show_timer(false)
 		SaveManager.clear_active_game()

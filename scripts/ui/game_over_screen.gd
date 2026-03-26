@@ -8,6 +8,9 @@ signal go_home_pressed()
 signal continue_ad_pressed()
 signal double_score_ad_pressed()
 
+# Preload to ensure class_name resolution
+const NearMissAnalyzerScript := preload("res://scripts/systems/near_miss_analyzer.gd")
+
 # ── Constants ──────────────────────────────────────────────────────
 const GRADE_THRESHOLDS := { "S+": 15000, "S": 10000, "A+": 7000, "A": 5000, "B+": 3000, "B": 2000, "C+": 1000 }
 const GRADE_COLORS := {
@@ -141,7 +144,7 @@ func show_result(state: GameState) -> void:
 
 	# Near-miss hint (what could have been)
 	if state.near_miss_result != null:
-		_near_miss_hint.text = NearMissAnalyzer.get_near_miss_message(state.near_miss_result)
+		_near_miss_hint.text = NearMissAnalyzerScript.get_near_miss_message(state.near_miss_result)
 		_near_miss_hint.visible = true
 	else:
 		_near_miss_hint.visible = false
@@ -711,7 +714,7 @@ func _build_highlights(state: GameState, speed_scale: float) -> void:
 
 	# Near-miss analysis (what could have been)
 	if state.near_miss_result != null:
-		var near_miss_details: Array = NearMissAnalyzer.get_near_miss_details(state.near_miss_result)
+		var near_miss_details: Array = NearMissAnalyzerScript.get_near_miss_details(state.near_miss_result)
 		for detail in near_miss_details:
 			has_content = true
 			var nm_item := _create_highlight_item(
@@ -1078,22 +1081,22 @@ func _spawn_particle() -> void:
 	_particles.append(p)
 
 func _show_play_again_hint() -> void:
-    var hint := Label.new()
-    var messages := [
-        "조금만 더 하면 됐는데!",
-        "이번엔 더 잘할 수 있어!",
-        "한판만 더?",
-        "기록 갱신 도전!",
-    ]
-    hint.text = messages[randi() % messages.size()]
-    hint.add_theme_font_size_override("font_size", 18)
-    hint.add_theme_color_override("font_color", Color(0.9, 0.9, 1.0, 0.7))
-    hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    hint.position = Vector2(0, size.y - 180)
-    hint.size = Vector2(size.x, 24)
-    add_child(hint)
-    
-    var tw := create_tween()
-    tw.tween_interval(2.5)
-    tw.tween_property(hint, "modulate:a", 0.0, 0.5)
-    tw.tween_callback(hint.queue_free)
+	var hint := Label.new()
+	var messages := [
+		"조금만 더 하면 됐는데!",
+		"이번엔 더 잘할 수 있어!",
+		"한판만 더?",
+		"기록 갱신 도전!",
+	]
+	hint.text = messages[randi() % messages.size()]
+	hint.add_theme_font_size_override("font_size", 18)
+	hint.add_theme_color_override("font_color", Color(0.9, 0.9, 1.0, 0.7))
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.position = Vector2(0, size.y - 180)
+	hint.size = Vector2(size.x, 24)
+	add_child(hint)
+
+	var tw := create_tween()
+	tw.tween_interval(2.5)
+	tw.tween_property(hint, "modulate:a", 0.0, 0.5)
+	tw.tween_callback(hint.queue_free)
