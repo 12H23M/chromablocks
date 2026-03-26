@@ -124,3 +124,12 @@ static func chroma_chain(cascade: int) -> void:
 static func chroma_blast() -> void:
 	_vibrate(100)
 	_vibrate_delayed(200, 0.15)
+
+## Haptic feedback for piece placement based on size
+static func placement(piece_cells: int) -> void:
+    if piece_cells >= 10:
+        heavy()
+    elif piece_cells >= 5:
+        medium()
+    else:
+        light()
