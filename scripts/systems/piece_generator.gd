@@ -176,6 +176,11 @@ func generate_tray(level: int, board: BoardState) -> Array:
 	var excluded := _get_excluded_for_level(level)
 	var fill := _board_fill_ratio(board)
 
+	# ── Beginner gift: first 5 games get easier pieces ──
+	var is_beginner := SaveManager.get_games_played() < 5
+	if is_beginner and fill < 0.5:
+		return _generate_beginner_gift_tray(board, level, excluded)
+
 	# Anti-frustration: relief tray after consecutive tight trays
 	if _tight_tray_streak >= MAX_TIGHT_STREAK and fill > 0.5:
 		_tight_tray_streak = 0
@@ -498,3 +503,67 @@ func _weighted_pick(weights: Dictionary) -> int:
 
 func _board_fill_ratio(board: BoardState) -> float:
 	return board.fill_ratio()
+
+
+## ── Beginner Gift Mode ──
+## First 5 games: give easier pieces to help new players experience line clears
+const TEMPLATES_BEGINNER: Array = [
+	{ "t": [SizeCat.TINY, SizeCat.SMALL, SizeCat.SMALL], "w": 0.35 },
+	{ "t": [SizeCat.TINY, SizeCat.TINY, SizeCat.SMALL], "w": 0.25 },
+	{ "t": [SizeCat.TINY, SizeCat.SMALL, SizeCat.MEDIUM], "w": 0.20 },
+	{ "t": [SizeCat.SMALL, SizeCat.SMALL, SizeCat.SMALL], "w": 0.15 },
+	{ "t": [SizeCat.TINY, SizeCat.TINY, SizeCat.MEDIUM], "w": 0.05 },
+]
+
+func _generate_beginner_gift_tray(board: BoardState, level: int, excluded: Array) -> Array:
+	var templates := TEMPLATES_BEGINNER.duplicate(true)
+	var template: Array = _pick_template(templates)
+
+	var tray: Array = []
+	var used_types: Array = []
+
+	for i in template.size():
+		var cat: int = template[i]
+		# For beginners, prefer simpler pieces (line-friendly)
+		var piece := _pick_beginner_piece(cat, excluded, used_types, level, board)
+		tray.append(piece)
+		used_types.append(piece.type)
+
+	_previous_tray_types = used_types.duplicate()
+
+	# Still guarantee playability
+	if not board.can_place_any_piece(tray):
+		tray = _rescue_tray(tray, board, level)
+
+	return tray
+
+
+func _pick_beginner_piece(cat: int, excluded: Array, used_types: Array, level: int, board: BoardState) -> BlockPiece:
+	# For beginners, prefer line-friendly pieces that help complete rows/cols
+	var line_friendly := [
+		Enums.PieceType.SINGLE,      # 1x1 - fits anywhere
+		Enums.PieceType.DUO,         # 1x2
+		Enums.PieceType.DUO_V,       # 2x1
+		Enums.PieceType.TRI_LINE,    # 1x3
+		Enums.PieceType.TRI_LINE_V,  # 3x1
+		Enums.PieceType.TET_LINE,    # 1x4
+		Enums.PieceType.TET_LINE_V,  # 4x1
+	]
+
+	# Get pieces for this category
+	var pool: Array = CATEGORY_PIECES.get(cat, []).duplicate()
+	pool = pool.filter(func(pt): return pt not in excluded and pt not in used_types)
+
+	# Prefer line-friendly pieces (70% chance)
+	if not pool.is_empty() and _rng.randf() < 0.7:
+		var lf_pool := pool.filter(func(pt): return pt in line_friendly)
+		if not lf_pool.is_empty():
+			pool = lf_pool
+
+	if pool.is_empty():
+		pool = CATEGORY_PIECES.get(SizeCat.TINY, []).duplicate()
+
+	var type: int = pool.pick_random() if not pool.is_empty() else Enums.PieceType.SINGLE
+	var color := _rng.randi_range(0, GameConstants.BLOCK_COLORS - 1)
+
+	return _create_piece(type, color)
