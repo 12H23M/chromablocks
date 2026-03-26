@@ -73,6 +73,9 @@ const MISSION_ALWAYS_ACTIVE: bool = true
 const MISSION_COMPLETION_BONUS_SCORE: int = 0  # bonus score on each mission complete (0 = XP only)
 const MISSION_ALL_COMPLETE_BONUS: int = 500     # bonus score for completing all 3
 
+# Time Attack
+const TIME_ATTACK_DURATION: float = 60.0  # seconds
+
 # Cell Aging — disabled (visual-only, no gameplay impact)
 const CELL_AGE_ENABLED: bool = false
 const CELL_AGE_STAGE1: int = 5

@@ -14,9 +14,80 @@ var _new_best_shown := false
 var _new_best_label: Label
 var _current_high_score: int = 0
 
+# Timer (Time Attack)
+var _timer_label: Label = null
+var _timer_visible := false
+var _timer_pulse_tween: Tween = null
+var _timer_was_urgent := false
+
 
 func _ready() -> void:
-	pass  # Combo display moved to full-screen overlay popup
+	_create_timer_label()
+
+
+func _create_timer_label() -> void:
+	_timer_label = Label.new()
+	_timer_label.text = "60"
+	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var fredoka: Font = load("res://assets/fonts/Fredoka-Bold.ttf")
+	if fredoka:
+		_timer_label.add_theme_font_override("font", fredoka)
+	_timer_label.add_theme_font_size_override("font_size", 28)
+	_timer_label.add_theme_color_override("font_color", Color.WHITE)
+	_timer_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.5))
+	_timer_label.add_theme_constant_override("shadow_offset_x", 0)
+	_timer_label.add_theme_constant_override("shadow_offset_y", 2)
+	_timer_label.visible = false
+	# Insert at top of HUD, before TopBar
+	var top_bar := get_node_or_null("TopBar")
+	if top_bar:
+		add_child(_timer_label)
+		move_child(_timer_label, top_bar.get_index())
+	else:
+		add_child(_timer_label)
+
+
+func show_timer(visible_flag: bool) -> void:
+	_timer_visible = visible_flag
+	if _timer_label:
+		_timer_label.visible = visible_flag
+	if not visible_flag:
+		_timer_was_urgent = false
+		if _timer_pulse_tween and _timer_pulse_tween.is_valid():
+			_timer_pulse_tween.kill()
+			_timer_pulse_tween = null
+		if _timer_label:
+			_timer_label.modulate.a = 1.0
+			_timer_label.add_theme_color_override("font_color", Color.WHITE)
+
+
+func update_timer(time_remaining: float) -> void:
+	if not _timer_label:
+		return
+	var secs := ceili(maxf(time_remaining, 0.0))
+	_timer_label.text = str(secs)
+
+	# Urgent state: <=10 seconds → red + pulse
+	var is_urgent := secs <= 10
+	if is_urgent and not _timer_was_urgent:
+		_timer_was_urgent = true
+		_timer_label.add_theme_color_override("font_color", Color(1.0, 0.25, 0.25))
+		_timer_label.add_theme_font_size_override("font_size", 32)
+		if _timer_pulse_tween and _timer_pulse_tween.is_valid():
+			_timer_pulse_tween.kill()
+		_timer_pulse_tween = create_tween().set_loops()
+		_timer_pulse_tween.tween_property(_timer_label, "modulate:a", 0.4, 0.3) \
+			.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+		_timer_pulse_tween.tween_property(_timer_label, "modulate:a", 1.0, 0.3) \
+			.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	elif not is_urgent and _timer_was_urgent:
+		_timer_was_urgent = false
+		_timer_label.add_theme_color_override("font_color", Color.WHITE)
+		_timer_label.add_theme_font_size_override("font_size", 28)
+		if _timer_pulse_tween and _timer_pulse_tween.is_valid():
+			_timer_pulse_tween.kill()
+			_timer_pulse_tween = null
+		_timer_label.modulate.a = 1.0
 
 
 func update_from_state(state: GameState) -> void:

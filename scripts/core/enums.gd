@@ -18,4 +18,4 @@ enum PieceType {
 
 enum GameStatus { READY, PLAYING, PAUSED, CLEARING, GAME_OVER }
 
-enum GameMode { CLASSIC, DAILY_CHALLENGE }
+enum GameMode { CLASSIC, DAILY_CHALLENGE, TIME_ATTACK }

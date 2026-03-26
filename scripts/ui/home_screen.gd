@@ -4,12 +4,14 @@ signal start_pressed()
 signal continue_pressed()
 signal daily_pressed()
 signal mission_pressed()
+signal time_attack_pressed()
 signal settings_pressed()
 signal how_to_play_pressed()
 
 # ─── Node references ───
 var _bg: ColorRect
 var _play_btn: Button
+var _time_attack_btn: Button
 var _mission_btn: Button
 var _continue_btn: Button
 var _daily_btn: Button
@@ -341,6 +343,48 @@ func _build_buttons() -> VBoxContainer:
 	_play_btn.add_theme_stylebox_override("pressed", pp)
 	_play_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	v.add_child(_play_btn)
+
+	# TIME ATTACK + PLAY row
+	var play_row := HBoxContainer.new()
+	play_row.set("theme_override_constants/separation", 10)
+	play_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	# Move play button into the row
+	_play_btn.get_parent().remove_child(_play_btn) if _play_btn.get_parent() else null
+	_play_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_play_btn.size_flags_stretch_ratio = 1.5
+	play_row.add_child(_play_btn)
+
+	# TIME ATTACK button
+	_time_attack_btn = Button.new()
+	_time_attack_btn.text = "⏱ TIME\nATTACK"
+	_time_attack_btn.name = "TimeAttackButton"
+	if _fredoka_bold:
+		_time_attack_btn.add_theme_font_override("font", _fredoka_bold)
+	_time_attack_btn.add_theme_font_size_override("font_size", 14)
+	_time_attack_btn.add_theme_color_override("font_color", Color.WHITE)
+	_time_attack_btn.custom_minimum_size = Vector2(0, 58)
+	_time_attack_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_time_attack_btn.size_flags_stretch_ratio = 1.0
+	var tas := StyleBoxFlat.new()
+	tas.bg_color = Color("#E53935")
+	_r(tas, 18)
+	tas.border_width_bottom = 4
+	tas.border_color = Color("#B71C1C")
+	tas.shadow_color = Color(0.90, 0.22, 0.21, 0.35)
+	tas.shadow_size = 10
+	_time_attack_btn.add_theme_stylebox_override("normal", tas)
+	_time_attack_btn.add_theme_stylebox_override("hover", tas)
+	var tap := tas.duplicate() as StyleBoxFlat
+	tap.bg_color = Color("#C62828")
+	tap.shadow_size = 4
+	_time_attack_btn.add_theme_stylebox_override("pressed", tap)
+	_time_attack_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	play_row.add_child(_time_attack_btn)
+
+	# Replace standalone PLAY with the row
+	v.remove_child(_play_btn)
+	v.add_child(play_row)
 
 	# Daily Bonus Badge (above MISSION, below PLAY)
 	_daily_bonus_badge = PanelContainer.new()

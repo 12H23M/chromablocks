@@ -17,6 +17,9 @@ var _state: GameState
 var _piece_gen := PieceGenerator.new()
 var _pending_action := ""
 var _is_daily_mode := false  # 일일 챌린지 모드 플래그
+var _is_time_attack := false  # 타임어택 모드 플래그
+var _time_remaining: float = 0.0  # 타임어택 남은 시간
+var _time_attack_active := false  # 타이머 진행 중
 var _is_mission_run := false
 var _mission_select_overlay: Control = null
 var _mission_hud: VBoxContainer = null
@@ -53,6 +56,7 @@ func _ready() -> void:
 	home_screen.continue_pressed.connect(continue_game)
 	home_screen.daily_pressed.connect(start_daily_challenge)
 	home_screen.mission_pressed.connect(_show_mission_select)
+	home_screen.time_attack_pressed.connect(start_time_attack)
 	game_over_screen.play_again_pressed.connect(_on_restart_from_game_over)
 	game_over_screen.go_home_pressed.connect(_on_go_home)
 	game_over_screen.continue_ad_pressed.connect(_on_continue_ad)
@@ -120,6 +124,11 @@ func start_daily_challenge() -> void:
 	_start_new_game(true)
 
 
+## 타임어택 시작 — 60초 동안 최대 점수 달성
+func start_time_attack() -> void:
+	_start_new_game(false, false, [], true)
+
+
 func _show_mission_select() -> void:
 	if is_instance_valid(_mission_select_overlay):
 		_mission_select_overlay.queue_free()
@@ -141,11 +150,14 @@ func _on_mission_start(missions: Array) -> void:
 	_start_new_game(false, true, missions)
 
 
-func _start_new_game(daily: bool, mission_run: bool = false, missions: Array = []) -> void:
+func _start_new_game(daily: bool, mission_run: bool = false, missions: Array = [], time_attack: bool = false) -> void:
 	ScreenTransition.fade_through_black(get_tree(), func() -> void:
 		Engine.time_scale = 1.0
 		_hit_stop_duration = 0.0
 		_is_daily_mode = daily
+		_is_time_attack = time_attack
+		_time_attack_active = false
+		_time_remaining = GameConstants.TIME_ATTACK_DURATION
 		MusicManager.set_intensity(0)
 		SaveManager.clear_active_game()
 		_state.reset()
@@ -204,10 +216,14 @@ func _start_new_game(daily: bool, mission_run: bool = false, missions: Array = [
 			_state.active_missions = []
 			_mission_hud.hide_hud()
 
-		var mode := "daily" if daily else ("mission" if mission_run else ("normal+mission" if effective_mission_run else "normal"))
+		var mode := "time_attack" if time_attack else ("daily" if daily else ("mission" if mission_run else ("normal+mission" if effective_mission_run else "normal")))
 		AnalyticsManager.game_start(mode)
 		if daily:
 			AnalyticsManager.daily_challenge_start()
+
+		# Start time attack timer
+		if time_attack:
+			_start_time_attack()
 
 		# Auto-play: restart timer if enabled
 		if _auto_play_enabled:
@@ -816,6 +832,8 @@ func _check_game_over() -> void:
 		board_renderer.modulate.a = 1.0
 		board_renderer.scale = Vector2.ONE
 		_state.status = Enums.GameStatus.GAME_OVER
+		_time_attack_active = false
+		hud.show_timer(false)
 		SaveManager.clear_active_game()
 		SaveManager.save_previous_score(_state.score)
 		SaveManager.update_play_streak()
@@ -825,7 +843,7 @@ func _check_game_over() -> void:
 			DailyChallengeSystem.save_daily_result(_state.score)
 			AnalyticsManager.daily_challenge_complete(_state.score)
 		# 분석 이벤트
-		var mode := "daily" if _is_daily_mode else "normal"
+		var mode := "time_attack" if _is_time_attack else ("daily" if _is_daily_mode else "normal")
 		AnalyticsManager.game_over(_state.score, _state.level, _state.lines_cleared, _state.max_combo, mode)
 		# 업적 체크
 		var daily_streak := DailyChallengeSystem.get_streak()
@@ -1020,6 +1038,9 @@ func _on_quit_to_home() -> void:
 	piece_tray.modulate.a = 1.0
 	_mission_hud.hide_hud()
 	_is_mission_run = false
+	_is_time_attack = false
+	_time_attack_active = false
+	hud.show_timer(false)
 	ScreenTransition.fade_through_black(get_tree(), func() -> void:
 		board_renderer.disable_gems()
 		home_screen.refresh_stats()
@@ -1124,6 +1145,11 @@ func _restart_game_mid_transition() -> void:
 	_state.is_mission_run = false
 	_state.active_missions = []
 	_mission_hud.hide_hud()
+
+	# Time attack reset
+	_is_time_attack = false
+	_time_attack_active = false
+	hud.show_timer(false)
 
 	AnalyticsManager.game_start("normal")
 
@@ -1407,6 +1433,20 @@ func _create_game_orbs() -> void:
 
 
 func _process(_delta: float) -> void:
+	# Time Attack timer update
+	if _time_attack_active and _state.status == Enums.GameStatus.PLAYING:
+		# Compensate for Engine.time_scale (hit-stop freezes)
+		var real_delta: float = _delta
+		if Engine.time_scale > 0.0:
+			real_delta = _delta / Engine.time_scale
+		_time_remaining -= real_delta
+		hud.update_timer(_time_remaining)
+		if _time_remaining <= 0.0:
+			_time_remaining = 0.0
+			hud.update_timer(0.0)
+			_time_attack_active = false
+			_trigger_time_attack_game_over()
+
 	if _game_orbs.is_empty():
 		return
 	var t: float = float(Time.get_ticks_msec()) / 1000.0
@@ -1425,6 +1465,43 @@ func _process(_delta: float) -> void:
 		var oy: float = cos(t * freq * 0.7 + phase) * amp_y
 		orb.position.x = viewport_size.x * cx + ox - orb.orb_radius
 		orb.position.y = viewport_size.y * cy + oy - orb.orb_radius
+
+
+# ── Time Attack ──
+
+func _start_time_attack() -> void:
+	_time_remaining = GameConstants.TIME_ATTACK_DURATION
+	_time_attack_active = true
+	hud.show_timer(true)
+	hud.update_timer(_time_remaining)
+
+
+func _trigger_time_attack_game_over() -> void:
+	Engine.time_scale = 1.0
+	_hit_stop_duration = 0.0
+	board_renderer.modulate.a = 1.0
+	board_renderer.scale = Vector2.ONE
+	_state.status = Enums.GameStatus.GAME_OVER
+	SaveManager.clear_active_game()
+	SaveManager.save_previous_score(_state.score)
+	SaveManager.update_play_streak()
+	SaveManager.save_end_of_game(_state.score)
+	var mode := "time_attack"
+	AnalyticsManager.game_over(_state.score, _state.level, _state.lines_cleared, _state.max_combo, mode)
+	var newly_unlocked := AchievementSystem.check_end_of_game(
+		_state.score, _state.max_combo, _state.level,
+		_state.lines_cleared, _color_match_count, _had_perfect_clear,
+		SaveManager.get_games_played(), DailyChallengeSystem.get_streak())
+	if not newly_unlocked.is_empty():
+		print("[Achievement] Unlocked: %s" % str(newly_unlocked))
+	if _is_mission_run:
+		_mission_hud.hide_hud()
+	hud.show_timer(false)
+	AdManager.on_game_ended()
+	SoundManager.play_sfx("game_over")
+	HapticManager.game_over()
+	game_over_screen.show_time_attack_result(_state)
+	game_over_triggered.emit()
 
 
 # ── Auto-play API ──
