@@ -918,19 +918,19 @@ func play_screen_flash(color: Color, duration: float = 0.08) -> void:
 
 ## Play a brief zoom effect for big clears
 func play_zoom_effect(magnitude: float, duration: float = 0.15) -> void:
-    var target_scale := 1.0 + magnitude * 0.02
-    var tw := create_tween().set_parallel(true)
-    tw.tween_property(self, "scale", Vector2(target_scale, target_scale), duration * 0.5).set_ease(Tween.EASE_OUT)
-    tw.chain().tween_property(self, "scale", Vector2.ONE, duration * 0.5).set_ease(Tween.EASE_IN)
+	var target_scale := 1.0 + magnitude * 0.02
+	var tw := create_tween().set_parallel(true)
+	tw.tween_property(self, "scale", Vector2(target_scale, target_scale), duration * 0.5).set_ease(Tween.EASE_OUT)
+	tw.chain().tween_property(self, "scale", Vector2.ONE, duration * 0.5).set_ease(Tween.EASE_IN)
 
 ## Play a subtle particle burst on piece placement
 func play_placement_particles(world_pos: Vector2, color: Color) -> void:
-    var particle := preload("res://scenes/clear_particle.tscn").instantiate() as Node2D
-    particle.position = world_pos
-    particle.modulate = color
-    particle.scale = Vector2(0.3, 0.3)
-    add_child(particle)
-    
-    var tw := create_tween()
-    tw.tween_property(particle, "modulate:a", 0.0, 0.3)
-    tw.tween_callback(particle.queue_free)
+	var particle := preload("res://scenes/clear_particle.tscn").instantiate() as Node2D
+	particle.position = world_pos
+	particle.modulate = color
+	particle.scale = Vector2(0.3, 0.3)
+	add_child(particle)
+	
+	var tw := create_tween()
+	tw.tween_property(particle, "modulate:a", 0.0, 0.3)
+	tw.tween_callback(particle.queue_free)

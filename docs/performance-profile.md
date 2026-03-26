@@ -281,12 +281,14 @@ The game uses Godot's custom drawing (`_draw()`) extensively instead of sprites/
 3. ✅ GameOrb _process disabled when not playing
 4. ✅ Pulse tween redraw throttled to 30fps (already implemented)
 
+### 2026-03-27 02:35 (verification)
+
+**All Quick Wins Complete:**
+5. ✅ Particle system pooling (already implemented in board_renderer.gd)
+
 **Expected Impact:**
 - CPU: ~30-40% reduction during gameplay
 - Memory: Reduced GC pressure from object allocation
-
-**Not Implemented:**
-- Particle system pooling (complexity vs benefit tradeoff)
 
 **Next Steps:**
 - Profile with ADB after release to validate improvements

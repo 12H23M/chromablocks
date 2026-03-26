@@ -67,6 +67,7 @@ var _next_grade_label: Label
 var _score_diff_label: Label
 var _streak_label: Label
 var _highlight_container: VBoxContainer
+var _near_miss_hint: Label  # "What could have been" message
 
 
 func _ready() -> void:
@@ -138,6 +139,13 @@ func show_result(state: GameState) -> void:
 	else:
 		_streak_label.visible = false
 
+	# Near-miss hint (what could have been)
+	if state.near_miss_result != null:
+		_near_miss_hint.text = NearMissAnalyzer.get_near_miss_message(state.near_miss_result)
+		_near_miss_hint.visible = true
+	else:
+		_near_miss_hint.visible = false
+
 	# Initial hidden states
 	_grade_hex.modulate.a = 0.0
 	_grade_hex.scale = Vector2(0.3, 0.3)
@@ -146,6 +154,7 @@ func show_result(state: GameState) -> void:
 	_next_grade_label.modulate.a = 0.0
 	_score_diff_label.modulate.a = 0.0
 	_streak_label.modulate.a = 0.0
+	_near_miss_hint.modulate.a = 0.0
 	for chip in _stat_chips:
 		chip.modulate.a = 0.0
 	_highlight_container.modulate.a = 0.0
@@ -176,6 +185,13 @@ func show_result(state: GameState) -> void:
 
 	# 2) Title glow pulse
 	_start_title_glow(speed_scale)
+
+	# 2b) Near-miss hint (if present)
+	if _near_miss_hint.visible:
+		var nmt := create_tween()
+		nmt.set_speed_scale(speed_scale)
+		nmt.tween_interval(0.2)
+		nmt.tween_property(_near_miss_hint, "modulate:a", 1.0, 0.3).set_ease(Tween.EASE_OUT)
 
 	# 3) Grade hexagon bounce
 	var gt := create_tween()
@@ -351,6 +367,16 @@ func _build_ui() -> void:
 	_title_label.add_theme_font_size_override("font_size", 40)
 	_title_label.add_theme_color_override("font_color", Color(0.75, 0.55, 1.0))
 	_content.add_child(_title_label)
+
+	# ── Near-miss hint (what could have been) ──
+	_near_miss_hint = Label.new()
+	_near_miss_hint.text = ""
+	_near_miss_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if _fredoka:
+		_near_miss_hint.add_theme_font_override("font", _fredoka)
+	_near_miss_hint.add_theme_font_size_override("font_size", 16)
+	_near_miss_hint.add_theme_color_override("font_color", Color(1.0, 0.6, 0.3))
+	_content.add_child(_near_miss_hint)
 
 	# ── Hexagon grade badge ──
 	var grade_center := CenterContainer.new()
@@ -682,6 +708,18 @@ func _build_highlights(state: GameState, speed_scale: float) -> void:
 			var diff_item := _create_highlight_item(
 				"🤝", "이전 판 대비", "동점!", Color(1, 1, 1, 0.5))
 			items_vbox.add_child(diff_item)
+
+	# Near-miss analysis (what could have been)
+	if state.near_miss_result != null:
+		var near_miss_details: Array = NearMissAnalyzer.get_near_miss_details(state.near_miss_result)
+		for detail in near_miss_details:
+			has_content = true
+			var nm_item := _create_highlight_item(
+				detail.get("icon", "💭"),
+				detail.get("text", ""),
+				detail.get("subtext", ""),
+				Color(1.0, 0.6, 0.3))
+			items_vbox.add_child(nm_item)
 
 	if not has_content:
 		# Remove header if nothing interesting

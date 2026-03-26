@@ -18,6 +18,7 @@ var active_missions: Array = []  # Array[MissionSystem.Mission]
 var reached_milestones: Array = []  # Array[int] — milestones already triggered this game
 var best_consecutive_clears: int = 0  # longest streak of consecutive clears
 var _current_consecutive: int = 0  # running streak counter
+var near_miss_result: RefCounted = null  # NearMissAnalyzer.NearMissResult — "what could have been" analysis
 
 
 func _init() -> void:
@@ -43,6 +44,7 @@ func reset() -> void:
 	reached_milestones = []
 	best_consecutive_clears = 0
 	_current_consecutive = 0
+	near_miss_result = null
 
 
 func apply_turn_result(board_new: BoardState, score_total: int, lines_cleared_delta: int,

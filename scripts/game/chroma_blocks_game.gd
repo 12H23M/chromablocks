@@ -843,6 +843,8 @@ func _check_game_over() -> void:
 		board_renderer.modulate.a = 1.0
 		board_renderer.scale = Vector2.ONE
 		_state.status = Enums.GameStatus.GAME_OVER
+		# Analyze near-miss situations for "what could have been" display
+		_state.near_miss_result = NearMissAnalyzer.analyze(_state.board, _state.tray_pieces)
 		_time_attack_active = false
 		hud.show_timer(false)
 		SaveManager.clear_active_game()
@@ -1515,10 +1517,10 @@ func _trigger_time_attack_game_over() -> void:
 	hud.show_timer(false)
 	AdManager.on_game_ended()
 	SoundManager.play_sfx("game_over")
-		# Slow motion effect
-		Engine.time_scale = 0.3
-		await get_tree().create_timer(0.5, true).timeout
-		Engine.time_scale = 1.0
+	# Slow motion effect
+	Engine.time_scale = 0.3
+	await get_tree().create_timer(0.5, true).timeout
+	Engine.time_scale = 1.0
 	HapticManager.game_over()
 	game_over_screen.show_time_attack_result(_state)
 	game_over_triggered.emit()
