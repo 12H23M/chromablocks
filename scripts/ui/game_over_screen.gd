@@ -47,7 +47,6 @@ var _fredoka: Font
 # ── Node references (assigned in _build_ui) ───────────────────────
 var _bg_rect: ColorRect
 var _particle_layer: Control
-var _scroll: ScrollContainer
 var _content: VBoxContainer
 var _title_label: Label
 var _grade_hex: Control    # custom hexagon draw node
@@ -331,18 +330,14 @@ func _build_ui() -> void:
 	_particle_layer.set_script(load("res://scripts/ui/particle_canvas.gd"))
 	add_child(_particle_layer)
 
-	# ── ScrollContainer ──
-	_scroll = ScrollContainer.new()
-	_scroll.set_anchors_preset(PRESET_FULL_RECT)
-	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	add_child(_scroll)
-
+	# ── Content container (no scroll — fits on one screen) ──
 	_content = VBoxContainer.new()
+	_content.set_anchors_preset(PRESET_FULL_RECT)
 	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_content.alignment = BoxContainer.ALIGNMENT_CENTER
-	_content.add_theme_constant_override("separation", 12)
-	_scroll.add_child(_content)
+	_content.add_theme_constant_override("separation", 8)  # tighter spacing
+	add_child(_content)
 
 	# Top spacer
 	var top_sp := Control.new()
