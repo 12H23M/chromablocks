@@ -898,3 +898,20 @@ func _draw_corner_gems() -> void:
 			center + Vector2(-gem_size * 0.5, -gem_size * 0.5),
 		])
 		draw_colored_polygon(highlight_points, Color(1, 1, 1, 0.25))
+
+## Play a brief screen flash effect
+func play_screen_flash(color: Color, duration: float = 0.08) -> void:
+	var flash := ColorRect.new()
+	flash.color = color
+	flash.set_anchors_preset(PRESET_FULL_RECT)
+	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var layer := CanvasLayer.new()
+	layer.layer = 30
+	add_child(layer)
+	layer.add_child(flash)
+	
+	var tw := create_tween()
+	tw.tween_property(flash, "color:a", 0.0, duration)
+	tw.tween_callback(func():
+		layer.queue_free()
+	)

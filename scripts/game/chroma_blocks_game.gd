@@ -729,7 +729,19 @@ func _play_effects_sequence(ed: Dictionary) -> void:
 			SoundManager.play_sfx("level_up")
 			HapticManager.level_up()
 			board_renderer.play_level_up_effect()
+			_spawn_level_up_popup(_state.level)
 		)
+
+func _spawn_level_up_popup(level: int) -> void:
+	var popup := Control.new()
+	popup.set_script(preload("res://scripts/game/level_up_popup.gd"))
+	var overlay_layer := CanvasLayer.new()
+	overlay_layer.layer = 21
+	add_child(overlay_layer)
+	overlay_layer.add_child(popup)
+	var board_center := board_renderer.global_position + board_renderer.size / 2.0
+	popup.show_level_up(level, board_center)
+	popup.tree_exited.connect(overlay_layer.queue_free)
 
 func _on_cell_tapped(gx: int, gy: int) -> void:
 	if _state.status != Enums.GameStatus.PLAYING:
