@@ -63,6 +63,9 @@ const CHROMA_BLAST_POINTS_PER_CELL: int = 50
 const CHROMA_BLAST_TRIGGER_BONUS: int = 500
 const CHROMA_BLAST_LINE_BONUS: int = 200
 
+# Score Milestones
+const SCORE_MILESTONES: Array = [500, 1000, 2000, 3000, 5000, 7500, 10000, 15000, 20000, 30000]
+
 # Cell Aging — disabled (visual-only, no gameplay impact)
 const CELL_AGE_ENABLED: bool = false
 const CELL_AGE_STAGE1: int = 5

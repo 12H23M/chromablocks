@@ -1,10 +1,22 @@
 extends Control
 
 var _progress: float = 0.0
+var _glow_phase: float = 0.0
+var _is_near_levelup: bool = false
+const NEAR_LEVELUP_THRESHOLD: float = 0.8
 
 func set_progress(value: float) -> void:
 	_progress = clampf(value, 0.0, 1.0)
+	var was_near := _is_near_levelup
+	_is_near_levelup = _progress >= NEAR_LEVELUP_THRESHOLD
+	if _is_near_levelup and not was_near:
+		_glow_phase = 0.0
 	queue_redraw()
+
+func _process(delta: float) -> void:
+	if _is_near_levelup:
+		_glow_phase += delta * 4.0
+		queue_redraw()
 
 func _draw() -> void:
 	var bar_height := 6.0
@@ -41,7 +53,6 @@ func _draw() -> void:
 				color = gradient_colors[1].lerp(gradient_colors[2], (t - 0.5) * 2.0)
 			var x_pos := float(i)
 			# Clip to rounded shape: skip pixels outside radius at edges
-			var local_y_center := bar_height / 2.0
 			if x_pos < radius:
 				var dx := radius - x_pos
 				if dx > radius:
@@ -50,13 +61,20 @@ func _draw() -> void:
 				break
 			draw_rect(Rect2(x_pos, y_offset, 1.0, bar_height), color)
 
-		# Round the fill edges by drawing circles at start and end
-		var fill_rect := Rect2(0, y_offset, fill_width, bar_height)
 		# Bright dot at the leading edge
 		if fill_width > 4:
 			var dot_center := Vector2(fill_width - 1, y_offset + bar_height / 2.0)
 			draw_circle(dot_center, 4.0, Color(1, 1, 1, 0.5))
 
 		# Glow under the fill
-		var glow_color := Color(0.655, 0.545, 0.98, 0.4)
+		var glow_alpha: float = 0.4
+		if _is_near_levelup:
+			# Pulse glow when near level-up
+			var pulse := (sin(_glow_phase) + 1.0) / 2.0  # 0..1
+			glow_alpha = 0.4 + pulse * 0.45
+			# Extra outer glow ring
+			var outer_glow_alpha: float = pulse * 0.25
+			var outer_glow_color := Color(0.957, 0.447, 0.714, outer_glow_alpha)
+			draw_rect(Rect2(0, y_offset - 3, fill_width, bar_height + 6), outer_glow_color)
+		var glow_color := Color(0.655, 0.545, 0.98, glow_alpha)
 		draw_rect(Rect2(0, y_offset - 1, fill_width, bar_height + 2), glow_color)

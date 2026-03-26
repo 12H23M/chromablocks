@@ -551,7 +551,10 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	}
 	_play_effects_sequence(effects_data)
 
-	# 9.5. BGM reactive intensity
+	# 9.5. Check score milestones
+	_check_milestones()
+
+	# 9.6. BGM reactive intensity
 	_update_bgm_intensity(board, new_combo)
 
 	# 10. Tray refill or game over
@@ -940,6 +943,27 @@ func _spawn_blast_popup(blast_color_idx: int) -> void:
 	var board_center := board_renderer.global_position + board_renderer.size / 2.0
 	popup.show_blast(blast_color_idx, board_center)
 	popup.tree_exited.connect(overlay_layer.queue_free)
+
+func _check_milestones() -> void:
+	for milestone in GameConstants.SCORE_MILESTONES:
+		if _state.score >= milestone and not _state.reached_milestones.has(milestone):
+			_state.reached_milestones.append(milestone)
+			_spawn_milestone_popup(milestone)
+			SoundManager.play_sfx("level_up")
+			HapticManager.level_up()
+
+
+func _spawn_milestone_popup(score_value: int) -> void:
+	var popup := Control.new()
+	popup.set_script(preload("res://scripts/game/milestone_popup.gd"))
+	var overlay_layer := CanvasLayer.new()
+	overlay_layer.layer = 22
+	add_child(overlay_layer)
+	overlay_layer.add_child(popup)
+	var board_center := board_renderer.global_position + board_renderer.size / 2.0
+	popup.show_milestone(score_value, board_center)
+	popup.tree_exited.connect(overlay_layer.queue_free)
+
 
 func _spawn_score_popup(value: int, gx: int, gy: int) -> void:
 	var popup := Label.new()

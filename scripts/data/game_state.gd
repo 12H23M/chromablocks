@@ -15,6 +15,9 @@ var held_piece: BlockPiece = null
 var hold_used_this_tray: bool = false
 var is_mission_run: bool = false
 var active_missions: Array = []  # Array[MissionSystem.Mission]
+var reached_milestones: Array = []  # Array[int] — milestones already triggered this game
+var best_consecutive_clears: int = 0  # longest streak of consecutive clears
+var _current_consecutive: int = 0  # running streak counter
 
 
 func _init() -> void:
@@ -37,6 +40,9 @@ func reset() -> void:
 	hold_used_this_tray = false
 	is_mission_run = false
 	active_missions = []
+	reached_milestones = []
+	best_consecutive_clears = 0
+	_current_consecutive = 0
 
 
 func apply_turn_result(board_new: BoardState, score_total: int, lines_cleared_delta: int,
@@ -50,6 +56,13 @@ func apply_turn_result(board_new: BoardState, score_total: int, lines_cleared_de
 	level = new_level
 	blocks_placed += 1
 	tray_pieces.erase(piece)
+	# Track consecutive clears
+	if lines_cleared_delta > 0:
+		_current_consecutive += 1
+		if _current_consecutive > best_consecutive_clears:
+			best_consecutive_clears = _current_consecutive
+	else:
+		_current_consecutive = 0
 
 
 var is_tray_empty: bool:

@@ -67,6 +67,7 @@ var _ad_section: HBoxContainer
 var _next_grade_label: Label
 var _score_diff_label: Label
 var _streak_label: Label
+var _highlight_container: VBoxContainer
 
 
 func _ready() -> void:
@@ -148,6 +149,7 @@ func show_result(state: GameState) -> void:
 	_streak_label.modulate.a = 0.0
 	for chip in _stat_chips:
 		chip.modulate.a = 0.0
+	_highlight_container.modulate.a = 0.0
 	_mission_container.modulate.a = 0.0
 	_play_again_btn.modulate.a = 0.0
 	_home_btn.modulate.a = 0.0
@@ -254,6 +256,9 @@ func show_result(state: GameState) -> void:
 				val_label.text = str(v)
 			, 0, val, 0.35).set_ease(Tween.EASE_OUT).set_delay(delay + 0.1)
 
+	# 6b) Highlights section
+	_build_highlights(state, speed_scale)
+
 	# 7) Mission results
 	_clear_missions()
 	var btn_delay: float = 1.8
@@ -269,6 +274,12 @@ func show_result(state: GameState) -> void:
 		btnw.tween_property(_ad_section, "modulate:a", 1.0, 0.25).set_ease(Tween.EASE_OUT)
 		btnw.tween_interval(0.1)
 	btnw.tween_property(_play_again_btn, "modulate:a", 1.0, 0.25).set_ease(Tween.EASE_OUT)
+	# Play Again button bounce entrance
+	btnw.tween_property(_play_again_btn, "scale", Vector2(1.08, 1.08), 0.1) \
+		.set_ease(Tween.EASE_OUT)
+	btnw.tween_property(_play_again_btn, "scale", Vector2(1.0, 1.0), 0.12) \
+		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_BACK)
+	btnw.tween_callback(_start_play_again_pulse.bind(speed_scale))
 	btnw.tween_interval(0.08)
 	btnw.tween_property(_home_btn, "modulate:a", 1.0, 0.25).set_ease(Tween.EASE_OUT)
 
@@ -454,6 +465,11 @@ func _build_ui() -> void:
 		_stat_chips.append(chip["panel"])
 		_stat_value_labels.append(chip["value_label"])
 
+	# ── Highlight section ──
+	_highlight_container = VBoxContainer.new()
+	_highlight_container.add_theme_constant_override("separation", 4)
+	_content.add_child(_highlight_container)
+
 	# ── Mission container (filled dynamically) ──
 	_mission_container = VBoxContainer.new()
 	_mission_container.add_theme_constant_override("separation", 6)
@@ -473,14 +489,15 @@ func _build_ui() -> void:
 	_double_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_ad_section.add_child(_double_btn)
 
-	# ── Play Again button ──
-	_play_again_btn = _make_button("PLAY AGAIN", _play_btn_style(), 18)
-	_play_again_btn.custom_minimum_size = Vector2(280, 54)
+	# ── Play Again button (large, prominent) ──
+	_play_again_btn = _make_button("▶  PLAY AGAIN", _play_btn_style(), 22)
+	_play_again_btn.custom_minimum_size = Vector2(320, 68)
 	_content.add_child(_play_again_btn)
 
-	# ── Home button ──
-	_home_btn = _make_button("HOME", _home_btn_style(), 13)
-	_home_btn.add_theme_color_override("font_color", Color(1, 1, 1, 0.25))
+	# ── Home button (small, subtle) ──
+	_home_btn = _make_button("HOME", _home_btn_style(), 12)
+	_home_btn.add_theme_color_override("font_color", Color(1, 1, 1, 0.2))
+	_home_btn.custom_minimum_size = Vector2(100, 32)
 	_content.add_child(_home_btn)
 
 	# Bottom spacer
@@ -609,6 +626,114 @@ func _create_stat_chip(icon_text: String, label_text: String, accent: Color) -> 
 # ══════════════════════════════════════════════════════════════════
 #  MISSION RESULTS
 # ══════════════════════════════════════════════════════════════════
+func _build_highlights(state: GameState, speed_scale: float) -> void:
+	# Clear previous highlights
+	for child in _highlight_container.get_children():
+		child.queue_free()
+
+	# Only show if there's something interesting
+	var has_content := false
+
+	# Header
+	var header := Label.new()
+	header.text = "🏆 이번 판 하이라이트"
+	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if _fredoka:
+		header.add_theme_font_override("font", _fredoka)
+	header.add_theme_font_size_override("font_size", 14)
+	header.add_theme_color_override("font_color", Color(0.47, 0.80, 1.0))
+	_highlight_container.add_child(header)
+
+	# Highlight items margin
+	var highlight_margin := MarginContainer.new()
+	highlight_margin.add_theme_constant_override("margin_left", 24)
+	highlight_margin.add_theme_constant_override("margin_right", 24)
+	_highlight_container.add_child(highlight_margin)
+
+	var items_vbox := VBoxContainer.new()
+	items_vbox.add_theme_constant_override("separation", 6)
+	highlight_margin.add_child(items_vbox)
+
+	# Max combo
+	if state.max_combo >= 2:
+		has_content = true
+		var combo_item := _create_highlight_item(
+			"🔥", "최대 콤보", "x%d" % state.max_combo, Color(1.0, 0.55, 0.26))
+		items_vbox.add_child(combo_item)
+
+	# Total cleared lines
+	if state.lines_cleared > 0:
+		has_content = true
+		var lines_item := _create_highlight_item(
+			"📏", "총 클리어 라인", "%d줄" % state.lines_cleared, Color(0.30, 0.59, 1.0))
+		items_vbox.add_child(lines_item)
+
+	# Best consecutive clears
+	if state.best_consecutive_clears >= 2:
+		has_content = true
+		var consec_item := _create_highlight_item(
+			"⚡", "최고 연속 클리어", "%d연속" % state.best_consecutive_clears, Color(0.61, 0.45, 0.81))
+		items_vbox.add_child(consec_item)
+
+	# Score comparison vs previous game
+	var prev_score: int = SaveManager.get_previous_score()
+	if prev_score > 0:
+		var diff: int = state.score - prev_score
+		if diff > 0:
+			has_content = true
+			var diff_item := _create_highlight_item(
+				"📈", "이전 판 대비", "+%s점" % FormatUtils.format_number(diff), Color(0.3, 0.9, 0.4))
+			items_vbox.add_child(diff_item)
+		elif diff == 0:
+			has_content = true
+			var diff_item := _create_highlight_item(
+				"🤝", "이전 판 대비", "동점!", Color(1, 1, 1, 0.5))
+			items_vbox.add_child(diff_item)
+
+	if not has_content:
+		# Remove header if nothing interesting
+		for child in _highlight_container.get_children():
+			child.queue_free()
+		return
+
+	# Animate
+	_highlight_container.modulate.a = 0.0
+	var ht := create_tween()
+	ht.set_speed_scale(speed_scale)
+	ht.tween_interval(1.7)
+	ht.tween_property(_highlight_container, "modulate:a", 1.0, 0.3).set_ease(Tween.EASE_OUT)
+
+
+func _create_highlight_item(icon_text: String, label_text: String, value_text: String, accent: Color) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+
+	var icon := Label.new()
+	icon.text = icon_text
+	icon.add_theme_font_size_override("font_size", 14)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(icon)
+
+	var desc := Label.new()
+	desc.text = label_text
+	desc.add_theme_font_size_override("font_size", 13)
+	desc.add_theme_color_override("font_color", Color(1, 1, 1, 0.5))
+	desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	desc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(desc)
+
+	var val := Label.new()
+	val.text = value_text
+	if _fredoka:
+		val.add_theme_font_override("font", _fredoka)
+	val.add_theme_font_size_override("font_size", 15)
+	val.add_theme_color_override("font_color", accent)
+	val.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(val)
+
+	return row
+
+
 func _clear_missions() -> void:
 	for child in _mission_container.get_children():
 		child.queue_free()
@@ -748,17 +873,22 @@ func _make_button(text: String, style: StyleBoxFlat, font_size: int = 12) -> But
 
 func _play_btn_style() -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
-	s.bg_color = Color(0.42, 0.31, 0.7, 1)
-	s.corner_radius_top_left = 16
-	s.corner_radius_top_right = 16
-	s.corner_radius_bottom_left = 16
-	s.corner_radius_bottom_right = 16
-	s.content_margin_left = 24.0
-	s.content_margin_top = 16.0
-	s.content_margin_right = 24.0
-	s.content_margin_bottom = 16.0
-	s.shadow_color = Color(0.42, 0.31, 0.7, 0.4)
-	s.shadow_size = 14
+	s.bg_color = Color(0.45, 0.28, 0.85, 1)
+	s.corner_radius_top_left = 20
+	s.corner_radius_top_right = 20
+	s.corner_radius_bottom_left = 20
+	s.corner_radius_bottom_right = 20
+	s.content_margin_left = 32.0
+	s.content_margin_top = 18.0
+	s.content_margin_right = 32.0
+	s.content_margin_bottom = 18.0
+	s.shadow_color = Color(0.45, 0.28, 0.85, 0.5)
+	s.shadow_size = 18
+	s.border_width_left = 2
+	s.border_width_top = 2
+	s.border_width_right = 2
+	s.border_width_bottom = 2
+	s.border_color = Color(0.7, 0.55, 1.0, 0.4)
 	return s
 
 
@@ -833,6 +963,22 @@ func _start_title_glow(speed_scale: float) -> void:
 	_glow_tween.tween_property(_title_label, "modulate:a", 0.55, 1.2) \
 		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
 	_glow_tween.tween_property(_title_label, "modulate:a", 1.0, 1.2) \
+		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+
+
+var _play_again_pulse_tween: Tween
+
+func _start_play_again_pulse(speed_scale: float) -> void:
+	if _play_again_pulse_tween and _play_again_pulse_tween.is_valid():
+		_play_again_pulse_tween.kill()
+	# Set pivot for center-based scaling
+	_play_again_btn.pivot_offset = _play_again_btn.size / 2.0
+	_play_again_pulse_tween = create_tween()
+	_play_again_pulse_tween.set_speed_scale(speed_scale)
+	_play_again_pulse_tween.set_loops()
+	_play_again_pulse_tween.tween_property(_play_again_btn, "scale", Vector2(1.04, 1.04), 0.8) \
+		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	_play_again_pulse_tween.tween_property(_play_again_btn, "scale", Vector2(1.0, 1.0), 0.8) \
 		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
 
 
