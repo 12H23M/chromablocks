@@ -637,6 +637,7 @@ func _play_effects_sequence(ed: Dictionary) -> void:
 					_spawn_multi_clear_popup(lines)
 				if lines >= 3:
 					board_renderer.play_screen_shake(8.0, 0.18)
+					board_renderer.play_screen_flash(Color(1, 1, 1, 0.2))
 				elif lines >= 2:
 					board_renderer.play_screen_shake(5.0, 0.12)
 				else:
