@@ -68,6 +68,7 @@ func _build_ui() -> void:
 	anchor_right = 1.0
 	anchor_bottom = 1.0
 	mouse_filter = Control.MOUSE_FILTER_IGNORE  # 버튼 터치 허용
+	z_index = 10  # GameUI 위에 표시
 
 	# Gradient background: top purple → mid dark → bottom dark purple
 	var bg_tex := GradientTexture2D.new()

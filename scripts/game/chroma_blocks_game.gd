@@ -43,6 +43,12 @@ var _auto_play_timer: Timer = null
 
 func _ready() -> void:
 	_apply_safe_area()
+	
+	# GameUI가 터치를 가로채지 않도록 설정
+	var game_ui := get_node_or_null("UILayer/GameUI")
+	if game_ui:
+		game_ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	
 	_state = GameState.new()
 	_state.high_score = SaveManager.get_high_score()
 	board_renderer.initialize()
