@@ -918,48 +918,271 @@ func _try_daily_reward() -> void:
 
 func _show_reward_popup(reward: Dictionary) -> void:
 	var day: int = reward["day"]
-	var parts: Array[String] = []
 	var multiplier: float = reward["score_multiplier"]
 	var swaps: int = reward["bonus_swaps"]
+	var cycle_day: int = SaveManager.get_value("daily_reward", "cycle_day", 1)
+	var streak: int = SaveManager.get_value("daily_reward", "streak", 0)
+
+	# ── Full-screen overlay ──
+	var overlay := ColorRect.new()
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.color = Color(0, 0, 0, 0.0)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+
+	# ── Central card container ──
+	var card_wrap := CenterContainer.new()
+	card_wrap.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	card_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.add_child(card_wrap)
+
+	var card := PanelContainer.new()
+	var card_style := StyleBoxFlat.new()
+	card_style.bg_color = Color("#1A1050")
+	_r(card_style, 24)
+	_b(card_style, 2, Color("#7C3AED"))
+	card_style.shadow_color = Color(0.49, 0.23, 0.93, 0.4)
+	card_style.shadow_size = 20
+	card_style.content_margin_left = 24
+	card_style.content_margin_right = 24
+	card_style.content_margin_top = 28
+	card_style.content_margin_bottom = 24
+	card.add_theme_stylebox_override("panel", card_style)
+	card.custom_minimum_size = Vector2(320, 0)
+	card_wrap.add_child(card)
+
+	var card_vbox := VBoxContainer.new()
+	card_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	card_vbox.set("theme_override_constants/separation", 16)
+	card.add_child(card_vbox)
+
+	# ── Title ──
+	var title := Label.new()
+	title.text = "Daily Reward"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if _fredoka_bold:
+		title.add_theme_font_override("font", _fredoka_bold)
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", Color("#FFD93D"))
+	title.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.5))
+	title.add_theme_constant_override("shadow_offset_x", 0)
+	title.add_theme_constant_override("shadow_offset_y", 2)
+	card_vbox.add_child(title)
+
+	# ── Streak label ──
+	if streak >= 2:
+		var streak_lbl := Label.new()
+		streak_lbl.text = "🔥 %d일 연속 출석!" % streak
+		streak_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		if _fredoka_bold:
+			streak_lbl.add_theme_font_override("font", _fredoka_bold)
+		streak_lbl.add_theme_font_size_override("font_size", 14)
+		streak_lbl.add_theme_color_override("font_color", Color("#FF8A50"))
+		card_vbox.add_child(streak_lbl)
+
+	# ── 7-day calendar row ──
+	var cal_center := CenterContainer.new()
+	var cal_row := HBoxContainer.new()
+	cal_row.set("theme_override_constants/separation", 6)
+	cal_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	cal_center.add_child(cal_row)
+	card_vbox.add_child(cal_center)
+
+	for i in range(1, 8):
+		var day_panel := PanelContainer.new()
+		var day_style := StyleBoxFlat.new()
+		day_panel.custom_minimum_size = Vector2(36, 44)
+
+		var is_today := (i == cycle_day)
+		var is_past := (i < cycle_day)
+
+		if is_today:
+			day_style.bg_color = Color("#FFD93D")
+			_r(day_style, 10)
+			_b(day_style, 2, Color("#FFA000"))
+		elif is_past:
+			day_style.bg_color = Color(0.3, 0.25, 0.6, 0.6)
+			_r(day_style, 10)
+			_b(day_style, 1, Color(0.5, 0.4, 0.8, 0.4))
+		else:
+			day_style.bg_color = Color(0.15, 0.12, 0.35, 0.5)
+			_r(day_style, 10)
+			_b(day_style, 1, Color(0.3, 0.25, 0.5, 0.3))
+
+		day_style.content_margin_left = 2
+		day_style.content_margin_right = 2
+		day_style.content_margin_top = 4
+		day_style.content_margin_bottom = 4
+		day_panel.add_theme_stylebox_override("panel", day_style)
+
+		var day_vbox := VBoxContainer.new()
+		day_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		day_vbox.set("theme_override_constants/separation", 0)
+
+		# Day number
+		var day_num := Label.new()
+		day_num.text = str(i)
+		day_num.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		if _fredoka_bold:
+			day_num.add_theme_font_override("font", _fredoka_bold)
+		day_num.add_theme_font_size_override("font_size", 12)
+		if is_today:
+			day_num.add_theme_color_override("font_color", Color("#3A2000"))
+		elif is_past:
+			day_num.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
+		else:
+			day_num.add_theme_color_override("font_color", Color(1, 1, 1, 0.35))
+		day_vbox.add_child(day_num)
+
+		# Check mark or reward icon
+		var icon_lbl := Label.new()
+		icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		icon_lbl.add_theme_font_size_override("font_size", 14)
+		if is_past:
+			icon_lbl.text = "✓"
+			icon_lbl.add_theme_color_override("font_color", Color("#7EDB95"))
+		elif is_today:
+			icon_lbl.text = "★"
+			icon_lbl.add_theme_color_override("font_color", Color("#FF8A00"))
+		else:
+			# Show small reward hint
+			var r_data: Dictionary = DailyRewardSystem.REWARDS[i]
+			var r_mult: float = r_data["score_multiplier"]
+			if r_mult > 1.0:
+				icon_lbl.text = "⭐"
+			else:
+				icon_lbl.text = "🔄"
+			icon_lbl.add_theme_color_override("font_color", Color(1, 1, 1, 0.25))
+		day_vbox.add_child(icon_lbl)
+
+		day_panel.add_child(day_vbox)
+		cal_row.add_child(day_panel)
+
+		# Pulse animation for today's cell
+		if is_today:
+			day_panel.pivot_offset = Vector2(18, 22)
+			var pulse_tw := create_tween().set_loops()
+			pulse_tw.set_speed_scale(1.0 / maxf(Engine.time_scale, 0.01))
+			pulse_tw.tween_property(day_panel, "scale", Vector2(1.08, 1.08), 0.6).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+			pulse_tw.tween_property(day_panel, "scale", Vector2.ONE, 0.6).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+			# Store reference so we can kill it on close
+			overlay.set_meta("pulse_tween", pulse_tw)
+
+	# ── Reward display ──
+	var reward_center := CenterContainer.new()
+	var reward_hbox := HBoxContainer.new()
+	reward_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	reward_hbox.set("theme_override_constants/separation", 20)
+	reward_center.add_child(reward_hbox)
+	card_vbox.add_child(reward_center)
+
 	if multiplier > 1.0:
-		parts.append("Score x%s" % str(multiplier))
+		var mult_vbox := VBoxContainer.new()
+		mult_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		mult_vbox.set("theme_override_constants/separation", 4)
+		var mult_icon := Label.new()
+		mult_icon.text = "⭐"
+		mult_icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		mult_icon.add_theme_font_size_override("font_size", 36)
+		mult_vbox.add_child(mult_icon)
+		var mult_text := Label.new()
+		mult_text.text = "점수 x%s" % str(multiplier)
+		mult_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		if _fredoka_bold:
+			mult_text.add_theme_font_override("font", _fredoka_bold)
+		mult_text.add_theme_font_size_override("font_size", 16)
+		mult_text.add_theme_color_override("font_color", Color("#FFD93D"))
+		mult_vbox.add_child(mult_text)
+		reward_hbox.add_child(mult_vbox)
+
 	if swaps > 0:
-		parts.append("Swap +%d" % swaps)
-	var text := "Day %d: %s" % [day, ", ".join(parts)]
+		var swap_vbox := VBoxContainer.new()
+		swap_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		swap_vbox.set("theme_override_constants/separation", 4)
+		var swap_icon := Label.new()
+		swap_icon.text = "🔄"
+		swap_icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		swap_icon.add_theme_font_size_override("font_size", 36)
+		swap_vbox.add_child(swap_icon)
+		var swap_text := Label.new()
+		swap_text.text = "스왑 +%d" % swaps
+		swap_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		if _fredoka_bold:
+			swap_text.add_theme_font_override("font", _fredoka_bold)
+		swap_text.add_theme_font_size_override("font_size", 16)
+		swap_text.add_theme_color_override("font_color", Color.WHITE)
+		swap_vbox.add_child(swap_text)
+		reward_hbox.add_child(swap_vbox)
 
-	var popup := Label.new()
-	popup.text = text
-	popup.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	popup.add_theme_font_size_override("font_size", 13)
-	popup.add_theme_color_override("font_color", Color("#FFD536"))
+	# ── Day indicator ──
+	var day_label := Label.new()
+	day_label.text = "Day %d / 7" % day
+	day_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	day_label.add_theme_font_size_override("font_size", 12)
+	day_label.add_theme_color_override("font_color", Color("#8070B0"))
+	card_vbox.add_child(day_label)
 
-	var panel := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.05, 0.18, 0.95)
-	_r(style, 16)
-	_b(style, 1, Color("#FFD536"))
-	style.content_margin_left = 16
-	style.content_margin_top = 10
-	style.content_margin_right = 16
-	style.content_margin_bottom = 10
-	panel.add_theme_stylebox_override("panel", style)
-	panel.add_child(popup)
+	# ── Tap to close hint ──
+	var hint := Label.new()
+	hint.text = "탭해서 닫기"
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_font_size_override("font_size", 11)
+	hint.add_theme_color_override("font_color", Color(1, 1, 1, 0.3))
+	card_vbox.add_child(hint)
 
-	panel.layout_mode = 1
-	panel.anchors_preset = 5
-	panel.anchor_left = 0.5
-	panel.anchor_right = 0.5
-	panel.offset_left = -100
-	panel.offset_right = 100
-	panel.offset_top = 40
-	panel.offset_bottom = 72
-	panel.grow_horizontal = 2
-	add_child(panel)
+	# Hint blink
+	var hint_tw := create_tween().set_loops()
+	hint_tw.set_speed_scale(1.0 / maxf(Engine.time_scale, 0.01))
+	hint_tw.tween_property(hint, "modulate:a", 0.4, 0.8).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	hint_tw.tween_property(hint, "modulate:a", 1.0, 0.8).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
 
-	var tween := create_tween()
-	tween.tween_interval(1.5)
-	tween.tween_property(panel, "modulate:a", 0.0, 0.5)
-	tween.tween_callback(panel.queue_free)
+	# ── Close logic ──
+	var close_fn := func() -> void:
+		if not is_instance_valid(overlay):
+			return
+		# Kill pulse tween
+		if overlay.has_meta("pulse_tween"):
+			var ptw: Tween = overlay.get_meta("pulse_tween")
+			if ptw and ptw.is_valid():
+				ptw.kill()
+		hint_tw.kill()
+		# Scale + fade out
+		card.pivot_offset = card.size / 2.0
+		var close_tw := create_tween()
+		close_tw.set_speed_scale(1.0 / maxf(Engine.time_scale, 0.01))
+		close_tw.set_parallel(true)
+		close_tw.tween_property(overlay, "color:a", 0.0, 0.25)
+		close_tw.tween_property(card, "scale", Vector2(0.85, 0.85), 0.25).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BACK)
+		close_tw.tween_property(card, "modulate:a", 0.0, 0.2)
+		close_tw.chain().tween_callback(overlay.queue_free)
+
+	# Tap overlay to close
+	overlay.gui_input.connect(func(e: InputEvent) -> void:
+		if e is InputEventMouseButton and e.pressed:
+			SoundManager.play_sfx("button_press")
+			close_fn.call())
+
+	# Auto-close after 3 seconds
+	var auto_tw := create_tween()
+	auto_tw.set_speed_scale(1.0 / maxf(Engine.time_scale, 0.01))
+	auto_tw.tween_interval(3.0)
+	auto_tw.tween_callback(close_fn)
+
+	# ── Entrance animation ──
+	overlay.modulate.a = 0.0
+	card.pivot_offset = Vector2(160, 100)
+	card.scale = Vector2(0.7, 0.7)
+	card.position.y += 80
+
+	var enter_tw := create_tween()
+	enter_tw.set_speed_scale(1.0 / maxf(Engine.time_scale, 0.01))
+	enter_tw.tween_interval(0.3)
+	# Fade in overlay
+	enter_tw.tween_property(overlay, "modulate:a", 1.0, 0.2)
+	enter_tw.parallel().tween_property(overlay, "color", Color(0, 0, 0, 0.8), 0.2)
+	# Card slide up + bounce
+	enter_tw.parallel().tween_property(card, "position:y", 0.0, 0.4).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	enter_tw.parallel().tween_property(card, "scale", Vector2.ONE, 0.4).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 
 
 # ═══════════════════════════════════════
