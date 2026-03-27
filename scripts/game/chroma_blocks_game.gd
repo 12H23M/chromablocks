@@ -9,6 +9,7 @@ const NearMissAnalyzerScript := preload("res://scripts/systems/near_miss_analyze
 @onready var board_renderer: Control = %Board
 @onready var piece_tray: VBoxContainer = %PieceTray
 @onready var hud: Control = %HUD
+@onready var _game_ui: Control = $UILayer/GameUI
 @onready var home_screen: Control = %HomeScreen
 @onready var game_over_screen: Control = %GameOverScreen
 @onready var pause_screen: Control = %PauseScreen
@@ -44,11 +45,6 @@ var _auto_play_timer: Timer = null
 
 func _ready() -> void:
 	_apply_safe_area()
-	
-	# GameUI가 터치를 가로채지 않도록 설정
-	var game_ui := get_node_or_null("UILayer/GameUI")
-	if game_ui:
-		game_ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	
 	_state = GameState.new()
 	_state.high_score = SaveManager.get_high_score()
@@ -88,13 +84,8 @@ func _ready() -> void:
 	var splash := get_node_or_null("UILayer/SplashScreen")
 	if splash:
 		home_screen.visible = false
-		%Board.visible = false
-		hud.visible = false
-		piece_tray.visible = false
+		_game_ui.visible = false
 		splash.intro_finished.connect(func():
-			%Board.visible = true
-			hud.visible = true
-			piece_tray.visible = true
 			_show_home_initial()
 		)
 	else:
@@ -210,6 +201,8 @@ func _start_new_game(daily: bool, mission_run: bool = false, missions: Array = [
 		pause_screen.visible = false
 		pause_screen.modulate.a = 1.0
 
+		_game_ui.visible = true
+
 		_color_match_count = 0
 		_had_perfect_clear = false
 
@@ -277,6 +270,8 @@ func continue_game() -> void:
 		game_over_screen.modulate.a = 1.0
 		pause_screen.visible = false
 		pause_screen.modulate.a = 1.0
+
+		_game_ui.visible = true
 
 		SaveManager.clear_active_game()
 	)
@@ -1265,9 +1260,7 @@ func _on_interstitial_closed() -> void:
 
 func _show_home_initial() -> void:
 	board_renderer.disable_gems()
-	board_renderer.visible = false
-	piece_tray.visible = false
-	hud.visible = false
+	_game_ui.visible = false
 	home_screen.refresh_stats()
 	ScreenTransition.fade_in(home_screen)
 
@@ -1462,9 +1455,7 @@ func _show_previous_score_toast() -> void:
 func _show_home() -> void:
 	ScreenTransition.fade_through_black(get_tree(), func() -> void:
 		board_renderer.disable_gems()
-		board_renderer.visible = false
-		piece_tray.visible = false
-		hud.visible = false
+		_game_ui.visible = false
 		home_screen.refresh_stats()
 		home_screen.visible = true
 		home_screen.modulate.a = 1.0
