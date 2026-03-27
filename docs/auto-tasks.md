@@ -83,10 +83,10 @@
   - _on_restart_from_game_over() + _play_restart_expand_animation() 완성
   - 보드 shrink/expand + fade + bounce 애니메이션
 
-- [ ] **스토어 준비**
-  - 스크린샷 5장 (ADB 캡처)
-  - 태그라인 확정
-  - 짧은 설명 + 긴 설명 최종본
+- [x] **스토어 준비** ✅ 2026-03-28 05:01
+  - 개인정보처리방침 HTML (docs/privacy-policy.html) — 한/영 탭 전환
+  - ADB 스크린샷 자동 캡처 스크립트 (scripts/store-screenshots.sh) — 5장
+  - commit: 5c2997e
 
 - [ ] **퍼포먼스 프로파일링**
   - 프레임 드롭 구간 확인
@@ -126,3 +126,12 @@
   - near_miss_analyzer: 메시지 풀 15개+로 확대, 6/8도 감지, 상황별 분기
   - game_over_screen: 반투명 주황 배경 패널 + 18px 폰트 + shake 애니메이션
   - commit: fda1327
+
+---
+
+## 📝 야간 자동 작업 로그 (2026-03-28 05:01 — 마지막 세션)
+
+- [x] **스토어 배포 준비** ✅ 2026-03-28 05:01
+  - 개인정보처리방침 (docs/privacy-policy.html): 한/영 탭 전환, AdMob 명시, GDPR 권리 안내
+  - ADB 스토어 스크린샷 자동화 (scripts/store-screenshots.sh): 5장 순서대로 캡처
+  - commit: 5c2997e
