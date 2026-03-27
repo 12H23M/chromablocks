@@ -10,6 +10,9 @@ var _combo_tween: Tween
 var _combo_badge: PanelContainer = null  # Combo badge in InfoRow
 var _combo_label: Label = null
 var _combo_glow: Control = null
+var _combo_hint_label: Label = null
+var _combo_dots: HBoxContainer = null
+var _combo_hint_tween: Tween = null
 var _displayed_score: int = 0
 var _score_tween: Tween
 var _color_flash_tween: Tween
@@ -235,6 +238,14 @@ func reset_new_best() -> void:
 		_new_best_label = null
 
 
+const COMBO_HINTS: Array[String] = [
+	"라인 클리어로 콤보 연장!",
+	"계속 클리어해!",
+	"콤보 이어가자!",
+	"멈추지 마!",
+]
+
+
 func _update_combo(combo: int) -> void:
 	# Update combo badge visibility and animation
 	if _combo_badge == null:
@@ -256,6 +267,12 @@ func _update_combo(combo: int) -> void:
 			5: combo_color = Color(1.0, 0.2, 0.4)
 			_: combo_color = Color(1.0, 0.15, 0.4)
 		_combo_label.add_theme_color_override("font_color", combo_color)
+
+		# Update combo dots
+		_update_combo_dots(combo, combo_color)
+
+		# Update hint label
+		_update_combo_hint(combo, combo_color)
 
 		# Show badge with animation if newly active
 		if was_zero:
@@ -286,8 +303,43 @@ func _update_combo(combo: int) -> void:
 			_combo_tween.tween_property(_combo_badge, "modulate:a", 0.0, 0.2)
 			_combo_tween.tween_callback(func(): _combo_badge.visible = false)
 			_stop_combo_glow()
+			_hide_combo_hint()
 
 	_prev_combo = combo
+
+
+func _update_combo_dots(combo: int, color: Color) -> void:
+	if _combo_dots == null:
+		return
+	var dot_count: int = mini(combo - 1, 5)  # combo 2 = 1 dot, combo 6+ = 5 dots
+	for i in range(_combo_dots.get_child_count()):
+		var dot: ColorRect = _combo_dots.get_child(i)
+		if i < dot_count:
+			dot.color = Color(color.r, color.g, color.b, 0.9)
+		else:
+			dot.color = Color(1.0, 1.0, 1.0, 0.2)
+
+
+func _update_combo_hint(combo: int, color: Color) -> void:
+	if _combo_hint_label == null:
+		return
+	var idx: int = (combo - 2) % COMBO_HINTS.size()
+	_combo_hint_label.text = COMBO_HINTS[idx]
+	_combo_hint_label.add_theme_color_override("font_color", Color(color.r, color.g, color.b, 0.8))
+	# Fade in hint
+	if _combo_hint_tween and _combo_hint_tween.is_valid():
+		_combo_hint_tween.kill()
+	_combo_hint_tween = create_tween()
+	_combo_hint_tween.tween_property(_combo_hint_label, "modulate:a", 1.0, 0.15).set_ease(Tween.EASE_OUT)
+
+
+func _hide_combo_hint() -> void:
+	if _combo_hint_label == null:
+		return
+	if _combo_hint_tween and _combo_hint_tween.is_valid():
+		_combo_hint_tween.kill()
+	_combo_hint_tween = create_tween()
+	_combo_hint_tween.tween_property(_combo_hint_label, "modulate:a", 0.0, 0.2)
 
 
 func _create_combo_badge() -> void:
@@ -328,6 +380,12 @@ func _create_combo_badge() -> void:
 	)
 	_combo_badge.add_child(_combo_glow)
 
+	# Inner VBox for label + hint + dots
+	var vbox := VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 2)
+	_combo_badge.add_child(vbox)
+
 	# Combo label
 	_combo_label = Label.new()
 	_combo_label.text = "x2 COMBO"
@@ -338,7 +396,29 @@ func _create_combo_badge() -> void:
 	_combo_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.3))
 	_combo_label.add_theme_color_override("font_outline_color", Color(0.1, 0.05, 0.2))
 	_combo_label.add_theme_constant_override("outline_size", 2)
-	_combo_badge.add_child(_combo_label)
+	vbox.add_child(_combo_label)
+
+	# Combo dots (hit counter)
+	_combo_dots = HBoxContainer.new()
+	_combo_dots.alignment = BoxContainer.ALIGNMENT_CENTER
+	_combo_dots.add_theme_constant_override("separation", 4)
+	for i in range(5):
+		var dot := ColorRect.new()
+		dot.custom_minimum_size = Vector2(6, 6)
+		dot.color = Color(1.0, 1.0, 1.0, 0.2)
+		_combo_dots.add_child(dot)
+	vbox.add_child(_combo_dots)
+
+	# Combo hint label
+	_combo_hint_label = Label.new()
+	_combo_hint_label.text = ""
+	_combo_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if fredoka:
+		_combo_hint_label.add_theme_font_override("font", fredoka)
+	_combo_hint_label.add_theme_font_size_override("font_size", 10)
+	_combo_hint_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.6, 0.8))
+	_combo_hint_label.modulate.a = 0.0
+	vbox.add_child(_combo_hint_label)
 
 	# Set pivot for center-based scaling
 	_combo_badge.pivot_offset = Vector2(40, 14)
