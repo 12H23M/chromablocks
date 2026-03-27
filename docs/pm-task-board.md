@@ -186,8 +186,8 @@
 
 | # | 작업 | 파일 | 상태 |
 |---|------|------|------|
-| 6.15 | shake/bounce 분리 — position 직접 조작 대신 offset 변수 사용 | `board_renderer.gd` | ⏳ |
-| 6.16 | PackedInt32Array 최적화 — board_state grid 구조 변경 | `board_state.gd` | ⏳ |
+| 6.15 | shake/bounce 분리 — position 직접 조작 대신 offset 변수 사용 | `board_renderer.gd` | ✅ |
+| 6.16 | PackedInt32Array 최적화 — board_state grid 구조 변경 | `board_state.gd` | ✅ |
 | 6.17 | 지연 로딩 — scene preload → lazy load | 전반적 | ⏳ |
 | 6.18 | 광고 버튼 배치 최적화 | `game_over_screen.gd/.tscn` | ⏳ |
 | 6.19 | 일일 보상 모달 개선 | `daily_reward_system.gd` | ⏳ |

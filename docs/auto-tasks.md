@@ -46,8 +46,8 @@
   - 밸런스 파라미터 자동 최적화
 
 - [ ] **Phase 6 P3 잔여 태스크**
-  - 6.15: shake/bounce offset 분리
-  - 6.16: PackedInt32Array 최적화
+  - ~~6.15: shake/bounce offset 분리~~ ✅
+  - ~~6.16: PackedInt32Array 최적화~~ ✅
   - 6.21: Safe area 패딩
 
 ---

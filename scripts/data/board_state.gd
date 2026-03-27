@@ -87,16 +87,13 @@ func fill_ratio() -> float:
 func is_cell_occupied(x: int, y: int) -> bool:
 	if x < 0 or x >= columns or y < 0 or y >= rows:
 		return true
-	return grid[y][x]["occupied"]
+	_refresh_packed()
+	return _packed_occupied[y * columns + x] == 1
 
 
 func can_place_piece_at(piece: BlockPiece, gx: int, gy: int) -> bool:
-	for cell in piece.occupied_cells_at(gx, gy):
-		if cell.x < 0 or cell.x >= columns or cell.y < 0 or cell.y >= rows:
-			return false
-		if grid[cell.y][cell.x]["occupied"]:
-			return false
-	return true
+	_refresh_packed()
+	return _can_place_piece_packed(piece, gx, gy)
 
 
 func place_piece(piece: BlockPiece, gx: int, gy: int) -> BoardState:
