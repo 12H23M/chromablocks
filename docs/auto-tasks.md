@@ -31,6 +31,12 @@
 
 ## 🟡 Tier 2 — 이번 주 (핵심 개선)
 
+- [x] **밸런스 개선 + Color Match 활성화** ✅ 2026-03-28
+  - COLOR_MATCH_ENABLED: false → true (중독성 핵심 피처 활성화)
+  - PLACEMENT_POINTS_PER_CELL: 5 → 10 (배치 보상감 강화)
+  - COMBO_MULTIPLIERS x2/x3 구간: 1.2/1.5 → 1.3/1.6 (체감 개선)
+  - commit: 5e28dd0
+
 - [ ] **ADB 자동 테스트 스크립트**
   - scripts/auto-test.sh 생성
   - 배포 → 스크린샷 → AI 분석 파이프라인
