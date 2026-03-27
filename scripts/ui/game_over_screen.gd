@@ -143,11 +143,14 @@ func show_result(state: GameState) -> void:
 		_streak_label.visible = false
 
 	# Near-miss hint (what could have been)
+	var nm_panel: PanelContainer = _near_miss_hint.get_parent() as PanelContainer
 	if state.near_miss_result != null:
 		_near_miss_hint.text = NearMissAnalyzerScript.get_near_miss_message(state.near_miss_result)
-		_near_miss_hint.visible = true
+		if nm_panel:
+			nm_panel.visible = true
 	else:
-		_near_miss_hint.visible = false
+		if nm_panel:
+			nm_panel.visible = false
 
 	# Initial hidden states
 	_grade_hex.modulate.a = 0.0
@@ -157,7 +160,8 @@ func show_result(state: GameState) -> void:
 	_next_grade_label.modulate.a = 0.0
 	_score_diff_label.modulate.a = 0.0
 	_streak_label.modulate.a = 0.0
-	_near_miss_hint.modulate.a = 0.0
+	if nm_panel:
+		nm_panel.modulate.a = 0.0
 	for chip in _stat_chips:
 		chip.modulate.a = 0.0
 	_highlight_container.modulate.a = 0.0
@@ -189,12 +193,18 @@ func show_result(state: GameState) -> void:
 	# 2) Title glow pulse
 	_start_title_glow(speed_scale)
 
-	# 2b) Near-miss hint (if present)
-	if _near_miss_hint.visible:
+	# 2b) Near-miss hint (if present) — with shake emphasis
+	if nm_panel and nm_panel.visible:
+		nm_panel.pivot_offset = nm_panel.size / 2.0
 		var nmt := create_tween()
 		nmt.set_speed_scale(speed_scale)
 		nmt.tween_interval(0.2)
-		nmt.tween_property(_near_miss_hint, "modulate:a", 1.0, 0.3).set_ease(Tween.EASE_OUT)
+		nmt.tween_property(nm_panel, "modulate:a", 1.0, 0.3).set_ease(Tween.EASE_OUT)
+		# Subtle shake for emphasis
+		nmt.tween_property(nm_panel, "position:x", nm_panel.position.x - 4, 0.04)
+		nmt.tween_property(nm_panel, "position:x", nm_panel.position.x + 4, 0.04)
+		nmt.tween_property(nm_panel, "position:x", nm_panel.position.x - 2, 0.03)
+		nmt.tween_property(nm_panel, "position:x", nm_panel.position.x, 0.03)
 
 	# 3) Grade hexagon bounce
 	var gt := create_tween()
@@ -382,14 +392,35 @@ func _build_ui() -> void:
 	_content.add_child(_title_label)
 
 	# ── Near-miss hint (what could have been) ──
+	var near_miss_panel := PanelContainer.new()
+	var nm_style := StyleBoxFlat.new()
+	nm_style.bg_color = Color(1.0, 0.42, 0.21, 0.12)
+	nm_style.corner_radius_top_left = 12
+	nm_style.corner_radius_top_right = 12
+	nm_style.corner_radius_bottom_left = 12
+	nm_style.corner_radius_bottom_right = 12
+	nm_style.content_margin_left = 16.0
+	nm_style.content_margin_right = 16.0
+	nm_style.content_margin_top = 8.0
+	nm_style.content_margin_bottom = 8.0
+	nm_style.border_width_left = 1
+	nm_style.border_width_top = 1
+	nm_style.border_width_right = 1
+	nm_style.border_width_bottom = 1
+	nm_style.border_color = Color(1.0, 0.42, 0.21, 0.25)
+	near_miss_panel.add_theme_stylebox_override("panel", nm_style)
+	_content.add_child(near_miss_panel)
+
 	_near_miss_hint = Label.new()
 	_near_miss_hint.text = ""
 	_near_miss_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_near_miss_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if _fredoka:
 		_near_miss_hint.add_theme_font_override("font", _fredoka)
-	_near_miss_hint.add_theme_font_size_override("font_size", 16)
-	_near_miss_hint.add_theme_color_override("font_color", Color(1.0, 0.6, 0.3))
-	_content.add_child(_near_miss_hint)
+	_near_miss_hint.add_theme_font_size_override("font_size", 18)
+	_near_miss_hint.add_theme_color_override("font_color", Color(1.0, 0.55, 0.25))
+	near_miss_panel.add_child(_near_miss_hint)
+	near_miss_panel.name = "NearMissPanel"
 
 	# ── Hexagon grade badge ──
 	var grade_center := CenterContainer.new()

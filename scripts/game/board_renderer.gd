@@ -724,6 +724,30 @@ func _update_cluster_hints(board: BoardState) -> void:
 			_cluster_hint_cells.append(p)
 
 
+## Game over near-miss highlight: show orange glow on near-complete lines then fade
+var _game_over_near_miss_cells: Array = []
+
+func show_game_over_near_miss(near_lines: Array) -> void:
+	clear_game_over_near_miss()
+	for near in near_lines:
+		var axis: String = near["axis"]
+		var idx: int = near["index"]
+		if axis == "row":
+			for x in GameConstants.BOARD_COLUMNS:
+				_cells[idx][x].show_game_over_near_miss_glow()
+				_game_over_near_miss_cells.append(Vector2i(x, idx))
+		elif axis == "col":
+			for y in GameConstants.BOARD_ROWS:
+				if not _game_over_near_miss_cells.has(Vector2i(idx, y)):
+					_cells[y][idx].show_game_over_near_miss_glow()
+					_game_over_near_miss_cells.append(Vector2i(idx, y))
+
+func clear_game_over_near_miss() -> void:
+	for pos in _game_over_near_miss_cells:
+		_cells[pos.y][pos.x].clear_game_over_near_miss_glow()
+	_game_over_near_miss_cells.clear()
+
+
 func clear_near_miss_hints() -> void:
 	for pos in _near_line_hint_cells:
 		_cells[pos.y][pos.x].clear_near_line_hint()

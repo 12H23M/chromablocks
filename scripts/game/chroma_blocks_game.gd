@@ -1014,10 +1014,13 @@ func _check_game_over() -> void:
 			_mission_hud.hide_hud()
 		AdManager.on_game_ended()
 		SoundManager.play_sfx("game_over")
-		# Slow motion effect
+		# Slow motion effect + near-miss board highlight
 		Engine.time_scale = 0.3
+		if _state.near_miss_result != null and _state.near_miss_result.near_lines.size() > 0:
+			board_renderer.show_game_over_near_miss(_state.near_miss_result.near_lines)
 		await get_tree().create_timer(0.5, true).timeout
 		Engine.time_scale = 1.0
+		board_renderer.clear_game_over_near_miss()
 		HapticManager.game_over()
 		game_over_screen.show_result(_state)
 		game_over_triggered.emit()
@@ -1676,10 +1679,15 @@ func _trigger_time_attack_game_over() -> void:
 	hud.show_timer(false)
 	AdManager.on_game_ended()
 	SoundManager.play_sfx("game_over")
-	# Slow motion effect
+	# Analyze near-miss for time attack too
+	_state.near_miss_result = NearMissAnalyzerScript.analyze(_state.board, _state.tray_pieces)
+	# Slow motion effect + near-miss board highlight
 	Engine.time_scale = 0.3
+	if _state.near_miss_result != null and _state.near_miss_result.near_lines.size() > 0:
+		board_renderer.show_game_over_near_miss(_state.near_miss_result.near_lines)
 	await get_tree().create_timer(0.5, true).timeout
 	Engine.time_scale = 1.0
+	board_renderer.clear_game_over_near_miss()
 	HapticManager.game_over()
 	game_over_screen.show_time_attack_result(_state)
 	game_over_triggered.emit()

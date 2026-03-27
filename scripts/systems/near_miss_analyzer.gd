@@ -34,13 +34,13 @@ static func analyze(board: BoardState, tray_pieces: Array) -> NearMissResult:
 static func _find_near_complete_lines(board: BoardState) -> Array:
 	var near_lines := []
 
-	# Check rows
+	# Check rows (6/8 or 7/8 filled = near complete)
 	for y in board.rows:
 		var filled := 0
 		for x in board.columns:
 			if board.grid[y][x]["occupied"]:
 				filled += 1
-		if filled == 7:  # One cell away from clear
+		if filled >= 6:
 			near_lines.append({
 				"axis": "row",
 				"index": y,
@@ -48,13 +48,13 @@ static func _find_near_complete_lines(board: BoardState) -> Array:
 				"needed": 8 - filled
 			})
 
-	# Check columns
+	# Check columns (6/8 or 7/8 filled = near complete)
 	for x in board.columns:
 		var filled := 0
 		for y in board.rows:
 			if board.grid[y][x]["occupied"]:
 				filled += 1
-		if filled == 7:  # One cell away from clear
+		if filled >= 6:
 			near_lines.append({
 				"axis": "col",
 				"index": x,
@@ -179,33 +179,62 @@ static func _find_closest_clear_opportunity(board: BoardState, tray_pieces: Arra
 
 ## Generate a human-readable "what could have been" message
 static func get_near_miss_message(result: NearMissResult) -> String:
-	var messages := []
+	var messages: Array = []
 
-	# Near-line messages
-	if result.near_lines.size() > 0:
-		var near: Dictionary = result.near_lines[0]
+	var near_count: int = result.near_lines.size()
+	var has_one_cell_away: bool = false
+	for near in result.near_lines:
 		if near["needed"] == 1:
-			messages.append("한 칸만 더 채우면 라인 클리어!")
-		else:
-			messages.append("%d칸만 더!" % near["needed"])
+			has_one_cell_away = true
+			break
 
-	# Almost-fitting piece messages
-	if result.almost_pieces.size() > 0:
-		if messages.is_empty():
-			messages.append("이 피스가 딱 맞았으면...")
-		else:
-			messages.append("다른 피스였으면 클리어!")
+	# Special emphasis for "just one cell away"
+	if has_one_cell_away:
+		var one_cell_msgs: Array = [
+			"💔 아... 한 칸만 더 있었으면!",
+			"💔 이럴 수가, 딱 한 칸 차이였는데!",
+			"💔 한 칸... 딱 한 칸만 더 채웠으면 클리어였어!",
+			"💔 거의 다 채웠는데... 한 칸이 아쉽다!",
+			"💔 이 한 칸의 차이가 이렇게 크다니...",
+		]
+		messages.append_array(one_cell_msgs)
+
+	# Multiple near-complete lines
+	if near_count >= 2:
+		var multi_msgs: Array = [
+			"😭 %d줄이나 거의 완성이었는데...!" % near_count,
+			"😭 조금만 더였으면 %d줄 동시 클리어!" % near_count,
+			"😭 %d줄이 한 발 차이였어... 아깝다!" % near_count,
+		]
+		messages.append_array(multi_msgs)
+	elif near_count == 1 and not has_one_cell_away:
+		messages.append("💔 거의 다 왔는데... 아쉽다!")
 
 	# Closest clear opportunity
 	if not result.closest_clear.is_empty() and result.closest_clear.get("placeable", false):
 		var lines: int = result.closest_clear.get("lines", 0)
 		if lines >= 2:
-			messages.clear()
-			messages.append("피스 배치만 다르게 했어도 %d줄 클리어!" % lines)
+			messages.append("😭 피스 배치만 달랐어도 %d줄 클리어였는데!" % lines)
+			messages.append("😭 이 피스를 저기 놨더라면... %d줄이었어!" % lines)
 
-	# Fallback
+	# Almost-fitting pieces
+	if result.almost_pieces.size() > 0:
+		var piece_msgs: Array = [
+			"💔 이 피스가 딱 맞았으면...",
+			"💔 다른 피스였으면 클리어할 수 있었는데!",
+			"💔 이 피스만 들어갔으면 달라졌을 텐데...",
+		]
+		messages.append_array(piece_msgs)
+
+	# General encouragement fallbacks
 	if messages.is_empty():
-		messages.append("조금만 더 하면 됐는데!")
+		messages = [
+			"💔 조금만 더 하면 됐는데!",
+			"💔 다음엔 꼭 해내자!",
+			"💔 거의 다 왔는데! 포기하지 마!",
+			"💔 이번엔 정말 아쉬웠어...",
+			"💔 한 줄만 더 지웠으면 달라졌을 텐데!",
+		]
 
 	return messages[randi() % messages.size()]
 

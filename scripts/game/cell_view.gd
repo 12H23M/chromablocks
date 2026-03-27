@@ -46,6 +46,8 @@ func set_empty() -> void:
 		_effect_tween = null
 	_clearing = false
 	_stop_special_pulse()
+	_stop_game_over_near_miss_tween()
+	_game_over_near_miss_active = false
 	_occupied = false
 	_color = -1
 	_age = 0
@@ -518,6 +520,56 @@ func _set_cluster_alpha(t: float) -> void:
 	_throttled_pulse_redraw()
 
 
+## Game-over near-miss glow overlay (orange pulse for near-complete lines)
+var _game_over_near_miss_active: bool = false
+var _game_over_near_miss_overlay := Color(1.0, 0.42, 0.21, 0.0)
+var _game_over_near_miss_border := Color(1.0, 0.42, 0.21, 0.0)
+var _game_over_near_miss_tween: Tween = null
+
+func show_game_over_near_miss_glow() -> void:
+	_game_over_near_miss_active = true
+	var orange := Color(1.0, 0.42, 0.21)
+	_game_over_near_miss_overlay = Color(orange.r, orange.g, orange.b, 0.0)
+	_game_over_near_miss_border = Color(orange.r, orange.g, orange.b, 0.0)
+	# Fade in glow
+	_stop_game_over_near_miss_tween()
+	_game_over_near_miss_tween = create_tween()
+	_game_over_near_miss_tween.set_process_mode(Tween.TWEEN_PROCESS_IDLE)
+	# Fade in
+	_game_over_near_miss_tween.tween_method(_set_game_over_nm_alpha, 0.0, 1.0, 0.3) \
+		.set_ease(Tween.EASE_OUT)
+	# Pulse loop
+	_game_over_near_miss_tween.tween_method(_set_game_over_nm_alpha, 1.0, 0.4, 0.5) \
+		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	_game_over_near_miss_tween.tween_method(_set_game_over_nm_alpha, 0.4, 1.0, 0.5) \
+		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	# Fade out
+	_game_over_near_miss_tween.tween_method(_set_game_over_nm_alpha, 1.0, 0.0, 0.4) \
+		.set_ease(Tween.EASE_IN)
+	_game_over_near_miss_tween.tween_callback(func():
+		_game_over_near_miss_active = false
+		queue_redraw()
+	)
+	queue_redraw()
+
+func clear_game_over_near_miss_glow() -> void:
+	_game_over_near_miss_active = false
+	_stop_game_over_near_miss_tween()
+	_game_over_near_miss_overlay.a = 0.0
+	_game_over_near_miss_border.a = 0.0
+	queue_redraw()
+
+func _stop_game_over_near_miss_tween() -> void:
+	if _game_over_near_miss_tween and _game_over_near_miss_tween.is_valid():
+		_game_over_near_miss_tween.kill()
+	_game_over_near_miss_tween = null
+
+func _set_game_over_nm_alpha(t: float) -> void:
+	_game_over_near_miss_overlay.a = lerpf(0.0, 0.35, t)
+	_game_over_near_miss_border.a = lerpf(0.0, 0.7, t)
+	queue_redraw()
+
+
 func _tween_to_empty(t: float) -> void:
 	_bg_color = _bg_color.lerp(AppColors.EMPTY_CELL, 1.0 - t)
 	_glow_color.a = _glow_color.a * t
@@ -603,6 +655,11 @@ func _draw() -> void:
 	# Near-miss cluster hint overlay (colored glow)
 	if _cluster_hint_active:
 		_draw_rounded_rect(bg_rect, _cluster_hint_overlay, true, 1.0, 0.2)
+
+	# Game-over near-miss glow (orange)
+	if _game_over_near_miss_active:
+		_draw_rounded_rect(bg_rect, _game_over_near_miss_overlay, true, 1.0, 0.2)
+		_draw_rounded_rect(bg_rect, _game_over_near_miss_border, false, 2.0, 0.2)
 
 	# Reset transform
 	if has_transform:
