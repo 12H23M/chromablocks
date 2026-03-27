@@ -40,10 +40,11 @@
   - headless 모드에서 N판 자동 실행
   - 통계 수집 (턴, 점수, 콤보, 체인, 즉사)
 
-- [ ] **Python 게임 시뮬레이터**
-  - board_state + piece_generator + scoring 로직 포팅
-  - 1000판 시뮬 → JSON 리포트
-  - 밸런스 파라미터 자동 최적화
+- [x] **Python 게임 시뮬레이터** ✅ 2026-03-28
+  - board_state + piece_generator + scoring 로직 포팅 완료
+  - 1000판 × 5 프리필 전략 비교 → JSON 리포트
+  - 결과: Spread 40% + 2 near-complete 전략 최우수
+  - tools/simulator.py, docs/sim-results-2026-03-28.md
 
 - [ ] **Phase 6 P3 잔여 태스크**
   - ~~6.15: shake/bounce offset 분리~~ ✅

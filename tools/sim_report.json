@@ -1,0 +1,215 @@
+{
+  "reports": [
+    {
+      "label": "현재: 하단 3줄 65%",
+      "n_games": 1000,
+      "elapsed_sec": 33.93,
+      "score": {
+        "min": 24915,
+        "max": 29390,
+        "avg": 26959,
+        "p25": 26435,
+        "p50": 26950,
+        "p75": 27440,
+        "p95": 28220
+      },
+      "turns": {
+        "min": 300,
+        "max": 300,
+        "avg": 300,
+        "p25": 300,
+        "p50": 300,
+        "p75": 300
+      },
+      "first_clear_turn": {
+        "avg": 2.7,
+        "never_cleared_pct": 0.0,
+        "within_3_turns_pct": 61.8,
+        "within_5_turns_pct": 95.5
+      },
+      "max_combo": {
+        "avg": 4.62,
+        "p50": 5,
+        "p90": 6,
+        "reached_5plus_pct": 54.2
+      },
+      "lines_cleared_avg": 144.3,
+      "perfect_clears_avg": 0.001,
+      "early_game_over_pct": 0.0,
+      "near_miss_at_game_over": {
+        "avg_lines": 0.0,
+        "has_near_miss_pct": 0.0
+      },
+      "fill_at_death_avg": 0.44
+    },
+    {
+      "label": "Spread 30% + 1 near-complete",
+      "n_games": 1000,
+      "elapsed_sec": 32.93,
+      "score": {
+        "min": 25230,
+        "max": 29405,
+        "avg": 27137,
+        "p25": 26620,
+        "p50": 27120,
+        "p75": 27615,
+        "p95": 28420
+      },
+      "turns": {
+        "min": 300,
+        "max": 300,
+        "avg": 300,
+        "p25": 300,
+        "p50": 300,
+        "p75": 300
+      },
+      "first_clear_turn": {
+        "avg": 2.2,
+        "never_cleared_pct": 0.0,
+        "within_3_turns_pct": 73.5,
+        "within_5_turns_pct": 94.3
+      },
+      "max_combo": {
+        "avg": 4.65,
+        "p50": 5,
+        "p90": 6,
+        "reached_5plus_pct": 54.3
+      },
+      "lines_cleared_avg": 145.3,
+      "perfect_clears_avg": 0.0,
+      "early_game_over_pct": 0.0,
+      "near_miss_at_game_over": {
+        "avg_lines": 0.0,
+        "has_near_miss_pct": 0.0
+      },
+      "fill_at_death_avg": 0.433
+    },
+    {
+      "label": "Spread 35% + 2 near-complete",
+      "n_games": 1000,
+      "elapsed_sec": 33.13,
+      "score": {
+        "min": 24765,
+        "max": 29865,
+        "avg": 27172,
+        "p25": 26640,
+        "p50": 27160,
+        "p75": 27675,
+        "p95": 28340
+      },
+      "turns": {
+        "min": 300,
+        "max": 300,
+        "avg": 300,
+        "p25": 300,
+        "p50": 300,
+        "p75": 300
+      },
+      "first_clear_turn": {
+        "avg": 1.9,
+        "never_cleared_pct": 0.0,
+        "within_3_turns_pct": 81.2,
+        "within_5_turns_pct": 96.6
+      },
+      "max_combo": {
+        "avg": 4.6,
+        "p50": 5,
+        "p90": 5,
+        "reached_5plus_pct": 52.1
+      },
+      "lines_cleared_avg": 145.5,
+      "perfect_clears_avg": 0.0,
+      "early_game_over_pct": 0.0,
+      "near_miss_at_game_over": {
+        "avg_lines": 0.0,
+        "has_near_miss_pct": 0.0
+      },
+      "fill_at_death_avg": 0.44
+    },
+    {
+      "label": "Spread 40% + 2 near-complete",
+      "n_games": 1000,
+      "elapsed_sec": 32.94,
+      "score": {
+        "min": 24785,
+        "max": 29555,
+        "avg": 27300,
+        "p25": 26765,
+        "p50": 27275,
+        "p75": 27805,
+        "p95": 28590
+      },
+      "turns": {
+        "min": 300,
+        "max": 300,
+        "avg": 300,
+        "p25": 300,
+        "p50": 300,
+        "p75": 300
+      },
+      "first_clear_turn": {
+        "avg": 1.9,
+        "never_cleared_pct": 0.0,
+        "within_3_turns_pct": 81.7,
+        "within_5_turns_pct": 97.7
+      },
+      "max_combo": {
+        "avg": 4.63,
+        "p50": 5,
+        "p90": 6,
+        "reached_5plus_pct": 53.5
+      },
+      "lines_cleared_avg": 146.1,
+      "perfect_clears_avg": 0.0,
+      "early_game_over_pct": 0.0,
+      "near_miss_at_game_over": {
+        "avg_lines": 0.0,
+        "has_near_miss_pct": 0.0
+      },
+      "fill_at_death_avg": 0.434
+    },
+    {
+      "label": "프리필 없음 (빈 보드)",
+      "n_games": 1000,
+      "elapsed_sec": 36.12,
+      "score": {
+        "min": 24385,
+        "max": 28790,
+        "avg": 26587,
+        "p25": 26085,
+        "p50": 26555,
+        "p75": 27080,
+        "p95": 27900
+      },
+      "turns": {
+        "min": 300,
+        "max": 300,
+        "avg": 300,
+        "p25": 300,
+        "p50": 300,
+        "p75": 300
+      },
+      "first_clear_turn": {
+        "avg": 5.4,
+        "never_cleared_pct": 0.0,
+        "within_3_turns_pct": 3.1,
+        "within_5_turns_pct": 61.1
+      },
+      "max_combo": {
+        "avg": 4.58,
+        "p50": 5,
+        "p90": 5,
+        "reached_5plus_pct": 50.6
+      },
+      "lines_cleared_avg": 142.1,
+      "perfect_clears_avg": 0.001,
+      "early_game_over_pct": 0.0,
+      "near_miss_at_game_over": {
+        "avg_lines": 0.0,
+        "has_near_miss_pct": 0.0
+      },
+      "fill_at_death_avg": 0.437
+    }
+  ],
+  "generated_at": "2026-03-28T03:43:54"
+}
