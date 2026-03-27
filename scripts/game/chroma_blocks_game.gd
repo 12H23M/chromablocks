@@ -1247,6 +1247,9 @@ func _on_interstitial_closed() -> void:
 
 func _show_home_initial() -> void:
 	board_renderer.disable_gems()
+	board_renderer.visible = false
+	piece_tray.visible = false
+	hud.visible = false
 	home_screen.refresh_stats()
 	ScreenTransition.fade_in(home_screen)
 
@@ -1441,6 +1444,9 @@ func _show_previous_score_toast() -> void:
 func _show_home() -> void:
 	ScreenTransition.fade_through_black(get_tree(), func() -> void:
 		board_renderer.disable_gems()
+		board_renderer.visible = false
+		piece_tray.visible = false
+		hud.visible = false
 		home_screen.refresh_stats()
 		home_screen.visible = true
 		home_screen.modulate.a = 1.0
