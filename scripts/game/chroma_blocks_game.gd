@@ -24,6 +24,7 @@ var _is_time_attack := false  # 타임어택 모드 플래그
 var _time_remaining: float = 0.0  # 타임어택 남은 시간
 var _time_attack_active := false  # 타이머 진행 중
 var _is_mission_run := false
+var _is_explicit_mission_run := false  # true only when player chose "Mission Run" from menu
 var _mission_select_overlay: Control = null
 var _mission_hud: VBoxContainer = null
 var _all_missions_completed_shown := false
@@ -492,7 +493,7 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	# 7.1. Special tile drops (after all clearing settles)
 	var special_result := {"board": board, "dropped": []}
 	if has_line_clear:
-		var mission_chance := 0.15 if _is_mission_run else -1.0
+		var mission_chance := 0.20 if _is_mission_run else -1.0
 		special_result = SpecialTileSystem.try_drop_specials(board, completed_rows, completed_cols, mission_chance)
 		board = special_result["board"]
 
@@ -548,7 +549,7 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 
 	# 10.5 Mission tracking
 	if _is_mission_run and not _state.active_missions.is_empty():
-		_update_mission_progress(clear_result, chain_result, blast_executed, new_combo)
+		_update_mission_progress(clear_result, chain_result, blast_executed, new_combo, special_result)
 
 	# 10.6 Time Attack: 라인 클리어 시 +3초 보너스
 	if _is_time_attack and clear_result["lines_cleared"] > 0:
@@ -1029,10 +1030,15 @@ func _check_game_over() -> void:
 
 ## Update mission progress after a piece placement turn.
 func _update_mission_progress(clear_result: Dictionary, chain_result: Dictionary,
-		blast_executed: Dictionary, new_combo: int) -> void:
+		blast_executed: Dictionary, new_combo: int, special_result: Dictionary = {}) -> void:
 	var missions: Array = _state.active_missions
 	if missions.is_empty():
 		return
+
+	var prev_completed: Array = []
+	for m in missions:
+		var mm: MissionSystem.Mission = m
+		prev_completed.append(mm.completed)
 
 	var lines: int = clear_result.get("lines_cleared", 0)
 	if lines > 0:
@@ -1046,9 +1052,21 @@ func _update_mission_progress(clear_result: Dictionary, chain_result: Dictionary
 		MissionSystem.update_progress(missions, MissionSystem.MissionType.TRIGGER_BLAST, 1)
 	MissionSystem.update_progress(missions, MissionSystem.MissionType.SCORE_POINTS, _state.score)
 	MissionSystem.update_progress(missions, MissionSystem.MissionType.PLACE_PIECES, 1)
+	# Special tile drops (FREEZE activates immediately on drop; BOMB/RAINBOW on tap/contact)
+	var dropped_count: int = special_result.get("dropped", []).size()
+	if dropped_count > 0:
+		MissionSystem.update_progress(missions, MissionSystem.MissionType.TRIGGER_SPECIAL, dropped_count)
 
 	# Refresh HUD
 	_mission_hud.refresh()
+
+	# Per-mission completion flash effect
+	for i in range(missions.size()):
+		var mm: MissionSystem.Mission = missions[i]
+		if mm.completed and not prev_completed[i]:
+			# Single mission just completed — flash the HUD row
+			_mission_hud.flash_row(i)
+			SoundManager.play_sfx("milestone")
 
 	# Check all completed — award bonus score and show popup
 	if not _all_missions_completed_shown and MissionSystem.all_completed(missions):

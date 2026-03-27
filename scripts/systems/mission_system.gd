@@ -8,6 +8,7 @@ enum MissionType {
 	TRIGGER_BLAST,
 	SCORE_POINTS,
 	PLACE_PIECES,
+	TRIGGER_SPECIAL,  ## 특수 타일(폭탄/레인보우/프리즈) 발동 횟수
 }
 
 class Mission:
@@ -38,25 +39,30 @@ class Mission:
 
 
 ## Mission pool definitions: [type, target, xp_reward, description]
+## TRIGGER_CHAIN / TRIGGER_BLAST: globally disabled systems — excluded.
+## TRIGGER_SPECIAL: enabled in mission mode via higher drop chance (0.20).
 const EASY_POOL: Array = [
 	[MissionType.CLEAR_LINES, 3, 35, "Clear 3 lines"],
 	[MissionType.PLACE_PIECES, 8, 25, "Place 8 pieces"],
 	[MissionType.SCORE_POINTS, 800, 30, "Score 800 pts"],
-	[MissionType.TRIGGER_BLAST, 1, 40, "Trigger a blast"],
+	[MissionType.REACH_COMBO, 2, 40, "Reach combo x2"],
+	[MissionType.TRIGGER_SPECIAL, 1, 50, "Activate a special tile"],
 ]
 
 const MEDIUM_POOL: Array = [
 	[MissionType.REACH_COMBO, 3, 65, "Reach combo x3"],
-	[MissionType.CLEAR_LINES, 6, 55, "Clear 6 lines"],
-	[MissionType.TRIGGER_CHAIN, 1, 75, "Trigger a chain"],
+	[MissionType.CLEAR_LINES, 5, 55, "Clear 5 lines"],
+	[MissionType.SCORE_POINTS, 1500, 60, "Score 1,500 pts"],
 	[MissionType.PLACE_PIECES, 12, 50, "Place 12 pieces"],
+	[MissionType.TRIGGER_SPECIAL, 2, 75, "Activate 2 special tiles"],
 ]
 
 const HARD_POOL: Array = [
-	[MissionType.REACH_COMBO, 5, 110, "Reach combo x5"],
-	[MissionType.TRIGGER_BLAST, 2, 140, "Trigger 2 blasts"],
+	[MissionType.REACH_COMBO, 4, 100, "Reach combo x4"],
 	[MissionType.SCORE_POINTS, 3000, 90, "Score 3,000 pts"],
-	[MissionType.CLEAR_LINES, 10, 120, "Clear 10 lines"],
+	[MissionType.CLEAR_LINES, 8, 110, "Clear 8 lines"],
+	[MissionType.PLACE_PIECES, 18, 95, "Place 18 pieces"],
+	[MissionType.TRIGGER_SPECIAL, 3, 120, "Activate 3 special tiles"],
 ]
 
 

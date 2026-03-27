@@ -52,6 +52,18 @@ func _refresh() -> void:
 			icon_label.add_theme_color_override("font_color", Color("#2196F3"))
 
 
+## Flash a single mission row when it completes (green pulse).
+func flash_row(index: int) -> void:
+	if index < 0 or index >= _rows.size():
+		return
+	var row: Dictionary = _rows[index]
+	var hbox: HBoxContainer = row["hbox"]
+	var tw := hbox.create_tween()
+	tw.set_loops(2)
+	tw.tween_property(hbox, "modulate", Color(0.5, 1.0, 0.6, 1.0), 0.1).set_ease(Tween.EASE_OUT)
+	tw.tween_property(hbox, "modulate", Color(1, 1, 1, 1), 0.15).set_ease(Tween.EASE_IN)
+
+
 func hide_hud() -> void:
 	visible = false
 	_clear()
