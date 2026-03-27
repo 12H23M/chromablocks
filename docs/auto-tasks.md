@@ -135,3 +135,21 @@
   - 개인정보처리방침 (docs/privacy-policy.html): 한/영 탭 전환, AdMob 명시, GDPR 권리 안내
   - ADB 스토어 스크린샷 자동화 (scripts/store-screenshots.sh): 5장 순서대로 캡처
   - commit: 5c2997e
+
+---
+
+## 📝 야간 자동 작업 로그 (2026-03-28 05:30 — 최종 회차)
+
+- [확인] 마지막 커밋: `db38e07 [auto] docs: 야간 작업 로그 업데이트 - 스토어 준비 완료`
+- [확인] 워킹 트리 클린, 진행 중 미완료 작업 없음
+- [점검] 오늘밤 완료된 주요 퍼포먼스 최적화 항목:
+  - ✅ StyleBoxFlat 캐시 (`_border_style_cache`) — `board_renderer.gd` 이미 적용됨
+  - ✅ Rounded rect polygon 캐시 (`_poly_cache`) — `draw_utils.gd` 이미 적용됨
+  - ✅ GameOrb `_process` 비활성 조건 — `PLAYING` 상태 아닐 때 skip 이미 적용됨
+  - ✅ Pulse tween `_throttled_pulse_redraw()` 30fps 쓰로틀링 — `cell_view.gd` 이미 적용됨
+  - ✅ Particle system pooling (`_particle_pool`) — `board_renderer.gd` 이미 적용됨
+- [점검] 중독성 개선 완료 항목:
+  - ✅ 게임오버 near-miss 보드 하이라이트 + 15가지 메시지 (fda1327)
+  - ✅ 첫 트레이 선물 피스 (SaveManager.is_first_gift_available) 이미 구현됨
+  - ✅ 콤보 유지 힌트 레이블 + 히트 카운터 도트 (ffae667)
+- 6시 요약 Discord 보고 예정
