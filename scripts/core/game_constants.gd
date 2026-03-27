@@ -17,7 +17,7 @@ const SCORE_POPUP_DURATION: float = 0.5
 const PLACEMENT_ANIM_DURATION: float = 0.15
 
 # Scoring
-const PLACEMENT_POINTS_PER_CELL: int = 5
+const PLACEMENT_POINTS_PER_CELL: int = 10
 const PERFECT_CLEAR_BONUS: int = 2000
 
 const LINE_CLEAR_POINTS: Dictionary = {
@@ -27,7 +27,7 @@ const LINE_CLEAR_POINTS: Dictionary = {
 	4: 1000,
 }
 
-const COMBO_MULTIPLIERS: Array = [1.0, 1.2, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0]
+const COMBO_MULTIPLIERS: Array = [1.0, 1.3, 1.6, 2.0, 2.5, 3.0, 3.5, 4.0]
 
 const COLOR_MATCH_BONUS: Dictionary = {
 	6: 200,
@@ -36,7 +36,7 @@ const COLOR_MATCH_BONUS: Dictionary = {
 }
 
 # Color Match
-const COLOR_MATCH_ENABLED: bool = false
+const COLOR_MATCH_ENABLED: bool = true
 const COLOR_MATCH_MIN_CELLS: int = 6
 
 # Layout
