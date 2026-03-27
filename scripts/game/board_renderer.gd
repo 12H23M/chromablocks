@@ -29,11 +29,17 @@ func _get_particle_system() -> Control:
 ## Return a particle system to pool for reuse
 func _return_particle_system(p: Control) -> void:
 	if _particle_pool.size() < PARTICLE_POOL_SIZE:
-		p.get_parent().remove_child(p)
+		if p.get_parent():
+			p.get_parent().remove_child(p)
 		p.set_script(null)  # Clear script to reset state
 		_particle_pool.append(p)
 	else:
 		p.queue_free()  # Pool full, discard
+
+## Called when a particle system finishes — return to pool
+func _on_particles_finished(p: Control) -> void:
+	if is_instance_valid(p):
+		_return_particle_system(p)
 const CORNER_RADIUS := 20
 const BORDER_WIDTH := 2.5
 
@@ -54,7 +60,7 @@ var _crisis_pulse_tween: Tween
 var _crisis_active: bool = false
 var _border_style_cache: StyleBoxFlat  # Cached outer border style (avoid per-frame allocation)
 var _particle_pool: Array = []  # Pool of reusable particle systems
-const PARTICLE_POOL_SIZE := 3  # Max concurrent particle systems
+const PARTICLE_POOL_SIZE := 5  # Max concurrent particle systems (5 allows multi-line clear without re-alloc)
 var _shockwaves: Array = []
 var _highlighted_cells: Array = []
 var _predicted_cells: Array = []
@@ -372,6 +378,11 @@ func _emit_particles_and_shockwave(positions: Array, colors: Array, intensity: f
 	effect_parent.add_child(particles)
 	particles.global_position = global_position
 	particles.size = get_viewport_rect().size
+	# Connect pool-return signal (one-shot) so particle returns to pool when done
+	if particles.has_signal("particles_finished"):
+		var _p := particles  # capture for lambda
+		if not particles.particles_finished.is_connected(_on_particles_finished):
+			particles.particles_finished.connect(_on_particles_finished.bind(particles), CONNECT_ONE_SHOT)
 	particles.emit_at(positions, _cell_size, colors, intensity)
 	# Shockwave rings at center of affected area
 	var center := Vector2.ZERO
@@ -467,8 +478,11 @@ func play_bomb_effect(destroyed_cells: Array) -> void:
 # --- Level Up Effect (2.3) ---
 
 func play_level_up_effect() -> void:
+	if _level_up_tween and _level_up_tween.is_valid():
+		_level_up_tween.kill()
 	# Flash the board border from normal to accent color and back
 	var tween := create_tween()
+	_level_up_tween = tween
 	tween.tween_property(_bg_style, "border_color", AppColors.ACCENT, 0.15) \
 		 .set_ease(Tween.EASE_OUT)
 	tween.tween_property(_bg_style, "border_color", AppColors.BOARD_BORDER, 0.3) \
@@ -722,6 +736,7 @@ func clear_near_miss_hints() -> void:
 # --- Anticipation Phase (dim + pulse before clear) ---
 
 var _anticipation_tween: Tween = null
+var _level_up_tween: Tween = null
 
 func play_clear_anticipation(rows: Array, cols: Array) -> void:
 	# Dim board modulate over 0.1s
@@ -913,27 +928,41 @@ func _draw_corner_gems() -> void:
 		])
 		draw_colored_polygon(highlight_points, Color(1, 1, 1, 0.25))
 
-## Play a brief screen flash effect
+## Play a brief screen flash effect — reuses a single overlay to avoid node churn
+var _screen_flash_layer: CanvasLayer = null
+var _screen_flash_rect: ColorRect = null
+var _screen_flash_tween: Tween = null
+
 func play_screen_flash(color: Color, duration: float = 0.08) -> void:
-	var flash := ColorRect.new()
-	flash.color = color
-	flash.set_anchors_preset(PRESET_FULL_RECT)
-	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var layer := CanvasLayer.new()
-	layer.layer = 30
-	add_child(layer)
-	layer.add_child(flash)
-	
-	var tw := create_tween()
-	tw.tween_property(flash, "color:a", 0.0, duration)
-	tw.tween_callback(func():
-		layer.queue_free()
+	# Reuse existing flash overlay nodes
+	if _screen_flash_layer == null or not is_instance_valid(_screen_flash_layer):
+		_screen_flash_layer = CanvasLayer.new()
+		_screen_flash_layer.layer = 30
+		add_child(_screen_flash_layer)
+		_screen_flash_rect = ColorRect.new()
+		_screen_flash_rect.set_anchors_preset(PRESET_FULL_RECT)
+		_screen_flash_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_screen_flash_layer.add_child(_screen_flash_rect)
+
+	_screen_flash_rect.color = color
+	_screen_flash_rect.visible = true
+
+	if _screen_flash_tween and _screen_flash_tween.is_valid():
+		_screen_flash_tween.kill()
+	_screen_flash_tween = create_tween()
+	_screen_flash_tween.tween_property(_screen_flash_rect, "color:a", 0.0, duration)
+	_screen_flash_tween.tween_callback(func():
+		_screen_flash_rect.visible = false
 	)
 
 ## Play a brief zoom effect for big clears
 func play_zoom_effect(magnitude: float, duration: float = 0.15) -> void:
+	if _zoom_tween and _zoom_tween.is_valid():
+		_zoom_tween.kill()
+	pivot_offset = size / 2.0
 	var target_scale := 1.0 + magnitude * 0.02
 	var tw := create_tween().set_parallel(true)
+	_zoom_tween = tw
 	tw.tween_property(self, "scale", Vector2(target_scale, target_scale), duration * 0.5).set_ease(Tween.EASE_OUT)
 	tw.chain().tween_property(self, "scale", Vector2.ONE, duration * 0.5).set_ease(Tween.EASE_IN)
 

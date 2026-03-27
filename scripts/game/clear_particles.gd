@@ -14,6 +14,8 @@ class Particle:
 	var rot_speed: float
 	var shape: int
 
+signal particles_finished()  # Emitted when all particles are dead (for pool return)
+
 var _particles: Array = []
 var _elapsed: float = 0.0
 var _pending_bursts: Array = []  # Delayed secondary bursts
@@ -21,6 +23,9 @@ const MAX_PARTICLES := 48
 const LIFETIME := 1.0
 const GRAVITY := 240.0
 const FADE_START := 0.4
+
+# Cached RNG — avoid allocating new one per emit call
+var _rng := RandomNumberGenerator.new()
 
 ## Shape types for visual variety
 enum Shape { RECT, DIAMOND, CIRCLE, STAR, SPARK }
@@ -61,8 +66,7 @@ func _make_particle(center: Vector2, vel: Vector2, color: Color, size: float,
 
 
 func emit_at(cell_positions: Array, cell_size: float, colors: Array, intensity: float = 1.0) -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.randomize()
+	var rng := _rng
 
 	# Scale max particles by intensity (1.0 = 32, 1.5 = 48, 2.0 = 64)
 	var max_particles := int(MAX_PARTICLES * intensity * 1.2)
@@ -184,10 +188,13 @@ func _process(delta: float) -> void:
 		_flash_alpha = maxf(0.0, _flash_alpha - delta * 1.5)
 		alive = true
 
-	for p in _particles:
+	# Update live particles and compact-remove dead ones
+	var write_idx: int = 0
+	for read_idx in _particles.size():
+		var p: Particle = _particles[read_idx]
 		p.age += delta
 		if p.age >= p.life:
-			continue
+			continue  # Dead — skip (compacted out)
 		alive = true
 
 		# Physics
@@ -208,15 +215,22 @@ func _process(delta: float) -> void:
 			var shrink_rate: float = 8.0 if p.shape == Shape.SPARK else 5.0
 			p.size = maxf(0.3, p.size - delta * shrink_rate)
 
+		_particles[write_idx] = p
+		write_idx += 1
+
+	# Trim dead particles from the end of the array
+	if write_idx < _particles.size():
+		_particles.resize(write_idx)
+
 	queue_redraw()
 
 	if not alive:
-		queue_free()
+		set_process(false)
+		particles_finished.emit()
 
 
 func _emit_secondary_burst(burst: Dictionary) -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.randomize()
+	var rng := _rng
 	var positions: Array = burst["positions"]
 	var colors: Array = burst["colors"]
 	var cell_size: float = burst["cell_size"]

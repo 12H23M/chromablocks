@@ -11,6 +11,7 @@ var _dragging: bool = false
 var _is_lifted: bool = false
 var _drag_offset := Vector2.ZERO
 var _original_position := Vector2.ZERO
+var _return_tween: Tween = null
 
 const DRAG_OFFSET_Y: float = GameConstants.DRAG_OFFSET_Y
 const DRAG_SCALE: float = GameConstants.DRAG_SCALE
@@ -134,10 +135,17 @@ func _draw_gift_effect(offset_x: float, offset_y: float, piece_w: float, piece_h
 		var star_size := 3.0 + 2.0 * pulse
 		draw_circle(Vector2(star_x, star_y), star_size, star_color)
 
+# Gift sparkle redraw throttle: limit to ~20fps to save CPU
+var _last_gift_redraw_msec: int = 0
+const _GIFT_REDRAW_INTERVAL_MS := 50
+
 func _process(_delta: float) -> void:
-	# Gift piece animation (sparkle effect)
+	# Gift piece animation (sparkle effect) — throttled
 	if piece_data != null and piece_data.is_gift:
-		queue_redraw()
+		var now := Time.get_ticks_msec()
+		if now - _last_gift_redraw_msec >= _GIFT_REDRAW_INTERVAL_MS:
+			_last_gift_redraw_msec = now
+			queue_redraw()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
@@ -181,13 +189,19 @@ func return_to_tray() -> Tween:
 	_is_lifted = false
 	scale = Vector2.ONE
 	z_index = 0
+	if _return_tween and _return_tween.is_valid():
+		_return_tween.kill()
 	var tween := create_tween()
+	_return_tween = tween
 	tween.set_ease(Tween.EASE_OUT)
 	tween.set_trans(Tween.TRANS_BACK)
 	tween.tween_property(self, "global_position", _original_position, 0.2)
 	return tween
 
 func remove_from_tray() -> void:
+	if _return_tween and _return_tween.is_valid():
+		_return_tween.kill()
 	var tween := create_tween()
+	_return_tween = tween
 	tween.tween_property(self, "modulate:a", 0.0, 0.15)
 	tween.tween_callback(queue_free)

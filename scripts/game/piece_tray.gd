@@ -17,6 +17,7 @@ const PLATE_RADIUS := 18
 
 var _tray_cell_size: float = 28.0
 var _active_pieces: Array = []
+var _tray_anim_tweens: Array = []  # Track tray entrance tweens to kill on re-populate
 var _card_style: StyleBoxFlat
 var _plate_style: StyleBoxFlat
 var _hold_slot: HoldSlot
@@ -109,12 +110,18 @@ func populate_tray(pieces: Array, animate: bool = false) -> void:
 		_animate_tray_pieces()
 
 func _animate_tray_pieces() -> void:
+	# Kill any previous tray entrance tweens
+	for tw in _tray_anim_tweens:
+		if tw and tw.is_valid():
+			tw.kill()
+	_tray_anim_tweens.clear()
 	for i in _active_pieces.size():
 		var piece: Control = _active_pieces[i]
 		var target_y: float = piece.position.y
 		piece.modulate.a = 0.0
 		piece.position.y += 30
 		var tween := create_tween()
+		_tray_anim_tweens.append(tween)
 		tween.set_parallel(true)
 		tween.tween_property(piece, "modulate:a", 1.0, 0.2) \
 			.set_ease(Tween.EASE_OUT).set_delay(0.05 * i)
@@ -132,6 +139,10 @@ func remove_piece_at(index: int) -> void:
 	_pieces_container.queue_redraw()
 
 func clear_tray() -> void:
+	for tw in _tray_anim_tweens:
+		if tw and tw.is_valid():
+			tw.kill()
+	_tray_anim_tweens.clear()
 	_active_pieces.clear()
 	if _pieces_container:
 		while _pieces_container.get_child_count() > 0:
@@ -239,6 +250,35 @@ class HoldSlot extends Control:
 			.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 		tween.tween_property(self, "modulate:a", end_alpha, 0.075)
 
+	# Cached style boxes — avoid per-frame allocation
+	var _cached_bg_style: StyleBoxFlat = null
+	var _cached_border_style: StyleBoxFlat = null
+
+	func _get_bg_style() -> StyleBoxFlat:
+		if _cached_bg_style == null:
+			_cached_bg_style = StyleBoxFlat.new()
+			_cached_bg_style.bg_color = BG_COLOR
+			_cached_bg_style.corner_radius_top_left = int(CORNER_RADIUS)
+			_cached_bg_style.corner_radius_top_right = int(CORNER_RADIUS)
+			_cached_bg_style.corner_radius_bottom_left = int(CORNER_RADIUS)
+			_cached_bg_style.corner_radius_bottom_right = int(CORNER_RADIUS)
+		return _cached_bg_style
+
+	func _get_border_style() -> StyleBoxFlat:
+		if _cached_border_style == null:
+			_cached_border_style = StyleBoxFlat.new()
+			_cached_border_style.bg_color = Color(0, 0, 0, 0)
+			_cached_border_style.border_color = BORDER_COLOR
+			_cached_border_style.border_width_top = int(BORDER_WIDTH)
+			_cached_border_style.border_width_bottom = int(BORDER_WIDTH)
+			_cached_border_style.border_width_left = int(BORDER_WIDTH)
+			_cached_border_style.border_width_right = int(BORDER_WIDTH)
+			_cached_border_style.corner_radius_top_left = int(CORNER_RADIUS)
+			_cached_border_style.corner_radius_top_right = int(CORNER_RADIUS)
+			_cached_border_style.corner_radius_bottom_left = int(CORNER_RADIUS)
+			_cached_border_style.corner_radius_bottom_right = int(CORNER_RADIUS)
+		return _cached_border_style
+
 	func _draw() -> void:
 		var slot_rect := Rect2(
 			Vector2((size.x - SLOT_SIZE) / 2.0, (size.y - SLOT_SIZE) / 2.0 + 6),
@@ -253,31 +293,14 @@ class HoldSlot extends Control:
 		var label_y := slot_rect.position.y - 4.0
 		draw_string(font, Vector2(label_x, label_y), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LABEL_COLOR)
 
-		# Background
-		var bg_style := StyleBoxFlat.new()
-		bg_style.bg_color = BG_COLOR
-		bg_style.corner_radius_top_left = int(CORNER_RADIUS)
-		bg_style.corner_radius_top_right = int(CORNER_RADIUS)
-		bg_style.corner_radius_bottom_left = int(CORNER_RADIUS)
-		bg_style.corner_radius_bottom_right = int(CORNER_RADIUS)
-		draw_style_box(bg_style, slot_rect)
+		# Background (cached style)
+		draw_style_box(_get_bg_style(), slot_rect)
 
 		# Border: dashed when empty, solid when piece held
 		if held_piece == null:
 			_draw_dashed_rounded_rect(slot_rect, EMPTY_BORDER_COLOR, EMPTY_BORDER_WIDTH)
 		else:
-			var border_style := StyleBoxFlat.new()
-			border_style.bg_color = Color(0, 0, 0, 0)
-			border_style.border_color = BORDER_COLOR
-			border_style.border_width_top = int(BORDER_WIDTH)
-			border_style.border_width_bottom = int(BORDER_WIDTH)
-			border_style.border_width_left = int(BORDER_WIDTH)
-			border_style.border_width_right = int(BORDER_WIDTH)
-			border_style.corner_radius_top_left = int(CORNER_RADIUS)
-			border_style.corner_radius_top_right = int(CORNER_RADIUS)
-			border_style.corner_radius_bottom_left = int(CORNER_RADIUS)
-			border_style.corner_radius_bottom_right = int(CORNER_RADIUS)
-			draw_style_box(border_style, slot_rect)
+			draw_style_box(_get_border_style(), slot_rect)
 
 		# Draw held piece
 		if held_piece != null:
@@ -374,6 +397,19 @@ class NextPreview extends Control:
 
 	static var _fredoka_font: Font = null
 
+	# Cached background style — avoid per-frame allocation
+	var _cached_bg_style: StyleBoxFlat = null
+
+	func _get_cached_bg_style() -> StyleBoxFlat:
+		if _cached_bg_style == null:
+			_cached_bg_style = StyleBoxFlat.new()
+			_cached_bg_style.bg_color = BG_COLOR
+			_cached_bg_style.corner_radius_top_left = int(CORNER_RADIUS)
+			_cached_bg_style.corner_radius_top_right = int(CORNER_RADIUS)
+			_cached_bg_style.corner_radius_bottom_left = int(CORNER_RADIUS)
+			_cached_bg_style.corner_radius_bottom_right = int(CORNER_RADIUS)
+		return _cached_bg_style
+
 	static func _get_font() -> Font:
 		if _fredoka_font == null:
 			_fredoka_font = load("res://assets/fonts/Fredoka-Bold.ttf")
@@ -386,15 +422,9 @@ class NextPreview extends Control:
 		# Subtle separator line at top
 		draw_line(Vector2(8, 0), Vector2(size.x - 8, 0), Color(1, 1, 1, 0.06), 1.0)
 
-		# Background rounded rect
+		# Background rounded rect (cached style)
 		var bg_rect := Rect2(Vector2(0, 2), Vector2(size.x, size.y - 2))
-		var bg_style := StyleBoxFlat.new()
-		bg_style.bg_color = BG_COLOR
-		bg_style.corner_radius_top_left = int(CORNER_RADIUS)
-		bg_style.corner_radius_top_right = int(CORNER_RADIUS)
-		bg_style.corner_radius_bottom_left = int(CORNER_RADIUS)
-		bg_style.corner_radius_bottom_right = int(CORNER_RADIUS)
-		draw_style_box(bg_style, bg_rect)
+		draw_style_box(_get_cached_bg_style(), bg_rect)
 
 		# "NEXT" label
 		var font: Font = _get_font()

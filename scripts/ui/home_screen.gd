@@ -821,6 +821,8 @@ func _start_idle() -> void:
 	if is_inside_tree():
 		var style: StyleBoxFlat = _play_btn.get_theme_stylebox("normal")
 		if style:
+			if _play_glow_tween and _play_glow_tween.is_valid():
+				_play_glow_tween.kill()
 			_play_glow_tween = create_tween().set_loops()
 			_play_glow_tween.tween_property(style, "shadow_size", 16, 1.0).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
 			_play_glow_tween.tween_property(style, "shadow_size", 6, 1.0).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)

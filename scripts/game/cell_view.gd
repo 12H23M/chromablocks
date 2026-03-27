@@ -24,6 +24,7 @@ var _age_shake_offset := Vector2.ZERO
 var _special_type: int = GameConstants.SPECIAL_TILE_NONE
 var _special_glow_alpha: float = 0.5
 var _special_pulse_tween: Tween = null
+var _effect_tween: Tween = null  # Tracked tween for transient effects (place pulse, ripple, etc.)
 
 # Pulse redraw throttle: limit ambient pulse redraws to ~30fps (33ms)
 var _last_pulse_redraw_msec: int = 0
@@ -36,10 +37,13 @@ func _throttled_pulse_redraw() -> void:
 		queue_redraw()
 
 func set_empty() -> void:
-	# Kill any running clear animation
+	# Kill any running tweens
 	if _clear_tween and _clear_tween.is_valid():
 		_clear_tween.kill()
 		_clear_tween = null
+	if _effect_tween and _effect_tween.is_valid():
+		_effect_tween.kill()
+		_effect_tween = null
 	_clearing = false
 	_stop_special_pulse()
 	_occupied = false
@@ -103,8 +107,16 @@ func clear_highlight() -> void:
 	else:
 		set_empty()
 
+# Age shake throttle: limit to ~30fps (33ms) to reduce per-cell CPU cost
+var _last_age_shake_msec: int = 0
+const _AGE_SHAKE_INTERVAL_MS := 33
+
 func _process(_delta: float) -> void:
 	if GameConstants.CELL_AGE_ENABLED and _age >= GameConstants.CELL_AGE_STAGE2 and _occupied:
+		var now := Time.get_ticks_msec()
+		if now - _last_age_shake_msec < _AGE_SHAKE_INTERVAL_MS:
+			return
+		_last_age_shake_msec = now
 		_age_shake_offset = Vector2(
 			randf_range(-0.7, 0.7),
 			randf_range(-0.7, 0.7)
@@ -137,7 +149,10 @@ func play_place_pulse(delay: float = 0.0) -> void:
 	var original_bg := _bg_color
 	var light := AppColors.get_block_light_color(_color) if _color >= 0 else Color.WHITE
 
+	if _effect_tween and _effect_tween.is_valid():
+		_effect_tween.kill()
 	var tween := create_tween()
+	_effect_tween = tween
 	if delay > 0.0:
 		tween.tween_interval(delay)
 	# Flash color
@@ -166,7 +181,10 @@ func play_place_pulse(delay: float = 0.0) -> void:
 func play_adjacent_ripple(delay: float = 0.0) -> void:
 	if not _occupied:
 		return
+	if _effect_tween and _effect_tween.is_valid():
+		_effect_tween.kill()
 	var tween := create_tween()
+	_effect_tween = tween
 	if delay > 0.0:
 		tween.tween_interval(delay)
 	tween.tween_property(self, "_scale_factor", 1.02, 0.05) \
@@ -179,7 +197,10 @@ func play_adjacent_ripple(delay: float = 0.0) -> void:
 func play_perfect_wave_flash(delay: float) -> void:
 	var original_bg := _bg_color
 	var flash_color := Color(1.0, 1.0, 1.0, 0.9)
+	if _effect_tween and _effect_tween.is_valid():
+		_effect_tween.kill()
 	var tween := create_tween()
+	_effect_tween = tween
 	tween.set_process_mode(Tween.TWEEN_PROCESS_IDLE)
 	if delay > 0.0:
 		tween.tween_interval(delay)
@@ -679,7 +700,10 @@ func _draw_freeze_icon(center: Vector2, r: float) -> void:
 # --- Anticipation pulse (white flash before clear) ---
 
 func play_anticipation_pulse() -> void:
+	if _effect_tween and _effect_tween.is_valid():
+		_effect_tween.kill()
 	var tween := create_tween()
+	_effect_tween = tween
 	tween.set_process_mode(Tween.TWEEN_PROCESS_IDLE)
 	var original_highlight := _highlight_color
 	# Pulse white overlay alpha 0→0.3→0 over 0.2s

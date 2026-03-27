@@ -172,6 +172,14 @@ func show_result(state: GameState) -> void:
 	_double_btn.visible = show_ads
 	_ad_section.visible = show_ads
 
+	# Kill any lingering tweens from previous show_result call
+	if _glow_tween and _glow_tween.is_valid():
+		_glow_tween.kill()
+		_glow_tween = null
+	if _play_again_pulse_tween and _play_again_pulse_tween.is_valid():
+		_play_again_pulse_tween.kill()
+		_play_again_pulse_tween = null
+
 	# Clear particles
 	_particles.clear()
 	_particle_layer.queue_redraw()

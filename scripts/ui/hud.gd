@@ -15,6 +15,7 @@ var _score_tween: Tween
 var _color_flash_tween: Tween
 var _new_best_shown := false
 var _new_best_label: Label
+var _new_best_pulse_tween: Tween = null  # perf: track loop tween for cleanup
 var _current_high_score: int = 0
 
 # Timer (Time Attack)
@@ -215,15 +216,20 @@ func _show_new_best_label() -> void:
 func _start_new_best_pulse() -> void:
 	if not is_instance_valid(_new_best_label):
 		return
-	var pulse := create_tween().set_loops()
-	pulse.tween_property(_new_best_label, "modulate:a", 1.0, 0.4) \
+	if _new_best_pulse_tween and _new_best_pulse_tween.is_valid():
+		_new_best_pulse_tween.kill()
+	_new_best_pulse_tween = create_tween().set_loops()
+	_new_best_pulse_tween.tween_property(_new_best_label, "modulate:a", 1.0, 0.4) \
 		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
-	pulse.tween_property(_new_best_label, "modulate:a", 0.7, 0.4) \
+	_new_best_pulse_tween.tween_property(_new_best_label, "modulate:a", 0.7, 0.4) \
 		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
 
 
 func reset_new_best() -> void:
 	_new_best_shown = false
+	if _new_best_pulse_tween and _new_best_pulse_tween.is_valid():
+		_new_best_pulse_tween.kill()
+		_new_best_pulse_tween = null
 	if is_instance_valid(_new_best_label):
 		_new_best_label.queue_free()
 		_new_best_label = null
