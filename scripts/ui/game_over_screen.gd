@@ -65,7 +65,7 @@ var _continue_btn: Button
 var _double_btn: Button
 var _play_again_btn: Button
 var _home_btn: Button
-var _ad_section: HBoxContainer
+var _ad_section: VBoxContainer
 var _next_grade_label: Label
 var _score_diff_label: Label
 var _streak_label: Label
@@ -507,27 +507,29 @@ func _build_ui() -> void:
 	_mission_container.add_theme_constant_override("separation", 6)
 	_content.add_child(_mission_container)
 
-	# ── Ad section ──
-	_ad_section = HBoxContainer.new()
+	# ── Ad section (vertical layout) ──
+	_ad_section = VBoxContainer.new()
 	_ad_section.alignment = BoxContainer.ALIGNMENT_CENTER
 	_ad_section.add_theme_constant_override("separation", 8)
 	_content.add_child(_ad_section)
 
-	_continue_btn = _make_button("▶️ Continue\nWATCH AD", _ad_btn_style())
+	_continue_btn = _make_button("▶ 이어하기\n광고 보기", _ad_btn_style())
 	_continue_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_continue_btn.custom_minimum_size = Vector2(0, 56)
 	_ad_section.add_child(_continue_btn)
 
-	_double_btn = _make_button("✨ 2× Score\nWATCH AD", _ad_btn_style())
+	_double_btn = _make_button("✨ 점수 2배\n광고 보기", _ad_btn_style())
 	_double_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_double_btn.custom_minimum_size = Vector2(0, 56)
 	_ad_section.add_child(_double_btn)
 
 	# ── Play Again button (large, prominent) ──
-	_play_again_btn = _make_button("▶  PLAY AGAIN", _play_btn_style(), 22)
+	_play_again_btn = _make_button("▶  다시 시작", _play_btn_style(), 22)
 	_play_again_btn.custom_minimum_size = Vector2(320, 68)
 	_content.add_child(_play_again_btn)
 
 	# ── Home button (small, subtle) ──
-	_home_btn = _make_button("HOME", _home_btn_style(), 12)
+	_home_btn = _make_button("홈", _home_btn_style(), 12)
 	_home_btn.add_theme_color_override("font_color", Color(1, 1, 1, 0.2))
 	_home_btn.custom_minimum_size = Vector2(100, 32)
 	_content.add_child(_home_btn)
