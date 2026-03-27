@@ -39,21 +39,24 @@ class Mission:
 
 ## Mission pool definitions: [type, target, xp_reward, description]
 const EASY_POOL: Array = [
-	[MissionType.CLEAR_LINES, 2, 30, "Clear 2 lines"],
-	[MissionType.PLACE_PIECES, 5, 20, "Place 5 pieces"],
-	[MissionType.SCORE_POINTS, 500, 25, "Score 500 pts"],
+	[MissionType.CLEAR_LINES, 3, 35, "Clear 3 lines"],
+	[MissionType.PLACE_PIECES, 8, 25, "Place 8 pieces"],
+	[MissionType.SCORE_POINTS, 800, 30, "Score 800 pts"],
+	[MissionType.TRIGGER_BLAST, 1, 40, "Trigger a blast"],
 ]
 
 const MEDIUM_POOL: Array = [
-	[MissionType.REACH_COMBO, 3, 60, "Reach combo x3"],
-	[MissionType.CLEAR_LINES, 5, 50, "Clear 5 lines"],
-	[MissionType.TRIGGER_CHAIN, 1, 70, "Trigger a chain"],
+	[MissionType.REACH_COMBO, 3, 65, "Reach combo x3"],
+	[MissionType.CLEAR_LINES, 6, 55, "Clear 6 lines"],
+	[MissionType.TRIGGER_CHAIN, 1, 75, "Trigger a chain"],
+	[MissionType.PLACE_PIECES, 12, 50, "Place 12 pieces"],
 ]
 
 const HARD_POOL: Array = [
-	[MissionType.REACH_COMBO, 5, 100, "Reach combo x5"],
-	[MissionType.TRIGGER_BLAST, 1, 120, "Trigger a blast"],
-	[MissionType.SCORE_POINTS, 3000, 80, "Score 3,000 pts"],
+	[MissionType.REACH_COMBO, 5, 110, "Reach combo x5"],
+	[MissionType.TRIGGER_BLAST, 2, 140, "Trigger 2 blasts"],
+	[MissionType.SCORE_POINTS, 3000, 90, "Score 3,000 pts"],
+	[MissionType.CLEAR_LINES, 10, 120, "Clear 10 lines"],
 ]
 
 

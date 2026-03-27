@@ -3,9 +3,10 @@ class_name SpecialTileSystem
 ## Try to drop special tiles after line clear.
 ## Each cleared line has SPECIAL_TILE_DROP_CHANCE to spawn one special.
 ## Returns: {board: BoardState, dropped: Array[Dictionary{pos, type}]}
-static func try_drop_specials(board: BoardState, cleared_rows: Array, cleared_cols: Array) -> Dictionary:
+static func try_drop_specials(board: BoardState, cleared_rows: Array, cleared_cols: Array, drop_chance: float = -1.0) -> Dictionary:
 	var dropped: Array = []
 	var new_grid: Array = board._copy_grid()
+	var chance: float = drop_chance if drop_chance >= 0.0 else GameConstants.SPECIAL_TILE_DROP_CHANCE
 
 	# Collect empty positions along cleared lines
 	var cleared_positions: Array = []
@@ -27,7 +28,7 @@ static func try_drop_specials(board: BoardState, cleared_rows: Array, cleared_co
 
 	var total_lines: int = cleared_rows.size() + cleared_cols.size()
 	for _i in total_lines:
-		if rng.randf() >= GameConstants.SPECIAL_TILE_DROP_CHANCE:
+		if rng.randf() >= chance:
 			continue
 		# Find available empty position
 		var available: Array = []

@@ -492,7 +492,8 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 	# 7.1. Special tile drops (after all clearing settles)
 	var special_result := {"board": board, "dropped": []}
 	if has_line_clear:
-		special_result = SpecialTileSystem.try_drop_specials(board, completed_rows, completed_cols)
+		var mission_chance := 0.15 if _is_mission_run else -1.0
+		special_result = SpecialTileSystem.try_drop_specials(board, completed_rows, completed_cols, mission_chance)
 		board = special_result["board"]
 
 	# 7.2. Increment all cell ages (skip if aging disabled)
@@ -1057,7 +1058,8 @@ func _update_mission_progress(clear_result: Dictionary, chain_result: Dictionary
 			hud.update_from_state(_state)
 		var popup := Control.new()
 		popup.set_script(load("res://scripts/ui/mission_complete_popup.gd"))
-		popup.show_popup(self)
+		var xp_total := MissionSystem.total_xp(missions)
+		popup.show_popup(self, xp_total)
 
 
 func _apply_hit_stop(duration: float) -> void:
