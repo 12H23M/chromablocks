@@ -124,7 +124,7 @@ static func _check_piece_fit(board: BoardState, piece: BlockPiece, gx: int, gy: 
 	var occupied_count := 0
 	var blocked_count := 0
 
-	for cell in piece.cells:
+	for cell in piece.occupied_cells_at(0, 0):
 		var cx: int = gx + cell.x
 		var cy: int = gy + cell.y
 
@@ -143,7 +143,7 @@ static func _check_piece_fit(board: BoardState, piece: BlockPiece, gx: int, gy: 
 
 static func _piece_shape_key(piece: BlockPiece) -> String:
 	var key := ""
-	for cell in piece.cells:
+	for cell in piece.occupied_cells_at(0, 0):
 		key += "%d,%d;" % [cell.x, cell.y]
 	return key
 
@@ -183,7 +183,7 @@ static func get_near_miss_message(result: NearMissResult) -> String:
 
 	# Near-line messages
 	if result.near_lines.size() > 0:
-		var near := result.near_lines[0]
+		var near: Dictionary = result.near_lines[0]
 		if near["needed"] == 1:
 			messages.append("한 칸만 더 채우면 라인 클리어!")
 		else:

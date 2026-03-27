@@ -278,7 +278,6 @@ func _update_combo(combo: int) -> void:
 		if was_zero:
 			_combo_badge.modulate.a = 0.0
 			_combo_badge.scale = Vector2(0.5, 0.5)
-			_combo_badge.visible = true
 			if _combo_tween and _combo_tween.is_valid():
 				_combo_tween.kill()
 			_combo_tween = create_tween()
@@ -301,7 +300,6 @@ func _update_combo(combo: int) -> void:
 				_combo_tween.kill()
 			_combo_tween = create_tween()
 			_combo_tween.tween_property(_combo_badge, "modulate:a", 0.0, 0.2)
-			_combo_tween.tween_callback(func(): _combo_badge.visible = false)
 			_stop_combo_glow()
 			_hide_combo_hint()
 
@@ -344,7 +342,8 @@ func _hide_combo_hint() -> void:
 
 func _create_combo_badge() -> void:
 	_combo_badge = PanelContainer.new()
-	_combo_badge.visible = false
+	_combo_badge.modulate.a = 0.0
+	_combo_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	# Style the badge
 	var style := StyleBoxFlat.new()

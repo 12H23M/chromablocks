@@ -196,6 +196,7 @@ func _start_new_game(daily: bool, mission_run: bool = false, missions: Array = [
 		piece_tray.update_next_preview(_next_tray_pieces)
 		hud.update_from_state(_state)
 
+		get_node("UILayer/GameUI").visible = true
 		home_screen.visible = false
 		home_screen.modulate.a = 1.0
 		game_over_screen.visible = false
@@ -264,6 +265,7 @@ func continue_game() -> void:
 		piece_tray.update_next_preview(_next_tray_pieces)
 		hud.update_from_state(_state)
 
+		get_node("UILayer/GameUI").visible = true
 		home_screen.visible = false
 		home_screen.modulate.a = 1.0
 		game_over_screen.visible = false
@@ -437,7 +439,7 @@ func _place_piece(piece: BlockPiece, gx: int, gy: int) -> void:
 		print("[Gift] Gift piece placed! Bonus: +%d" % gift_bonus)
 
 	SoundManager.play_sfx("block_place")
-	HapticManager.placement(piece.cells.size())
+	HapticManager.placement(piece.cell_count)
 
 	# 1. Place on board
 	var board := _state.board.place_piece(piece, gx, gy)
@@ -877,9 +879,9 @@ func _on_hold_pressed() -> void:
 func _create_gift_piece() -> BlockPiece:
 	# 선물 피스: 2x2 블록 (사용하기 쉬운 모양)
 	var gift := BlockPiece.new(
-		Enums.PieceType.SQUARE,
-		Enums.BlockColor.RED,  # 빨간색 (눈에 띄게)
-		PieceDefinitions.SHAPES[Enums.PieceType.SQUARE]
+		Enums.PieceType.TET_SQUARE,
+		Enums.BlockColor.CORAL,  # 눈에 띄게
+		PieceDefinitions.SHAPES[Enums.PieceType.TET_SQUARE]
 	)
 	gift.is_gift = true
 	return gift
@@ -1240,6 +1242,7 @@ func _on_interstitial_closed() -> void:
 func _show_home_initial() -> void:
 	board_renderer.disable_gems()
 	home_screen.refresh_stats()
+	get_node("UILayer/GameUI").visible = false
 	ScreenTransition.fade_in(home_screen)
 
 
@@ -1434,6 +1437,7 @@ func _show_home() -> void:
 	ScreenTransition.fade_through_black(get_tree(), func() -> void:
 		board_renderer.disable_gems()
 		home_screen.refresh_stats()
+		get_node("UILayer/GameUI").visible = false
 		home_screen.visible = true
 		home_screen.modulate.a = 1.0
 		game_over_screen.visible = false

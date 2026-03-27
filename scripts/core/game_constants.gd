@@ -4,6 +4,9 @@ extends Node
 const BOARD_COLUMNS: int = 8
 const BOARD_ROWS: int = 8
 
+# Colors (normal block colors, excluding SPECIAL)
+const BLOCK_COLORS: int = 6
+
 # Piece Tray
 const TRAY_SIZE: int = 3
 

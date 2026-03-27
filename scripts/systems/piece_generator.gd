@@ -566,4 +566,5 @@ func _pick_beginner_piece(cat: int, excluded: Array, used_types: Array, level: i
 	var type: int = pool.pick_random() if not pool.is_empty() else Enums.PieceType.SINGLE
 	var color := _rng.randi_range(0, GameConstants.BLOCK_COLORS - 1)
 
-	return _create_piece(type, color)
+	var shape: Array = PieceDefinitions.SHAPES[type]
+	return BlockPiece.new(type, color, shape)
