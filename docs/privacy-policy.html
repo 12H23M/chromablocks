@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChromaBlocks — 개인정보 처리방침</title>
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --card: #1a1a2e;
+      --accent: #7c4dff;
+      --accent2: #ff6b6b;
+      --text: #e8e8f0;
+      --muted: #8888aa;
+      --border: #2a2a44;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+    header {
+      background: linear-gradient(135deg, #1a0a3e 0%, #0a1a3e 50%, #0a2e2e 100%);
+      padding: 48px 24px 40px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #7c4dff, #ff6b6b, #ffd700);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    .logo-sub {
+      color: var(--muted);
+      font-size: 0.9rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+    .effective {
+      color: var(--muted);
+      font-size: 0.875rem;
+      margin-bottom: 32px;
+    }
+    section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    h2 .icon { font-size: 1.2em; }
+    p { color: var(--text); margin-bottom: 12px; font-size: 0.95rem; }
+    p:last-child { margin-bottom: 0; }
+    ul {
+      padding-left: 20px;
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+    }
+    ul:last-child { margin-bottom: 0; }
+    li { margin-bottom: 6px; color: var(--text); }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .highlight {
+      background: rgba(124, 77, 255, 0.1);
+      border-left: 3px solid var(--accent);
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 12px;
+      font-size: 0.9rem;
+    }
+    .contact-card {
+      background: rgba(124, 77, 255, 0.08);
+      border: 1px solid rgba(124, 77, 255, 0.3);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+    }
+    .contact-card p { margin-bottom: 6px; }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      padding: 24px;
+      border-top: 1px solid var(--border);
+    }
+    /* Language tabs */
+    .lang-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+    .lang-tab {
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .lang-tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    .lang-content { display: none; }
+    .lang-content.active { display: block; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🎮 ChromaBlocks</div>
+  <div class="logo-sub">Color Block Puzzle</div>
+</header>
+
+<main>
+  <h1>개인정보 처리방침</h1>
+  <p class="effective">시행일: 2026년 3월 28일 | Privacy Policy</p>
+
+  <div class="lang-tabs">
+    <button class="lang-tab active" onclick="setLang('ko')">한국어</button>
+    <button class="lang-tab" onclick="setLang('en')">English</button>
+  </div>
+
+  <!-- 한국어 -->
+  <div class="lang-content active" id="lang-ko">
+
+    <section>
+      <h2><span class="icon">📌</span> 요약</h2>
+      <div class="highlight">
+        ChromaBlocks는 광고 수익 기반 무료 게임입니다. 광고 SDK를 통해 일부 데이터가 수집될 수 있으며, 게임 플레이 데이터는 기기 내에만 저장됩니다.
+      </div>
+      <p>저희는 여러분의 개인정보를 소중히 여깁니다. 이 방침은 ChromaBlocks 앱을 사용할 때 어떤 정보가 수집되고 어떻게 사용되는지 설명합니다.</p>
+    </section>
+
+    <section>
+      <h2><span class="icon">📊</span> 수집하는 정보</h2>
+      <p><strong>앱 자체적으로 수집하는 정보:</strong></p>
+      <ul>
+        <li>게임 진행 데이터 (점수, 레벨, 업적) — <em>기기 내 저장, 외부 전송 없음</em></li>
+        <li>설정 및 환경설정 — <em>기기 내 저장</em></li>
+      </ul>
+      <p><strong>광고 SDK를 통해 수집될 수 있는 정보 (Google AdMob):</strong></p>
+      <ul>
+        <li>광고 ID (GAID) — 광고 개인화에 사용</li>
+        <li>기기 정보 (OS 버전, 기기 모델)</li>
+        <li>IP 주소 (대략적 위치)</li>
+        <li>광고 상호작용 (노출, 클릭)</li>
+        <li>앱 사용 데이터</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="icon">🎯</span> 정보 사용 목적</h2>
+      <ul>
+        <li>무료 게임 서비스 제공 (광고 수익으로 운영)</li>
+        <li>관련성 높은 광고 제공</li>
+        <li>게임 안정성 및 성능 개선</li>
+        <li>사기 방지 및 보안</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="icon">🔗</span> 제3자 서비스</h2>
+      <p>본 앱은 다음 제3자 서비스를 사용합니다:</p>
+      <ul>
+        <li><strong>Google AdMob</strong> — 광고 게재<br>
+          <a href="https://policies.google.com/privacy" target="_blank">Google 개인정보처리방침 →</a></li>
+        <li><strong>Google Play Services</strong> — 앱 배포 및 업데이트</li>
+      </ul>
+      <p>각 서비스의 데이터 처리 방식은 해당 서비스의 개인정보처리방침을 참고하세요.</p>
+    </section>
+
+    <section>
+      <h2><span class="icon">🛡️</span> 사용자 권리 및 선택</h2>
+      <ul>
+        <li><strong>광고 개인화 거부:</strong> 기기 설정 → Google → 광고 → 광고 개인화 선택 해제</li>
+        <li><strong>광고 ID 초기화:</strong> 기기 설정 → Google → 광고 → 광고 ID 초기화</li>
+        <li><strong>게임 데이터 삭제:</strong> 앱 설정 → 데이터 초기화, 또는 앱 삭제</li>
+        <li><strong>EU 거주자 (GDPR):</strong> 앱 최초 실행 시 동의 화면 제공</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="icon">🔒</span> 데이터 보안</h2>
+      <p>게임 진행 데이터는 기기 내에만 저장되며 외부 서버로 전송되지 않습니다. 광고 SDK의 데이터 처리는 Google의 보안 정책에 따릅니다.</p>
+    </section>
+
+    <section>
+      <h2><span class="icon">👶</span> 아동 개인정보</h2>
+      <p>ChromaBlocks는 13세 미만 아동을 대상으로 하지 않습니다. 만약 13세 미만 아동의 개인정보가 수집된 것을 알게 되면 즉시 삭제 조치를 취합니다.</p>
+    </section>
+
+    <section>
+      <h2><span class="icon">📝</span> 방침 변경</h2>
+      <p>개인정보 처리방침이 변경될 경우 이 페이지를 통해 공지합니다. 중요한 변경사항은 앱 내 알림을 통해 안내드립니다.</p>
+    </section>
+
+    <section>
+      <h2><span class="icon">📬</span> 문의</h2>
+      <div class="contact-card">
+        <p>개인정보 관련 문의사항이 있으시면 아래로 연락해 주세요.</p>
+        <p><strong>Alba Games</strong></p>
+        <p>📧 <a href="mailto:alba.games.dev@gmail.com">alba.games.dev@gmail.com</a></p>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- English -->
+  <div class="lang-content" id="lang-en">
+
+    <section>
+      <h2><span class="icon">📌</span> Summary</h2>
+      <div class="highlight">
+        ChromaBlocks is a free game supported by advertising. Some data may be collected through ad SDKs. Game progress data is stored locally on your device only.
+      </div>
+      <p>We take your privacy seriously. This policy explains what information is collected when you use ChromaBlocks and how it is used.</p>
+    </section>
+
+    <section>
+      <h2><span class="icon">📊</span> Information We Collect</h2>
+      <p><strong>Information stored by the app itself:</strong></p>
+      <ul>
+        <li>Game progress (scores, levels, achievements) — <em>stored locally, never transmitted</em></li>
+        <li>App settings and preferences — <em>stored locally</em></li>
+      </ul>
+      <p><strong>Information that may be collected via ad SDK (Google AdMob):</strong></p>
+      <ul>
+        <li>Advertising ID (GAID) — used for ad personalization</li>
+        <li>Device information (OS version, device model)</li>
+        <li>IP address (approximate location)</li>
+        <li>Ad interactions (impressions, clicks)</li>
+        <li>App usage data</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="icon">🎯</span> How We Use Information</h2>
+      <ul>
+        <li>To provide the free game (funded by ad revenue)</li>
+        <li>To serve relevant advertisements</li>
+        <li>To improve game stability and performance</li>
+        <li>To prevent fraud and ensure security</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="icon">🔗</span> Third-Party Services</h2>
+      <p>This app uses the following third-party services:</p>
+      <ul>
+        <li><strong>Google AdMob</strong> — Ad serving<br>
+          <a href="https://policies.google.com/privacy" target="_blank">Google Privacy Policy →</a></li>
+        <li><strong>Google Play Services</strong> — App distribution and updates</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="icon">🛡️</span> Your Choices</h2>
+      <ul>
+        <li><strong>Opt out of personalized ads:</strong> Device Settings → Google → Ads → Opt out of Ads Personalization</li>
+        <li><strong>Reset Advertising ID:</strong> Device Settings → Google → Ads → Reset advertising ID</li>
+        <li><strong>Delete game data:</strong> App Settings → Reset, or uninstall the app</li>
+        <li><strong>EU residents (GDPR):</strong> Consent screen provided on first launch</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="icon">🔒</span> Data Security</h2>
+      <p>Game progress is stored locally and never sent to external servers. Ad SDK data handling follows Google's security standards.</p>
+    </section>
+
+    <section>
+      <h2><span class="icon">👶</span> Children's Privacy</h2>
+      <p>ChromaBlocks is not directed to children under 13. If we become aware that personal information of a child under 13 has been collected, we will take immediate steps to delete it.</p>
+    </section>
+
+    <section>
+      <h2><span class="icon">📝</span> Changes to This Policy</h2>
+      <p>We may update this policy from time to time. Changes will be posted on this page. Significant changes will be notified via in-app notification.</p>
+    </section>
+
+    <section>
+      <h2><span class="icon">📬</span> Contact Us</h2>
+      <div class="contact-card">
+        <p>If you have any questions about this privacy policy, please contact us.</p>
+        <p><strong>Alba Games</strong></p>
+        <p>📧 <a href="mailto:alba.games.dev@gmail.com">alba.games.dev@gmail.com</a></p>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <p>© 2026 Alba Games · ChromaBlocks · <a href="privacy-policy.html">Privacy Policy</a></p>
+</footer>
+
+<script>
+  function setLang(lang) {
+    document.querySelectorAll('.lang-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.lang-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById('lang-' + lang).classList.add('active');
+    event.target.classList.add('active');
+  }
+</script>
+
+</body>
+</html>
