@@ -114,3 +114,15 @@
 | 날짜 | 태스크 | 결과 |
 |------|--------|------|
 | (자동 기록) | | |
+
+---
+
+## 📝 야간 자동 작업 로그 (2026-03-28 04:30)
+
+- [x] **게임오버 아쉬움 극대화** ✅ 2026-03-28 04:30
+  - 게임오버 시 near-complete 라인 보드 주황 글로우 하이라이트 (slow-motion 구간)
+  - cell_view: show_game_over_near_miss_glow() + fade pulse 애니메이션
+  - board_renderer: show_game_over_near_miss() / clear_game_over_near_miss()
+  - near_miss_analyzer: 메시지 풀 15개+로 확대, 6/8도 감지, 상황별 분기
+  - game_over_screen: 반투명 주황 배경 패널 + 18px 폰트 + shake 애니메이션
+  - commit: fda1327
