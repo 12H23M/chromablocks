@@ -41,10 +41,11 @@
   - scripts/auto-test.sh 생성
   - 배포 → 스크린샷 → AI 분석 파이프라인
 
-- [ ] **오토플레이 봇 (GDScript)**
-  - 빈 자리 탐색 → 최적 위치 배치 AI
-  - headless 모드에서 N판 자동 실행
-  - 통계 수집 (턴, 점수, 콤보, 체인, 즉사)
+- [x] **오토플레이 봇 (GDScript)** ✅ 2026-03-28
+  - autoplay_runner.gd + scenes/autoplay_runner.tscn + scripts/run-autoplay.sh 생성
+  - headless 모드에서 N판 자동 실행 (`./scripts/run-autoplay.sh --games N`)
+  - 통계 수집 (turns, score, lines_cleared, max_combo, chains, blasts, game_over_turn)
+  - commit: ab1638d
 
 - [x] **Python 게임 시뮬레이터** ✅ 2026-03-28
   - board_state + piece_generator + scoring 로직 포팅 완료
