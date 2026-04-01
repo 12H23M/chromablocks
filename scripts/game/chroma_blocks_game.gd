@@ -170,8 +170,8 @@ func _start_new_game(daily: bool, mission_run: bool = false, missions: Array = [
 			_piece_gen.set_seed(DailyChallengeSystem.get_today_seed())
 		_state.high_score = SaveManager.get_high_score()
 		_state.status = Enums.GameStatus.PLAYING
-		# _prefill_board disabled — empty board start (addiction improvement)
-		# _prefill_board(_state.board)
+		# Prefill board for exciting start (30% fill, color clusters)
+		_prefill_board(_state.board)
 		SaveManager.increment_games_played()
 		game_over_screen.reset_ad_state()
 		hud.reset_new_best()
@@ -1515,72 +1515,94 @@ func _double_score_after_ad() -> void:
 
 	game_over_screen.show_result(_state)
 
-## Pre-fill board with scattered blocks for an exciting start.
-## Distributes ~30% fill across ALL rows with color clusters, avoiding complete lines/columns.
+## Pre-fill board with strategic blocks for an exciting start.
+## Creates near-complete rows/columns so player can clear within 1-2 moves.
+## Fill: ~35% (~22 cells), bottom-heavy, never completes any line.
 func _prefill_board(board: BoardState) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	var target_cells := int(board.rows * board.columns * 0.30)  # ~30% fill (~19 cells)
+	var cols: int = board.columns  # 8
+	var rows: int = board.rows     # 8
+	var target_cells := int(rows * cols * 0.35)  # ~22 cells
 	var placed := 0
 
-	# Phase 1: Color clusters (2-4 adjacent same color) spread across entire board
-	for _i in range(6):
-		var color: int = rng.randi_range(0, 5)
-		var y: int = rng.randi_range(0, board.rows - 1)
-		var x: int = rng.randi_range(0, board.columns - 2)
-		var length: int = rng.randi_range(2, 4)
-		# Randomly grow horizontally or vertically
-		var grow_vertical: bool = rng.randf() < 0.4
-		for step in range(length):
-			var nx: int = x + (0 if grow_vertical else step)
-			var ny: int = y + (step if grow_vertical else 0)
-			if nx < board.columns and ny < board.rows and not board.grid[ny][nx]["occupied"]:
-				board.grid[ny][nx]["occupied"] = true
-				board.grid[ny][nx]["color"] = color
-				placed += 1
-
-	# Phase 2: Fill remaining randomly across ALL rows to reach target
-	var empty_cells: Array = []
-	for y in range(board.rows):
-		for x in range(board.columns):
-			if not board.grid[y][x]["occupied"]:
-				empty_cells.append(Vector2i(x, y))
-
-	# Shuffle empty cells
-	for i in range(empty_cells.size() - 1, 0, -1):
-		var j: int = rng.randi_range(0, i)
-		var tmp: Vector2i = empty_cells[i]
-		empty_cells[i] = empty_cells[j]
-		empty_cells[j] = tmp
-
-	for cell_pos in empty_cells:
+	# Phase 1: Near-complete rows (6/8 filled) — concentrated in bottom half
+	# This gives player immediate satisfaction from first move
+	var near_rows := [rows - 1, rows - 2, rows - 3]  # bottom 3 rows
+	for row_y in near_rows:
 		if placed >= target_cells:
 			break
-		var x: int = cell_pos.x
-		var y: int = cell_pos.y
-		board.grid[y][x]["occupied"] = true
-		board.grid[y][x]["color"] = rng.randi_range(0, 5)
-		placed += 1
-		# Don't complete any row (would auto-clear)
+		# Fill 5-6 cells randomly, leave 2-3 gaps
+		var gaps := rng.randi_range(2, 3)
+		var gap_positions: Array = []
+		while gap_positions.size() < gaps:
+			var gx := rng.randi_range(0, cols - 1)
+			if gx not in gap_positions:
+				gap_positions.append(gx)
+		var row_color: int = rng.randi_range(0, 5)
+		for x in range(cols):
+			if x in gap_positions:
+				continue
+			if not board.grid[row_y][x]["occupied"]:
+				board.grid[row_y][x]["occupied"] = true
+				# Mix colors: 60% same color cluster, 40% random
+				board.grid[row_y][x]["color"] = row_color if rng.randf() < 0.6 else rng.randi_range(0, 5)
+				placed += 1
+
+	# Phase 2: Near-complete columns (5/8) in top half — creates vertical targets
+	var near_cols := [1, 3, 5, 7]  # alternating columns
+	for col_x in near_cols:
+		if placed >= target_cells:
+			break
+		var col_color: int = rng.randi_range(0, 5)
+		var filled_in_col := 0
+		for y in range(0, rows - 3):  # only top 5 rows
+			if board.grid[y][col_x]["occupied"]:
+				filled_in_col += 1
+		if filled_in_col >= 4:  # already dense, skip
+			continue
+		# Fill 3-4 cells in top area
+		var fill_count := rng.randi_range(3, 4)
+		for y in range(rows - 4, -1, -1):
+			if fill_count <= 0:
+				break
+			if not board.grid[y][col_x]["occupied"]:
+				# Safety: don't complete column (needs gap)
+				var col_total := 0
+				for cy in range(rows):
+					if board.grid[cy][col_x]["occupied"]:
+						col_total += 1
+				if col_total >= rows - 1:
+					break
+				board.grid[y][col_x]["occupied"] = true
+				board.grid[y][col_x]["color"] = col_color if rng.randf() < 0.5 else rng.randi_range(0, 5)
+				placed += 1
+				fill_count -= 1
+
+	# Phase 3: Safety — remove any accidentally completed lines
+	for y in range(rows):
 		var row_full := true
-		for cx in range(board.columns):
-			if not board.grid[y][cx]["occupied"]:
+		for x in range(cols):
+			if not board.grid[y][x]["occupied"]:
 				row_full = false
 				break
 		if row_full:
-			board.grid[y][x]["occupied"] = false
-			board.grid[y][x]["color"] = -1
+			# Clear one random cell in this row
+			var clear_x := rng.randi_range(0, cols - 1)
+			board.grid[y][clear_x]["occupied"] = false
+			board.grid[y][clear_x]["color"] = -1
 			placed -= 1
-			continue
-		# Don't complete any column either
+
+	for x in range(cols):
 		var col_full := true
-		for cy in range(board.rows):
-			if not board.grid[cy][x]["occupied"]:
+		for y in range(rows):
+			if not board.grid[y][x]["occupied"]:
 				col_full = false
 				break
 		if col_full:
-			board.grid[y][x]["occupied"] = false
-			board.grid[y][x]["color"] = -1
+			var clear_y := rng.randi_range(0, rows - 1)
+			board.grid[clear_y][x]["occupied"] = false
+			board.grid[clear_y][x]["color"] = -1
 			placed -= 1
 
 

@@ -132,8 +132,8 @@ const EXCLUDED_LV5: Array = [
 # Level 8+: All pieces allowed
 
 # ── DDA thresholds ──
-const DDA_RUSH_THRESHOLD := 0.20       # fill < 20% → rush mode (was 30%)
-const DDA_RUSH_CHANCE := 0.50           # 50% chance to use rush templates (was 80%)
+const DDA_RUSH_THRESHOLD := 0.40       # fill < 40% → rush mode (bigger pieces to fill faster)
+const DDA_RUSH_CHANCE := 0.70           # 70% chance to use rush templates
 const DDA_MERCY_MILD := 0.40            # fill 40%+ → mild mercy (was 50%)
 const DDA_MERCY_STRONG := 0.60          # fill 60%+ → strong mercy (was 70%)
 const DDA_MERCY_CRITICAL := 0.75        # fill 75%+ → critical mercy (was 85%)
