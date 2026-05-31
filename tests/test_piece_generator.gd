@@ -8,25 +8,24 @@ const TEST_NAME := "TestPieceGenerator"
 
 ## 빈 보드 생성
 static func _empty_board() -> BoardState:
-	return BoardState.new(10, 10)
-
+	return BoardState.new(GameConstants.BOARD_COLUMNS, GameConstants.BOARD_ROWS)
 
 ## 지정 밀도로 채워진 보드 생성 (왼쪽 상단부터 순서대로 채움)
 static func _filled_board(fill_ratio: float) -> BoardState:
-	var board := BoardState.new(10, 10)
-	var total_cells := 100  # 10x10
+	var board := BoardState.new(GameConstants.BOARD_COLUMNS, GameConstants.BOARD_ROWS)
+	var total_cells := GameConstants.BOARD_COLUMNS * GameConstants.BOARD_ROWS
 	var target := int(total_cells * fill_ratio)
 	var filled := 0
 	var new_grid := board._copy_grid()
-	for y in 10:
+	for y in GameConstants.BOARD_ROWS:
 		if filled >= target:
 			break
-		for x in 10:
+		for x in GameConstants.BOARD_COLUMNS:
 			if filled >= target:
 				break
 			new_grid[y][x] = {"occupied": true, "color": 0}
 			filled += 1
-	return BoardState.new(10, 10, new_grid)
+	return BoardState.new(GameConstants.BOARD_COLUMNS, GameConstants.BOARD_ROWS, new_grid)
 
 
 # ── 테스트 케이스 ──
@@ -117,7 +116,9 @@ func test_mercy_produces_small_pieces() -> String:
 
 ## 레벨 30+ (EXPERT_TRAY_REDUCE_LEVEL) 에서는 2개 피스 트레이
 func test_expert_tray_has_two_pieces() -> String:
-	var board := _empty_board()
+	# Beginner gift tray intentionally returns 3 pieces for early empty boards.
+	# Use a non-beginner-density board so this test isolates expert templates.
+	var board := _filled_board(0.55)
 	var gen := PieceGenerator.new()
 	gen.set_seed(12345)
 

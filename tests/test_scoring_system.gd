@@ -72,7 +72,7 @@ func test_line_clear_score() -> String:
 	return r
 
 
-## 콤보 배율 적용: combo=0 → 1.0x, combo=1 → 1.2x, combo=3 → 2.0x
+## 콤보 배율 적용: GameConstants.COMBO_MULTIPLIERS 정책을 따른다.
 func test_combo_multiplier() -> String:
 	# 콤보 0: 배율 1.0
 	var r0 := ScoringSystem.calculate(10, _line_clear(1), _no_color(), 0, 1)
@@ -80,21 +80,22 @@ func test_combo_multiplier() -> String:
 	if r != "":
 		return r
 
-	# 콤보 1: 배율 1.2
+	# 콤보 1: 현재 밸런스 배율
 	var r1 := ScoringSystem.calculate(10, _line_clear(1), _no_color(), 1, 1)
-	r = TestRunner.assert_eq(r1["combo_multiplier"], 1.2, "콤보 1 → 1.2x")
+	r = TestRunner.assert_eq(r1["combo_multiplier"], GameConstants.COMBO_MULTIPLIERS[1],
+		"콤보 1 → %.1fx" % GameConstants.COMBO_MULTIPLIERS[1])
 	if r != "":
 		return r
 
-	# 콤보 3: 배율 2.0
+	# 콤보 3: 현재 밸런스 배율
 	var r3 := ScoringSystem.calculate(10, _line_clear(1), _no_color(), 3, 1)
-	r = TestRunner.assert_eq(r3["combo_multiplier"], 2.0, "콤보 3 → 2.0x")
+	r = TestRunner.assert_eq(r3["combo_multiplier"], GameConstants.COMBO_MULTIPLIERS[3],
+		"콤보 3 → %.1fx" % GameConstants.COMBO_MULTIPLIERS[3])
 	if r != "":
 		return r
 
-	# 콤보 3에서 1줄 클리어: 보너스 = round(100 * 2.0) = 200
-	# 총점 = 배치(10*5=50) + 보너스(200) = 250
-	var expected_total := 50 + 200
+	# 콤보 3에서 1줄 클리어: 현재 배치 점수/콤보 배율로 계산
+	var expected_total := 10 * GameConstants.PLACEMENT_POINTS_PER_CELL + roundi(100 * GameConstants.COMBO_MULTIPLIERS[3])
 	r = TestRunner.assert_eq(r3["total"], expected_total,
 		"콤보 3 + 1줄 클리어: 총 %d" % expected_total)
 	return r
@@ -123,10 +124,9 @@ func test_dual_clear_multiplier() -> String:
 	if r != "":
 		return r
 
-	# 듀얼 클리어 총점 검증:
-	# 배치 = 10*5 = 50
-	# 라인 = 100, 컬러 = 200 (6셀)
-	# 보너스 = round((100 + 200) * 1.0 * 1.25) = round(375.0) = 375
-	# 총점 = 50 + 375 = 425
-	r = TestRunner.assert_eq(r_dual["total"], 425, "듀얼 클리어 총점 = 425")
+	# 듀얼 클리어 총점 검증: 현재 배치 점수/컬러 보너스 정책으로 계산
+	var expected_total := 10 * GameConstants.PLACEMENT_POINTS_PER_CELL \
+		+ roundi((100 + GameConstants.color_match_score(6)) * 1.0 * 1.25)
+	r = TestRunner.assert_eq(r_dual["total"], expected_total,
+		"듀얼 클리어 총점 = %d" % expected_total)
 	return r

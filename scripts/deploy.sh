@@ -26,9 +26,21 @@ for arg in "$@"; do
 done
 
 # Retry ADB connection helper
+adb_connect_with_timeout() {
+  python3 - "$ADB" "$DEVICE" <<'PY'
+import subprocess, sys
+adb, device = sys.argv[1], sys.argv[2]
+try:
+    r = subprocess.run([adb, 'connect', device], timeout=6, capture_output=True, text=True)
+    sys.exit(0 if r.returncode == 0 else 1)
+except subprocess.TimeoutExpired:
+    sys.exit(124)
+PY
+}
+
 adb_ensure() {
   for i in 1 2 3; do
-    $ADB connect "$DEVICE" 2>/dev/null || true
+    adb_connect_with_timeout >/dev/null 2>&1 || true
     sleep 1
     if $ADB devices | grep -q "$DEVICE_IP"; then
       return 0
